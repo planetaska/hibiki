@@ -62,6 +62,8 @@ doubled.value # => 4
 ```ruby
 name = state("world")
 effect { puts "hello, #{name.value}!" } # prints "hello, world!"
+
+# Effect triggers whenever any of the subscribed values changes
 name.value = "Ruby"                     # prints "hello, Ruby!"
 ```
 
