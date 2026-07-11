@@ -79,4 +79,62 @@ RSpec.describe Hibiki::Effect do
       expect(runs).to eq(1)
     end
   end
+
+  describe "ownership" do
+    it "disposes an inner effect when the outer effect re-runs" do
+      inner_runs = 0
+      outer = Hibiki::State.new(0)
+      inner = Hibiki::State.new(0)
+      described_class.new do
+        outer.value
+        described_class.new do
+          inner_runs += 1
+          inner.value
+        end
+      end
+      expect(inner_runs).to eq(1)
+
+      inner.value = 1 # current inner generation re-runs
+      expect(inner_runs).to eq(2)
+
+      outer.value = 1 # outer re-runs: old inner disposed, new one created
+      expect(inner_runs).to eq(3)
+
+      inner.value = 2 # only the new generation re-runs — no leak
+      expect(inner_runs).to eq(4)
+    end
+
+    it "disposes inner effects when the outer effect is disposed" do
+      inner_runs = 0
+      dep = Hibiki::State.new(0)
+      effect = described_class.new do
+        described_class.new do
+          inner_runs += 1
+          dep.value
+        end
+      end
+
+      effect.dispose
+      dep.value = 1
+      expect(inner_runs).to eq(1)
+    end
+
+    it "assigns ownership through a derived to the running effect" do
+      # A lazy derived recomputing mid-effect must not steal ownership:
+      # the effect its block creates belongs to the running effect.
+      inner_runs = 0
+      dep = Hibiki::State.new(0)
+      maker = Hibiki::Derived.new do
+        described_class.new do
+          inner_runs += 1
+          dep.value
+        end
+      end
+      effect = described_class.new { maker.value }
+
+      effect.dispose
+      dep.value = 1
+      expect(inner_runs).to eq(1)
+    end
+  end
 end

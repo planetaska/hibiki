@@ -4,6 +4,12 @@ module Hibiki
   # ---- observer stack (the heart of runtime dependency tracking) ------------
   @observers = []
 
+  # ---- owner stack (ownership for disposal) ----------------------------------
+  # Solid keeps Owner separate from Listener: only effects own, and a lazy
+  # derived computing mid-effect must not steal ownership of effects its
+  # block creates. Hence a second stack rather than reusing @observers.
+  @owners = []
+
   class << self
     def current_observer = @observers.last
 
@@ -12,6 +18,15 @@ module Hibiki
       yield
     ensure
       @observers.pop
+    end
+
+    def current_owner = @owners.last
+
+    def own(owner)
+      @owners.push(owner)
+      yield
+    ensure
+      @owners.pop
     end
   end
 

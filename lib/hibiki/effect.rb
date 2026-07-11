@@ -8,17 +8,23 @@ module Hibiki
     def initialize(&block)
       @block = block
       @disposed = false
+      @children = []
+      # Effects created while another effect runs are owned by it: when the
+      # owner re-runs or is disposed, they are disposed too (Solid's owner
+      # tree). Otherwise the re-creating rerun would leak live duplicates.
+      Hibiki.current_owner&.adopt(self)
       run
     end
 
     def disposed? = @disposed
 
-    # Sever every subscription so the effect never runs again — including
-    # a pending batch flush (`invalidate` no-ops once disposed).
+    # Sever every subscription and take owned children down with us. A
+    # disposed effect never runs again — including a pending batch flush.
     def dispose
       return if @disposed
 
       @disposed = true
+      dispose_children
       clear_sources
     end
 
@@ -31,11 +37,24 @@ module Hibiki
       run
     end
 
+    def adopt(child) = @children << child
+
     private
 
     def run
+      dispose_children
       clear_sources
-      Hibiki.track(self) { @block.call }
+      Hibiki.own(self) do
+        Hibiki.track(self) { @block.call }
+      end
+    end
+
+    # Swap the list out first: the rerun adopts fresh children into a
+    # clean slate while the previous generation is being disposed.
+    def dispose_children
+      children = @children
+      @children = []
+      children.each(&:dispose)
     end
   end
 end
