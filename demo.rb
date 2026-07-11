@@ -6,7 +6,8 @@ puts "=== Non-reactive Ruby ==="
 puts y
 
 # === Reactivity demo
-require_relative "reactive"
+require_relative "lib/hibiki"
+include Hibiki::DSL # the gem is opt-in; a demo script including into main is fine
 
 puts "=== Reactive Ruby ==="
 
