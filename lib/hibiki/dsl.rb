@@ -8,5 +8,6 @@ module Hibiki
     def state(value) = State.new(value)
     def derived(&) = Derived.new(&)
     def effect(&)  = Effect.new(&)
+    def batch(&)   = Hibiki.batch(&)
   end
 end

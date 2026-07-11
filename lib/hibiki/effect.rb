@@ -10,7 +10,13 @@ module Hibiki
       run
     end
 
-    def invalidate = run
+    # Under a batch, defer: Hibiki queues us (deduplicated) and re-runs the
+    # block once at flush instead of once per write.
+    def invalidate
+      return Hibiki.schedule(self) if Hibiki.batching?
+
+      run
+    end
 
     private
 

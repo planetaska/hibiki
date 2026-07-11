@@ -124,6 +124,20 @@ RSpec.describe "reactive graphs" do
                           [3, 20]  # consistent again
                         ])
     end
+
+    it "runs the effect exactly once, glitch-free, when the write is batched" do
+      # Batching sidesteps the diamond glitch: both branches go dirty inside
+      # the batch, and the single flush run reads them fresh. Topological
+      # ordering for UNBATCHED writes is still roadmap #2.
+      log = []
+      s = state(1)
+      d1 = derived { s.value + 1 }
+      d2 = derived { s.value * 10 }
+      effect { log << [d1.value, d2.value] }
+
+      batch { s.value = 2 }
+      expect(log).to eq([[2, 10], [3, 20]])
+    end
   end
 
   describe "effects on derived state" do

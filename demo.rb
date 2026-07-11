@@ -59,3 +59,17 @@ b.value = "B2"    # picked does NOT depend on b right now...
 puts picked       # => A (no recompute needed)
 flag.value = false
 puts picked       # => B2 (deps re-collected on recompute)
+
+puts "\n=== Batching ==="
+
+# --- batching: many writes, one effect run ----------------------------------
+first = state("Alan")
+last = state("Turing")
+effect { puts "full name: #{first.value} #{last.value}" } # runs immediately
+
+# the effect runs ONCE at batch exit, seeing both new values —
+# never an inconsistent "Yukihiro Turing"
+batch do
+  first.value = "Yukihiro"
+  last.value = "Matsumoto"
+end
