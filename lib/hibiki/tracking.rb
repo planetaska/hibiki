@@ -1,32 +1,37 @@
 # frozen_string_literal: true
 
 module Hibiki
-  # ---- observer stack (the heart of runtime dependency tracking) ------------
-  @observers = []
-
-  # ---- owner stack (ownership for disposal) ----------------------------------
-  # Solid keeps Owner separate from Listener: only effects own, and a lazy
-  # derived computing mid-effect must not steal ownership of effects its
-  # block creates. Hence a second stack rather than reusing @observers.
-  @owners = []
-
+  # ---- observer / owner context (the heart of runtime dependency tracking) --
+  # Per-execution-context, in Fiber storage (Fiber[], Ruby 3.2+), not module
+  # ivars: concurrent contexts must not see each other's tracking windows, and
+  # module ivars raise Ractor::IsolationError off the main Ractor. Fiber[] over
+  # Thread.current[] (which is fiber-local too, despite the name) because it is
+  # inherited at fiber creation — reads inside an Enumerator's internal fiber
+  # still register, where uninherited storage would silently drop the edge.
+  # The explicit stacks are gone: save/restore around the block makes the call
+  # stack the stack.
   class << self
-    def current_observer = @observers.last
+    def current_observer = Fiber[:hibiki_observer]
 
     def track(observer)
-      @observers.push(observer)
+      prev = Fiber[:hibiki_observer]
+      Fiber[:hibiki_observer] = observer
       yield
     ensure
-      @observers.pop
+      Fiber[:hibiki_observer] = prev
     end
 
-    def current_owner = @owners.last
+    # Solid keeps Owner separate from Listener: only effects own, and a lazy
+    # derived computing mid-effect must not steal ownership of effects its
+    # block creates. Hence a second slot rather than reusing the observer's.
+    def current_owner = Fiber[:hibiki_owner]
 
     def own(owner)
-      @owners.push(owner)
+      prev = Fiber[:hibiki_owner]
+      Fiber[:hibiki_owner] = owner
       yield
     ensure
-      @owners.pop
+      Fiber[:hibiki_owner] = prev
     end
   end
 
