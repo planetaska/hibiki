@@ -118,4 +118,27 @@ RSpec.describe "concurrency isolation" do
     signal.value = 5
     expect(doubled.value).to eq(10)
   end
+
+  # Signals are unshareable objects, so a graph can never cross a Ractor
+  # boundary — Ractor support means each Ractor runs its own independent
+  # reactive world. Module-ivar state used to raise IsolationError here.
+  it "runs a full reactive cycle inside a non-main Ractor" do
+    prev = Warning[:experimental]
+    Warning[:experimental] = false
+
+    ractor = Ractor.new do
+      log = []
+      count = Hibiki::State.new(1)
+      doubled = Hibiki::Derived.new { count.value * 2 }
+      Hibiki::Effect.new { log << doubled.value }
+      Hibiki.batch { count.value = 3 }
+      log
+    end
+
+    # Ractor#value arrived with the 3.5 Port redesign; 3.4 (our floor) takes.
+    result = ractor.respond_to?(:value) ? ractor.value : ractor.take
+    expect(result).to eq([2, 6])
+  ensure
+    Warning[:experimental] = prev
+  end
 end
