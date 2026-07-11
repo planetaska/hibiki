@@ -41,4 +41,42 @@ RSpec.describe Hibiki::Effect do
     count.value = 3
     expect(seen).to eq([2, 6])
   end
+
+  describe "#dispose" do
+    it "stops future re-runs" do
+      runs = 0
+      count = Hibiki::State.new(0)
+      effect = described_class.new do
+        runs += 1
+        count.value
+      end
+
+      effect.dispose
+      count.value = 1
+      expect(runs).to eq(1)
+      expect(effect).to be_disposed
+    end
+
+    it "is idempotent" do
+      effect = described_class.new { nil }
+
+      effect.dispose
+      expect { effect.dispose }.not_to raise_error
+    end
+
+    it "wins over a pending batch flush" do
+      runs = 0
+      count = Hibiki::State.new(0)
+      effect = described_class.new do
+        runs += 1
+        count.value
+      end
+
+      Hibiki.batch do
+        count.value = 1 # queues the effect...
+        effect.dispose  # ...but disposal before the flush must stick
+      end
+      expect(runs).to eq(1)
+    end
+  end
 end
