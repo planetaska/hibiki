@@ -3,6 +3,8 @@
 module Hibiki
   # ---- effect -----------------------------------------------------------------
   class Effect
+    include Observer # observes, but is never observed (no Trackable)
+
     def initialize(&block)
       @block = block
       run
@@ -13,6 +15,7 @@ module Hibiki
     private
 
     def run
+      clear_sources
       Hibiki.track(self) { @block.call }
     end
   end

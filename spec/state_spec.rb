@@ -3,7 +3,8 @@
 RSpec.describe Hibiki::State do
   # A bare observer: whatever is on the observer stack during a read
   # subscribes to the signal, exactly like a Derived or Effect would.
-  let(:observer) { instance_double(Hibiki::Effect, invalidate: nil) }
+  # (`add_source` is the reverse edge every subscription now records.)
+  let(:observer) { instance_double(Hibiki::Effect, invalidate: nil, add_source: nil) }
 
   it "returns its initial value" do
     expect(described_class.new(1).value).to eq(1)

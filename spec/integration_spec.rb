@@ -28,12 +28,9 @@ RSpec.describe "reactive graphs" do
     end
 
     it "does not recompute when a stale dependency changes" do
-      # Roadmap #1: recomputing does not yet unsubscribe from old deps
-      # (Solid clears per-observer dep lists before each rerun). After the
-      # flip, `picked` no longer reads `a`, but it is still subscribed, so
-      # writing `a` spuriously invalidates it.
-      pending "stale subscriptions: old deps are never unsubscribed (roadmap #1)"
-
+      # Each recompute clears the observer's source list first (Solid's
+      # cleanNode), so after the flip `picked` is unsubscribed from `a` and
+      # writing `a` no longer invalidates it.
       runs = 0
       flag = state(true)
       a = state("A")
@@ -51,6 +48,45 @@ RSpec.describe "reactive graphs" do
       a.value = "A2"        # no longer a dependency — should be a no-op
       picked.value
       expect(runs).to eq(runs_after_flip)
+    end
+
+    it "does not re-run an effect when a stale dependency changes" do
+      # Same shape as above, but the observer is an Effect: reruns are eager,
+      # so a stale subscription would fire the block immediately.
+      runs = 0
+      flag = state(true)
+      a = state("A")
+      b = state("B")
+      effect do
+        runs += 1
+        flag.value ? a.value : b.value
+      end
+
+      flag.value = false    # deps re-collected: flag, b
+      runs_after_flip = runs
+
+      a.value = "A2"        # no longer a dependency — should be a no-op
+      expect(runs).to eq(runs_after_flip)
+      b.value = "B2"        # still a dependency — must re-run
+      expect(runs).to eq(runs_after_flip + 1)
+    end
+
+    it "re-subscribes to a branch it returns to" do
+      # Guards against over-clearing: severed edges must come back once the
+      # branch is read again.
+      flag = state(true)
+      a = state("A")
+      b = state("B")
+      picked = derived { flag.value ? a.value : b.value }
+
+      picked.value
+      flag.value = false    # a unsubscribed
+      picked.value
+      flag.value = true     # a is a live dependency again
+      picked.value
+
+      a.value = "A2"
+      expect(picked.value).to eq("A2")
     end
   end
 

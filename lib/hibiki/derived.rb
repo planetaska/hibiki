@@ -3,7 +3,8 @@
 module Hibiki
   # ---- derived / computed -----------------------------------------------------
   class Derived
-    include Trackable
+    include Trackable # observed by downstream deriveds/effects
+    include Observer  # observes its own dependencies
 
     def initialize(&block)
       @block = block
@@ -29,6 +30,7 @@ module Hibiki
     private
 
     def recompute
+      clear_sources
       @value = Hibiki.track(self) { @block.call }
       @dirty = false
     end
