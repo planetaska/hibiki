@@ -72,6 +72,38 @@ RSpec.describe "concurrency isolation" do
     creator&.join
   end
 
+  it "does not defer another thread's effects while a batch is open" do
+    runs_after_write = nil
+
+    batching = Queue.new
+    wrote = Queue.new
+    writer = Thread.new do
+      signal = Hibiki::State.new(0)
+      runs = 0
+      Hibiki::Effect.new do
+        runs += 1
+        signal.value
+      end
+      batching.pop
+      # The main thread is mid-batch; this thread is not. Its write must run
+      # its effect eagerly, not park it in someone else's pending queue.
+      signal.value = 1
+      runs_after_write = runs
+      wrote << true
+    end
+
+    unrelated = Hibiki::State.new(0)
+    Hibiki.batch do
+      unrelated.value = 1
+      batching << true
+      wrote.pop
+    end
+
+    expect(runs_after_write).to eq(2)
+  ensure
+    writer&.join
+  end
+
   # Pins the Fiber[] choice for the observer: Enumerator#next runs its block
   # in an internal fiber, and Fiber storage is inherited at fiber creation, so
   # reads in there still see the tracking window. Fiber-local-but-uninherited
