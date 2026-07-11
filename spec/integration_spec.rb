@@ -104,11 +104,10 @@ RSpec.describe "reactive graphs" do
   end
 
   describe "diamond graphs (s -> d1, d2 -> effect)" do
-    # Roadmap #3: no glitch freedom yet. Notifying s's subscribers one at a
-    # time means the effect re-runs once per branch, and the first re-run
-    # reads d1 fresh but d2 stale. This spec pins the CURRENT behavior so
-    # the fix (topological ordering / batching) shows up as a diff here.
-    it "runs the effect once per branch, glitching on the first run" do
+    # Glitch freedom: every unbatched write is an implicit batch of one
+    # (Solid's runUpdates), so the whole invalidation wave lands before the
+    # effect flushes — it runs once and reads both branches fresh.
+    it "runs the effect exactly once, glitch-free, on an unbatched write" do
       log = []
       s = state(1)
       d1 = derived { s.value + 1 }
@@ -118,17 +117,26 @@ RSpec.describe "reactive graphs" do
       expect(log).to eq([[2, 10]])
 
       s.value = 2
-      expect(log).to eq([
-                          [2, 10], # initial run
-                          [3, 10], # glitch: d1 fresh, d2 still cached
-                          [3, 20]  # consistent again
-                        ])
+      expect(log).to eq([[2, 10], [3, 20]]) # no [3, 10] glitch in between
+    end
+
+    it "stays glitch-free when the branches have uneven depth" do
+      # s -> d1 -> effect, s -> d2 -> d3 -> effect: the longer branch must
+      # not lag a notification wave behind the shorter one.
+      log = []
+      s = state(1)
+      d1 = derived { s.value + 1 }
+      d2 = derived { s.value * 10 }
+      d3 = derived { d2.value + 100 }
+      effect { log << [d1.value, d3.value] }
+
+      s.value = 2
+      expect(log).to eq([[2, 110], [3, 120]])
     end
 
     it "runs the effect exactly once, glitch-free, when the write is batched" do
-      # Batching sidesteps the diamond glitch: both branches go dirty inside
-      # the batch, and the single flush run reads them fresh. Topological
-      # ordering for UNBATCHED writes is still roadmap #2.
+      # Same guarantee under an explicit batch: both branches go dirty inside
+      # the batch, and the single flush run reads them fresh.
       log = []
       s = state(1)
       d1 = derived { s.value + 1 }

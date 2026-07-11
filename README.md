@@ -89,16 +89,23 @@ picked.value        # => "B2" (deps re-collected)
 
 ## Status & limitations
 
-Hibiki is a young signal core. Known gaps, in the order they'll be addressed:
+Hibiki is a young signal core.
 
-1. **Stale subscriptions** — recomputing does not yet unsubscribe from old
-   dependencies (Solid clears dependency lists before each rerun; we'll
-   mirror that).
-2. **Batching** — multiple writes should coalesce effect runs.
-3. **Glitch freedom** — diamond-shaped graphs may run effects with
-   inconsistent intermediate values.
-4. **Effect disposal** — `Effect#dispose` and ownership scopes.
-5. **Thread safety** — the observer stack is currently global.
+Already in place:
+
+- **Stale subscriptions** — dependency lists are cleared before each rerun
+  (mirroring Solid), so conditional reads switch subscriptions cleanly.
+- **Batching** — `Hibiki.batch { ... }` coalesces effect runs across
+  multiple writes.
+- **Glitch freedom** — every write is an implicit batch (Solid's
+  `runUpdates`), so diamond-shaped graphs never run effects with
+  inconsistent intermediate values.
+
+Known gaps, in the order they'll be addressed:
+
+1. **Effect disposal** — `Effect#dispose` and ownership scopes.
+2. **Thread safety** — the observer stack and batch state are currently
+   global.
 
 ## Development
 

@@ -18,7 +18,11 @@ module Hibiki
       return if new_value == @value
 
       @value = new_value
-      notify
+      # Solid wraps every write in runUpdates; mirroring that, an unbatched
+      # write becomes an implicit batch of one. The whole invalidation wave
+      # (all diamond branches) lands before effects flush, so an effect runs
+      # once per write and never sees a half-updated graph.
+      Hibiki.batch { notify }
     end
 
     # sugar for in-place updates: counter.update { it + 1 }
