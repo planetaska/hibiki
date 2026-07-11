@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 # === Non-reactive Ruby behavior
 x = 0
 y = x + 1
-x += 1
+x += 1 # rubocop:disable Lint/UselessAssignment -- the whole point: y will NOT update
 puts "=== Non-reactive Ruby ==="
 puts y
 
@@ -16,7 +18,7 @@ x = state(0)
 y = derived { x.value + 1 }
 
 x.value += 1
-puts y            # => 2  (Derived#to_s reads .value)
+puts y # => 2  (Derived#to_s reads .value)
 
 # --- chained deriveds ------------------------------------------------------
 doubled = derived { y.value * 2 }
@@ -28,8 +30,8 @@ puts doubled      # => 22
 
 # --- effects (Svelte's $effect) --------------------------------------------
 name = state("world")
-effect { puts "hello, #{name.value}!" }   # runs immediately: hello, world!
-name.value = "Aska"                        # re-runs: hello, Aska!
+effect { puts "hello, #{name.value}!" } # runs immediately: hello, world!
+name.value = "Aska" # re-runs: hello, Aska!
 
 # --- dynamic dependencies: the thing static analysis can't do --------------
 flag = state(true)

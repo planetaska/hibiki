@@ -1,0 +1,21 @@
+AllCops:
+  TargetRubyVersion: 3.4
+  NewCops: enable
+  SuggestExtensions: false
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/Documentation:
+  Enabled: false
+
+# demo.rb includes Hibiki::DSL into main on purpose — that's the demo.
+Style/MixinUsage:
+  Exclude:
+    - demo.rb
+
+# Spec blocks are naturally long.
+Metrics/BlockLength:
+  Exclude:
+    - spec/**/*
+    - "*.gemspec"

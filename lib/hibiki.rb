@@ -12,8 +12,6 @@
 # signal whose value is READ during that window registers the observer as a
 # subscriber. Writes then invalidate subscribers transitively.
 
-require "set" # core class on Ruby >= 4.0; kept for the 3.4 floor
-
 require_relative "hibiki/version"
 require_relative "hibiki/tracking"
 require_relative "hibiki/state"
