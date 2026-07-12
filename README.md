@@ -148,46 +148,19 @@ Two designs were evaluated and rejected, so they don't need relitigating:
   variable reads or writes, so writes need `self.x =` anyway — at which point
   a class (above) wears the same design better.
 
-## Threading model
+The full walkthrough with examples lives in
+[docs/why-no-transparent-signals.md](docs/why-no-transparent-signals.md).
 
-Hibiki's bookkeeping is isolated per execution context, and the context is
-the **fiber** (each thread gets that automatically via its root fiber):
+## Documentation
 
-- The tracking window (which derived/effect is currently computing) and
-  effect ownership live in [fiber storage](https://docs.ruby-lang.org/en/master/Fiber.html#method-c-5B-5D)
-  (`Fiber[]`), which child fibers inherit — so reads made through an
-  `Enumerator`'s internal fiber still register their dependencies.
-- Batch state is fiber-local but *not* inherited: a batch belongs to the
-  fiber that opened it, and only that fiber's writes are coalesced.
+More detail in [docs/](docs/):
 
-Independent signal graphs on different threads, fibers, or Ractors never
-interfere. A Ractor can run its own reactive world (signals are unshareable
-objects, so a graph can't cross a Ractor boundary anyway).
-
-What Hibiki does **not** do is synchronize the graph itself: a signal graph
-is confined to the execution context that uses it, and sharing one graph
-between concurrently running threads is not supported — same single-threaded
-worldview as Solid and Svelte.
-
-## Status & limitations
-
-Hibiki is a young signal core.
-
-Already in place:
-
-- **Stale subscriptions** — dependency lists are cleared before each rerun
-  (mirroring Solid), so conditional reads switch subscriptions cleanly.
-- **Batching** — `Hibiki.batch { ... }` coalesces effect runs across
-  multiple writes.
-- **Glitch freedom** — every write is an implicit batch (Solid's
-  `runUpdates`), so diamond-shaped graphs never run effects with
-  inconsistent intermediate values.
-- **Effect disposal** — `Effect#dispose`, with ownership: effects created
-  inside an effect are disposed when their owner re-runs or is disposed.
-- **Execution-context isolation** — see the threading model above.
-- **Ergonomics** — `Hibiki::Reactive` class macros, `untrack`/`peek`/`call`
-  (transparent access and a block DSL were evaluated and rejected — see
-  "Why no transparent signals?" above).
+- [Why no transparent signals?](docs/why-no-transparent-signals.md) — the two
+  rejected transparency designs, with the failure cases spelled out.
+- [Threading model](docs/threading-model.md) — fiber-confined bookkeeping,
+  what is and isn't isolated across threads, fibers, and Ractors.
+- [Status & limitations](docs/status-and-limitations.md) — what the signal
+  core already guarantees.
 
 ## Development
 
