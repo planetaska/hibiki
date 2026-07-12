@@ -73,3 +73,22 @@ batch do
   first.value = "Yukihiro"
   last.value = "Matsumoto"
 end
+
+puts "\n=== Class-based reactivity ==="
+
+# --- Hibiki::Reactive: Svelte 5 class fields, Ruby style --------------------
+# No .value anywhere: readers/writers are plain methods over per-instance
+# signals, and the class-level effect starts when the instance is created.
+class Counter
+  include Hibiki::Reactive
+
+  state :count, 0
+  derived(:doubled) { count * 2 }
+  effect { puts "count=#{count} doubled=#{doubled}" } # runs on Counter.new
+
+  def increment = self.count += 1
+end
+
+counter = Counter.new # => count=0 doubled=0
+counter.increment     # => count=1 doubled=2
+counter.count = 10    # => count=10 doubled=20

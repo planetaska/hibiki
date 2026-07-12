@@ -67,6 +67,26 @@ effect { puts "hello, #{name.value}!" } # prints "hello, world!"
 name.value = "Ruby"                     # prints "hello, Ruby!"
 ```
 
+### Untracked reads
+
+Sometimes an effect should *sample* a signal without depending on it.
+`Hibiki.untrack { }` suppresses dependency registration for a block, and
+`#peek` is the per-signal shorthand — the classic use is read-modify-write,
+where an effect must not depend on the signal it writes:
+
+```ruby
+count = state(0)
+history = state([])
+
+# Log every count change — without peek, writing history would re-trigger
+# this effect forever (it would depend on its own output).
+effect { history.value = history.peek + [count.value] }
+```
+
+A dirty derived still recomputes on `peek`; only the reader's subscription is
+skipped. Signals also respond to `#call`, mirroring Solid's
+signals-as-getter-functions: `count.call` (or `count.()`) reads and registers.
+
 ### Dynamic dependencies
 
 Dependencies are re-collected on every recompute, so conditional reads work:
@@ -82,6 +102,51 @@ b.value = "B2"      # picked doesn't depend on b right now — no recompute
 flag.value = false
 picked.value        # => "B2" (deps re-collected)
 ```
+
+### Class-based reactivity
+
+Svelte 5 allows `$state`/`$derived`/`$effect` as class fields; `Hibiki::Reactive`
+is the Ruby analogue. Declare signals with class macros and use them as plain
+attributes — no `.value` at usage sites:
+
+```ruby
+class Counter
+  include Hibiki::Reactive
+
+  state :count, 0
+  state(:history) { [] }          # block form: fresh default per instance
+  derived(:doubled) { count * 2 }
+  effect { puts "count is now #{count}" } # starts on Counter.new
+
+  def increment = self.count += 1
+end
+
+counter = Counter.new  # prints "count is now 0"
+counter.increment      # prints "count is now 1"
+counter.doubled        # => 2
+```
+
+Signals are per-instance and created lazily; subclasses inherit all
+declarations. Use the block form for mutable defaults (a positional default
+is one shared object, the same gotcha as Rails attribute defaults).
+
+Effect lifecycle: an instance created *inside* a running effect is adopted by
+the owner tree and cleaned up automatically when that owner re-runs or is
+disposed. For long-lived instances whose effects read signals *outside* the
+instance, call `#dispose` — effects that only read the instance's own signals
+form a self-contained island that garbage-collects with it.
+
+### Why no transparent signals?
+
+Two designs were evaluated and rejected, so they don't need relitigating:
+
+- **Transparent value wrappers** (`method_missing` forwarding to `.value`):
+  Ruby object truthiness cannot be overridden, so `if flag` on a wrapper is
+  always true — it silently breaks conditionals, the exact thing dynamic
+  dependency tracking is best at. `nil?` and `==` lie similarly.
+- **A `reactive do ... end` block DSL**: Ruby has no hook for bare local
+  variable reads or writes, so writes need `self.x =` anyway — at which point
+  a class (above) wears the same design better.
 
 ## Threading model
 
@@ -120,10 +185,9 @@ Already in place:
 - **Effect disposal** — `Effect#dispose`, with ownership: effects created
   inside an effect are disposed when their owner re-runs or is disposed.
 - **Execution-context isolation** — see the threading model above.
-
-Known gaps, in the order they'll be addressed:
-
-1. **Ergonomics experiments** — transparent access, a `reactive` DSL.
+- **Ergonomics** — `Hibiki::Reactive` class macros, `untrack`/`peek`/`call`
+  (transparent access and a block DSL were evaluated and rejected — see
+  "Why no transparent signals?" above).
 
 ## Development
 
