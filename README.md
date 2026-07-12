@@ -1,4 +1,4 @@
-# Hibiki (響き)
+# Hibiki (響き) — Svelte-5-style signals for Ruby
 
 Svelte-5-style signals for Ruby: `state`, `derived`, `effect`.
 
@@ -20,7 +20,18 @@ Or `gem install hibiki`.
 You can use Hibiki in two flavors:
 
 ```ruby
-# Without DSL
+# 1. With DSL
+require "hibiki"
+include Hibiki::DSL
+
+x = state(0)
+y = derived { x.value + 1 }
+```
+
+Or if you wish to avoid using DSL:
+
+```ruby
+# 2. Without DSL
 require "hibiki"
 
 x = Hibiki::State.new(0)
@@ -28,16 +39,6 @@ y = Hibiki::Derived.new { x.value + 1 }
 
 x.value = 10
 y.value # => 11
-```
-
-Or more conveniently, opt into the DSL helpers wherever you like:
-
-```ruby
-# With DSL
-include Hibiki::DSL
-
-x = state(0)
-y = derived { x.value + 1 }
 ```
 
 ### The three primitives
