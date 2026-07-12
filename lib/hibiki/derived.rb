@@ -17,6 +17,16 @@ module Hibiki
       @value
     end
 
+    # Read without subscribing the reader. A dirty derived still recomputes
+    # (collecting its own deps as usual) — peek only skips the outward edge.
+    def peek
+      recompute if @dirty
+      @value
+    end
+
+    # Solid signals are getter functions; `sig.()` reads (and registers).
+    def call = value
+
     def invalidate
       return if @dirty
 

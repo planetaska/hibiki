@@ -21,6 +21,11 @@ module Hibiki
       Fiber[:hibiki_observer] = prev
     end
 
+    # Solid's untrack: reads inside the block register nothing. Only the
+    # listener is suppressed — the owner slot is left alone, so effects
+    # created under untrack are still adopted.
+    def untrack(&) = track(nil, &)
+
     # Solid keeps Owner separate from Listener: only effects own, and a lazy
     # derived computing mid-effect must not steal ownership of effects its
     # block creates. Hence a second slot rather than reusing the observer's.

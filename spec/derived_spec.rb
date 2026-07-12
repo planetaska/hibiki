@@ -63,6 +63,37 @@ RSpec.describe Hibiki::Derived do
     expect(runs).to eq(2)
   end
 
+  describe "#peek" do
+    it "recomputes when dirty but does not subscribe the reader" do
+      count = Hibiki::State.new(2)
+      doubled = described_class.new { count.value * 2 }
+      runs = 0
+      Hibiki::Effect.new do
+        runs += 1
+        doubled.peek
+      end
+
+      count.value = 5
+      expect(runs).to eq(1) # effect never depended on doubled
+      expect(doubled.peek).to eq(10) # yet peek sees the fresh value
+    end
+  end
+
+  describe "#call" do
+    it "reads like #value, registering a dependency" do
+      count = Hibiki::State.new(2)
+      doubled = described_class.new { count.value * 2 }
+      runs = 0
+      Hibiki::Effect.new do
+        runs += 1
+        doubled.call
+      end
+
+      count.value = 5
+      expect(runs).to eq(2)
+    end
+  end
+
   it "propagates dirtiness through chained deriveds" do
     count = Hibiki::State.new(1)
     inc = described_class.new { count.value + 1 }

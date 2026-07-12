@@ -14,6 +14,13 @@ module Hibiki
       @value
     end
 
+    # Read without subscribing (per-signal untrack), for read-modify-write
+    # effects that must not depend on what they write.
+    def peek = @value
+
+    # Solid signals are getter functions; `sig.()` reads (and registers).
+    def call = value
+
     def value=(new_value)
       return if new_value == @value
 

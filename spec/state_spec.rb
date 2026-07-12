@@ -40,6 +40,35 @@ RSpec.describe Hibiki::State do
     counter.value = 1
   end
 
+  describe "#peek" do
+    it "returns the current value without subscribing" do
+      counter = described_class.new(0)
+      Hibiki.track(observer) { expect(counter.peek).to eq(0) }
+
+      expect(observer).not_to receive(:invalidate)
+      counter.value = 1
+    end
+
+    it "lets an effect read-modify-write without looping on itself" do
+      count = Hibiki::State.new(1)
+      history = described_class.new([])
+      Hibiki::Effect.new { history.value = history.peek + [count.value] }
+
+      count.value = 2
+      expect(history.peek).to eq([1, 2]) # and no infinite self-trigger
+    end
+  end
+
+  describe "#call" do
+    it "reads like #value, registering a dependency" do
+      counter = described_class.new(3)
+      Hibiki.track(observer) { expect(counter.call).to eq(3) }
+
+      expect(observer).to receive(:invalidate)
+      counter.value = 4
+    end
+  end
+
   describe "#update" do
     it "writes the block's result over the current value" do
       counter = described_class.new(1)
