@@ -150,17 +150,19 @@ Two designs were evaluated and rejected, so they don't need relitigating:
   a class (above) wears the same design better.
 
 The full walkthrough with examples lives in
-[docs/why-no-transparent-signals.md](docs/why-no-transparent-signals.md).
+[docs-md/why-no-transparent-signals.md](docs-md/why-no-transparent-signals.md).
 
 ## Documentation
 
-More detail in [docs/](docs/):
+Browsable documentation site: <https://planetaska.github.io/hibiki/>
 
-- [Why no transparent signals?](docs/why-no-transparent-signals.md) — the two
+More detail in [docs-md/](docs-md/):
+
+- [Why no transparent signals?](docs-md/why-no-transparent-signals.md) — the two
   rejected transparency designs, with the failure cases spelled out.
-- [Threading model](docs/threading-model.md) — fiber-confined bookkeeping,
+- [Threading model](docs-md/threading-model.md) — fiber-confined bookkeeping,
   what is and isn't isolated across threads, fibers, and Ractors.
-- [Status & limitations](docs/status-and-limitations.md) — what the signal
+- [Status & limitations](docs-md/status-and-limitations.md) — what the signal
   core already guarantees.
 
 ## Development
