@@ -1,3 +1,8 @@
+---
+title: Why no transparent signals?
+nav_order: 2
+---
+
 # Why no transparent signals?
 
 Two designs were evaluated and rejected during Hibiki's development. Both are

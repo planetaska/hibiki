@@ -1,3 +1,8 @@
+---
+title: Status & limitations
+nav_order: 3
+---
+
 # Status & limitations
 
 Hibiki is a young signal core.

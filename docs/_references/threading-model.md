@@ -1,3 +1,8 @@
+---
+title: Threading model
+nav_order: 1
+---
+
 # Threading model
 
 Hibiki's bookkeeping is isolated per execution context, and the context is
