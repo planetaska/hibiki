@@ -21,13 +21,14 @@
 title: Hibiki Documentation
 email: planetaska@gmail.com
 description: >- # this means to ignore newlines until "baseurl:"
-  Write an awesome description for your new site here. You can edit this
-  line in _config.yml. It will appear in your document head meta (for
-  Google search results) and in your feed.xml site description.
+  Hibiki is a fine-grained reactivity library modeled on the signal systems in 
+  Svelte 5 and SolidJS. Dependency tracking is done at runtime 
+  (not by static AST analysis): while a derived value or effect is computing, 
+  it sits on an observer stack, and any signal read during that window subscribes it.
 baseurl: "/hibiki" # the subpath of your site, e.g. /blog
 url: "https://planetaska.github.io" # the base hostname & protocol for your site, e.g. http://example.com
-twitter_username: jekyllrb
-github_username:  jekyll
+twitter_username: planetaska
+github_username:  planetaska
 
 # Build settings
 # theme: minima
