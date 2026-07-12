@@ -148,6 +148,25 @@ RSpec.describe "reactive graphs" do
     end
   end
 
+  describe "diamond graphs through a Reactive class" do
+    it "keeps the same glitch-free guarantee when the graph lives in an instance" do
+      klass = Class.new do
+        include Hibiki::Reactive
+
+        state :root, 1
+        derived(:left)  { root + 1 }
+        derived(:right) { root * 10 }
+        derived(:sum)   { left + right }
+      end
+      obj = klass.new
+      log = []
+      effect { log << obj.sum }
+
+      obj.root = 2
+      expect(log).to eq([12, 23]) # never a half-updated 13 or 22
+    end
+  end
+
   describe "effects on derived state" do
     it "sees consistent values through a linear chain" do
       seen = []
