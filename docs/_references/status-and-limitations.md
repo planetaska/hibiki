@@ -16,6 +16,11 @@ Already in place:
 - **Glitch freedom** — every write is an implicit batch (Solid's
   `runUpdates`), so diamond-shaped graphs never run effects with
   inconsistent intermediate values.
+- **Error isolation** — a raising effect doesn't take the rest of a flush
+  down with it: the queue always completes, then the first error re-raises.
+  Set `Hibiki.error_handler = ->(error, effect) { ... }` (Solid's
+  `handleError`) to route errors instead — e.g. to `Rails.error.report` —
+  so one broken effect never raises out of a write.
 - **Effect disposal** — `Effect#dispose`, with ownership: effects created
   inside an effect are disposed when their owner re-runs or is disposed.
 - **Lifecycle scoping** — `Hibiki.root { |root| ... }` (Solid's
