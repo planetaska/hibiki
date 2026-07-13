@@ -141,4 +141,26 @@ RSpec.describe "concurrency isolation" do
   ensure
     Warning[:experimental] = prev
   end
+
+  # Pins the Ractor-local storage for the error handler: a module ivar
+  # would raise IsolationError the moment a flush error looked it up here,
+  # and each Ractor configures its own world's handler.
+  it "routes flush errors to an error_handler set inside a non-main Ractor" do
+    prev = Warning[:experimental]
+    Warning[:experimental] = false
+
+    ractor = Ractor.new do
+      handled = []
+      Hibiki.error_handler = ->(error, _effect) { handled << error.message }
+      count = Hibiki::State.new(1)
+      Hibiki::Effect.new { raise "boom" if count.value > 1 }
+      count.value = 2
+      handled
+    end
+
+    result = ractor.respond_to?(:value) ? ractor.value : ractor.take
+    expect(result).to eq(["boom"])
+  ensure
+    Warning[:experimental] = prev
+  end
 end

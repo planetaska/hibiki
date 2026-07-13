@@ -92,6 +92,72 @@ RSpec.describe "Hibiki.batch" do
     expect(seen).to eq([1, 2])
   end
 
+  describe "error isolation in the flush" do
+    it "still runs the remaining pending effects when one raises, then re-raises" do
+      seen = []
+      a = Hibiki::State.new(1)
+      Hibiki::Effect.new { raise "boom" if a.value > 1 }
+      Hibiki::Effect.new { seen << a.value }
+
+      expect { Hibiki.batch { a.value = 2 } }.to raise_error("boom")
+      expect(seen).to eq([1, 2]) # the raise must not drop the second effect
+    end
+
+    it "re-raises the first error when several effects raise" do
+      seen = []
+      a = Hibiki::State.new(1)
+      Hibiki::Effect.new { raise "first" if a.value > 1 }
+      Hibiki::Effect.new { seen << a.value }
+      Hibiki::Effect.new { raise "second" if a.value > 1 }
+
+      expect { Hibiki.batch { a.value = 2 } }.to raise_error("first")
+      expect(seen).to eq([1, 2])
+    end
+
+    it "isolates eager (unbatched) writes too, via the implicit batch" do
+      seen = []
+      a = Hibiki::State.new(1)
+      Hibiki::Effect.new { raise "boom" if a.value > 1 }
+      Hibiki::Effect.new { seen << a.value }
+
+      expect { a.value = 2 }.to raise_error("boom")
+      expect(seen).to eq([1, 2])
+    end
+
+    context "with Hibiki.error_handler set" do
+      after { Hibiki.error_handler = nil }
+
+      it "routes each error to the handler instead of raising" do
+        handled = []
+        Hibiki.error_handler = ->(error, effect) { handled << [error.message, effect] }
+
+        seen = []
+        a = Hibiki::State.new(1)
+        raiser = Hibiki::Effect.new { raise "boom" if a.value > 1 }
+        Hibiki::Effect.new { seen << a.value }
+
+        expect { Hibiki.batch { a.value = 2 } }.not_to raise_error
+        expect(seen).to eq([1, 2])
+        expect(handled).to eq([["boom", raiser]])
+      end
+
+      it "completes the flush across multiple failing effects" do
+        handled = []
+        Hibiki.error_handler = ->(error, _effect) { handled << error.message }
+
+        seen = []
+        a = Hibiki::State.new(1)
+        Hibiki::Effect.new { raise "first" if a.value > 1 }
+        Hibiki::Effect.new { seen << a.value }
+        Hibiki::Effect.new { raise "second" if a.value > 1 }
+
+        expect { Hibiki.batch { a.value = 2 } }.not_to raise_error
+        expect(seen).to eq([1, 2])
+        expect(handled).to eq(%w[first second])
+      end
+    end
+  end
+
   it "runs an effect created inside a batch immediately, as usual" do
     runs = 0
     Hibiki.batch { Hibiki::Effect.new { runs += 1 } }

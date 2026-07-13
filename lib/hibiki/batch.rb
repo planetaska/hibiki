@@ -30,18 +30,55 @@ module Hibiki
 
     def schedule(effect) = (Thread.current[:hibiki_pending_effects] ||= Set.new) << effect
 
+    # Where effect errors raised during a flush go (Solid's handleError):
+    # a callable receiving (error, effect). With a handler set the flush
+    # never raises; a raising handler propagates — we don't swallow it.
+    # Ractor-local, not a module ivar (IsolationError off the main Ractor)
+    # and not Thread.current[] (configuration set once, e.g. in an
+    # initializer, must be visible to threads spawned later). Per-Ractor
+    # fits the one-independent-world-per-Ractor model.
+    def error_handler = Ractor.current[:hibiki_error_handler]
+
+    def error_handler=(handler)
+      Ractor.current[:hibiki_error_handler] = handler
+    end
+
     private
 
     def batch_depth = Thread.current[:hibiki_batch_depth] || 0
 
     # Swap the queue out before running: an effect may write states and
     # invalidate further effects, and with the batch over those run eagerly.
+    #
+    # A raising effect must not take the rest of the queue down with it
+    # (Solid's runUpdates completes the queue and routes errors to a
+    # handler): rescue per effect, finish the flush, then re-raise the
+    # first error unless an error_handler took it. StandardError only —
+    # Interrupt and friends should still abort the flush.
     def flush_effects
       pending = Thread.current[:hibiki_pending_effects]
       return if pending.nil? || pending.empty?
 
       Thread.current[:hibiki_pending_effects] = Set.new
-      pending.each(&:invalidate)
+      first_error = nil
+      pending.each do |effect|
+        error = invalidate_isolated(effect)
+        first_error ||= error
+      end
+      raise first_error if first_error
+    end
+
+    # One queue entry: run it, and route or return its error instead of
+    # raising, so the flush loop always reaches every pending effect.
+    def invalidate_isolated(effect)
+      effect.invalidate
+      nil
+    rescue StandardError => e
+      handler = error_handler
+      return e unless handler
+
+      handler.call(e, effect)
+      nil
     end
   end
 end
