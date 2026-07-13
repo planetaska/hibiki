@@ -7,7 +7,7 @@ module Hibiki
   module DSL
     def state(value) = State.new(value)
     def derived(&) = Derived.new(&)
-    def effect(&)  = Effect.new(&)
+    def effect(scheduler: nil, &) = Effect.new(scheduler:, &)
     def batch(&)   = Hibiki.batch(&)
     def root(&)    = Hibiki.root(&)
     def on_cleanup(&) = Hibiki.on_cleanup(&)

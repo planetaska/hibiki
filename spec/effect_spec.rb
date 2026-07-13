@@ -80,6 +80,113 @@ RSpec.describe Hibiki::Effect do
     end
   end
 
+  describe "scheduler:" do
+    it "hands the re-run to the scheduler instead of running inline" do
+      scheduled = []
+      seen = []
+      a = Hibiki::State.new(1)
+      effect = described_class.new(scheduler: ->(e) { scheduled << e }) { seen << a.value }
+
+      a.value = 2
+      expect(seen).to eq([1]) # the write did not re-run the block
+      expect(scheduled).to eq([effect]) # it was scheduled instead
+    end
+
+    it "does not schedule the initial run" do
+      scheduled = []
+      runs = 0
+      described_class.new(scheduler: ->(e) { scheduled << e }) { runs += 1 }
+
+      expect(runs).to eq(1)
+      expect(scheduled).to be_empty
+    end
+
+    it "schedules once per batch, not once per write" do
+      scheduled = []
+      a = Hibiki::State.new(1)
+      b = Hibiki::State.new(2)
+      described_class.new(scheduler: ->(e) { scheduled << e }) { a.value + b.value }
+
+      Hibiki.batch do
+        a.value = 10
+        b.value = 20
+        expect(scheduled).to be_empty # nothing until the flush
+      end
+      expect(scheduled.size).to eq(1)
+    end
+
+    it "schedules once per unbatched write, via the implicit batch" do
+      scheduled = []
+      a = Hibiki::State.new(1)
+      described_class.new(scheduler: ->(e) { scheduled << e }) { a.value }
+
+      a.value = 2
+      a.value = 3
+      expect(scheduled.size).to eq(2)
+    end
+
+    it "re-collects dependencies when the scheduled effect is run" do
+      schedules = 0
+      pending_effect = nil
+      seen = []
+      flag = Hibiki::State.new(true)
+      a = Hibiki::State.new("a")
+      b = Hibiki::State.new("b")
+      described_class.new(scheduler: lambda { |e|
+        schedules += 1
+        pending_effect = e
+      }) { seen << (flag.value ? a.value : b.value) }
+
+      flag.value = false
+      pending_effect.run
+      expect(seen).to eq(%w[a b])
+
+      a.value = "a2" # stale branch after the deferred run: must not schedule
+      expect(schedules).to eq(1)
+
+      b.value = "b2" # live branch still does
+      expect(schedules).to eq(2)
+    end
+
+    it "run is a no-op once disposed (a late debounced run loses to dispose)" do
+      runs = 0
+      a = Hibiki::State.new(1)
+      pending_effect = nil
+      effect = described_class.new(scheduler: ->(e) { pending_effect = e }) do
+        runs += 1
+        a.value
+      end
+
+      a.value = 2
+      effect.dispose
+      pending_effect.run
+      expect(runs).to eq(1)
+    end
+
+    it "routes a raising scheduler through the flush's error isolation" do
+      seen = []
+      a = Hibiki::State.new(1)
+      described_class.new(scheduler: ->(_e) { raise "boom" }) { a.value }
+      described_class.new { seen << a.value }
+
+      expect { Hibiki.batch { a.value = 2 } }.to raise_error("boom")
+      expect(seen).to eq([1, 2]) # the rest of the flush still ran
+    end
+
+    it "routes a raising scheduler to Hibiki.error_handler when set" do
+      handled = []
+      Hibiki.error_handler = ->(error, effect) { handled << [error.message, effect] }
+
+      a = Hibiki::State.new(1)
+      effect = described_class.new(scheduler: ->(_e) { raise "boom" }) { a.value }
+
+      expect { a.value = 2 }.not_to raise_error
+      expect(handled).to eq([["boom", effect]])
+    ensure
+      Hibiki.error_handler = nil
+    end
+  end
+
   describe "ownership" do
     it "disposes an inner effect when the outer effect re-runs" do
       inner_runs = 0

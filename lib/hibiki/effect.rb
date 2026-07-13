@@ -6,8 +6,14 @@ module Hibiki
     include Observer # observes, but is never observed (no Trackable)
     include Owner    # owns effects and cleanups registered while running
 
-    def initialize(&block)
+    # scheduler: hands re-runs to the caller instead of running inline
+    # (Vue's ReactiveEffect scheduler): a callable receiving the effect,
+    # which calls #run whenever it's ready — on the graph's own execution
+    # context. The initial run is never scheduled: dependency collection
+    # must happen at creation, and Vue's constructor runs directly too.
+    def initialize(scheduler: nil, &block)
       @block = block
+      @scheduler = scheduler
       @disposed = false
       # Effects created while another effect (or root) runs are owned by it
       # and disposed when the owner re-runs or is disposed.
@@ -29,17 +35,26 @@ module Hibiki
     end
 
     # Under a batch, defer: Hibiki queues us (deduplicated) and re-runs the
-    # block once at flush instead of once per write.
+    # block once at flush instead of once per write. With a scheduler, the
+    # re-run is handed to it right where it would have happened — after the
+    # batch dedup, so the flush's error isolation covers a raising scheduler
+    # too, and N batched writes mean one scheduler call.
     def invalidate
       return if @disposed
       return Hibiki.schedule(self) if Hibiki.batching?
+      return @scheduler.call(self) if @scheduler
 
       run
     end
 
-    private
-
+    # Public for scheduled effects: the scheduler (or whoever it handed us
+    # to) calls this when it's time to re-run. No-op once disposed — a
+    # debounced run firing late must lose to dispose, like a pending flush
+    # does. A raise propagates to the caller: a deferred run is outside any
+    # flush, so the integration owns rescue there.
     def run
+      return if @disposed
+
       dispose_owned
       clear_sources
       Hibiki.own(self) do
