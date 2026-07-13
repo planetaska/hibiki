@@ -1,0 +1,17 @@
+<h1>Hibiki cable spike — todos (Phlex)</h1>
+
+<div data-controller="todos" data-todos-cid-value="<%= @cid %>">
+  <%= turbo_stream_from "todos", @cid %>
+
+  <%# A throwaway instance for the initial static render; the channel's
+      long-lived instance takes over from the first broadcast. Both start
+      from the same defaults, so the handoff is invisible. %>
+  <%= render TodoList.new %>
+
+  <form data-action="submit->todos#add">
+    <input type="text" data-todos-target="title" placeholder="new todo">
+    <button>add</button>
+  </form>
+</div>
+
+<p><a href="/">&larr; ERB stage</a></p>

@@ -2,6 +2,9 @@ AllCops:
   TargetRubyVersion: 3.4
   NewCops: enable
   SuggestExtensions: false
+  Exclude:
+    # The Phase 2 spike app is not gem code (mostly Rails-generated).
+    - spike/**/*
 
 Style/StringLiterals:
   EnforcedStyle: double_quotes
