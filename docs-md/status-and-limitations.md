@@ -18,6 +18,13 @@ Already in place:
   so one broken effect never raises out of a write.
 - **Effect disposal** — `Effect#dispose`, with ownership: effects created
   inside an effect are disposed when their owner re-runs or is disposed.
+- **Scheduler seam** — `Effect.new(scheduler: ->(effect) { ... })` (Vue's
+  `ReactiveEffect` scheduler) hands re-runs to your callable instead of
+  running them inline; call `effect.run` when ready — on the graph's own
+  execution context. Lets an integration debounce or coalesce chosen
+  effects (e.g. one broadcast per burst of writes) while other effects
+  stay synchronous. The initial run is never scheduled, and a run after
+  `dispose` is a no-op.
 - **Lifecycle scoping** — `Hibiki.root { |root| ... }` (Solid's
   `createRoot`) owns everything created inside it and tears it all down on
   `root.dispose` — the anchor for long-lived graphs whose teardown is an
