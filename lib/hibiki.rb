@@ -7,7 +7,9 @@
 #   derived { }   -> lazy computed signal with runtime dependency tracking
 #   effect { }    -> side effect that re-runs when its dependencies change
 #
-# Plus `batch { }`, which coalesces effect runs across multiple writes.
+# Plus `batch { }`, which coalesces effect runs across multiple writes, and
+# lifecycle scoping: `root { }` (an ownership scope disposed by its holder)
+# and `on_cleanup { }` (per-run teardown on the owning effect or root).
 #
 # Dependency tracking works exactly like the JS frameworks: while a derived
 # or effect is (re)computing, it is pushed onto an "observer stack". Any
@@ -20,5 +22,6 @@ require_relative "hibiki/batch"
 require_relative "hibiki/state"
 require_relative "hibiki/derived"
 require_relative "hibiki/effect"
+require_relative "hibiki/root"
 require_relative "hibiki/reactive"
 require_relative "hibiki/dsl"

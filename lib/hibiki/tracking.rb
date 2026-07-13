@@ -38,6 +38,19 @@ module Hibiki
     ensure
       Fiber[:hibiki_owner] = prev
     end
+
+    # Solid's onCleanup: registers on the current OWNER, not the listener —
+    # a lazy derived computing mid-effect registers cleanups on the effect,
+    # matching how effects created there are adopted. The block runs before
+    # the owner's next rerun and on dispose. Outside any owner it can never
+    # run; mirror Solid and warn rather than raise.
+    def on_cleanup(&block)
+      owner = current_owner
+      return warn("Hibiki.on_cleanup: no current owner (effect or root); the cleanup can never run") unless owner
+
+      owner.add_cleanup(block)
+      block
+    end
   end
 
   # ---- shared subscription behaviour -----------------------------------------
@@ -74,6 +87,36 @@ module Hibiki
     def clear_sources
       sources.each { |source| source.unsubscribe(self) }
       sources.clear
+    end
+  end
+
+  # ---- shared owner behaviour ---------------------------------------------------
+  # Solid's Owner half of a computation: effects and roots own the child
+  # effects and cleanups registered while their block runs, and tear them
+  # down together on rerun/dispose.
+  module Owner
+    # Effects created while our block runs become ours: when we re-run or
+    # are disposed, they are disposed too (Solid's owner tree). Otherwise a
+    # re-creating rerun would leak live duplicates.
+    def adopt(child) = (@children ||= []) << child
+
+    def add_cleanup(block) = (@cleanups ||= []) << block
+
+    private
+
+    # Solid's cleanNode: children go down before our own cleanups run (a
+    # child's cleanup may still need a resource ours tears down), cleanups
+    # in LIFO order like nested ensure blocks. Both lists are swapped out
+    # first, so a rerun adopts fresh entries into a clean slate while the
+    # previous generation is being torn down.
+    def dispose_owned
+      children = @children || []
+      @children = []
+      children.each(&:dispose)
+
+      cleanups = @cleanups || []
+      @cleanups = []
+      cleanups.reverse_each(&:call)
     end
   end
 end

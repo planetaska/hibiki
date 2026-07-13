@@ -9,5 +9,7 @@ module Hibiki
     def derived(&) = Derived.new(&)
     def effect(&)  = Effect.new(&)
     def batch(&)   = Hibiki.batch(&)
+    def root(&)    = Hibiki.root(&)
+    def on_cleanup(&) = Hibiki.on_cleanup(&)
   end
 end
