@@ -1,0 +1,22 @@
+<h1>Hibiki cable spike — counter (ERB)</h1>
+
+<div data-controller="counter" data-counter-cid-value="<%= @cid %>">
+  <%= turbo_stream_from "counter", @cid %>
+
+  <%# Initial values must match the graph's initial state in CounterChannel:
+      the effect's first broadcast fires in `subscribed`, before the Turbo
+      stream subscription is confirmed, so the page never receives it. %>
+  <%= render "count", count: 0, doubled: 0 %>
+  <%= render "step", step: 1 %>
+
+  <p>
+    <button data-action="counter#increment">+ step</button>
+    <button data-action="counter#burst">burst (10 writes, 1 broadcast)</button>
+    <label>
+      step:
+      <input type="number" value="1" min="1" data-action="change->counter#setStep">
+    </label>
+  </p>
+</div>
+
+<p><a href="/phlex">Phlex stage &rarr;</a></p>
