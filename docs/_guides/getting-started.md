@@ -107,6 +107,37 @@ batch do
 end # prints "Grace Hopper" — once, not twice
 ```
 
+## Lifecycle: `root` and `on_cleanup`
+
+Effects created while another effect runs are *owned* by it and disposed
+automatically when the owner re-runs or is disposed. For everything else
+there is `Hibiki.root` (Solid's `createRoot`): an ownership scope you tear
+down yourself — the anchor for long-lived graphs (a session, a connection)
+whose teardown is an external event, not a rerun.
+
+`Hibiki.on_cleanup` (Solid's `onCleanup`) registers teardown on the owning
+effect or root; it runs before each re-run and on dispose — the place to
+release timers, sockets, subscriptions an effect sets up:
+
+```ruby
+interval = state(1)
+
+ticker = Hibiki.root do
+  effect do
+    timer = start_timer(every: interval.value)
+    Hibiki.on_cleanup { timer.cancel } # runs before each re-run, and on dispose
+  end
+end
+
+interval.value = 5 # old timer cancelled, new one started
+ticker.dispose     # tears down every effect in the scope, cleanups included
+```
+
+A root's block runs untracked, and a root created inside an effect is *not*
+adopted by it — it deliberately escapes the automatic owner tree, so its
+lifetime is exactly `Hibiki.root` … `root.dispose`. Individual effects can
+still be disposed directly with `Effect#dispose`.
+
 ## Class-based reactivity
 
 Svelte 5 allows `$state` / `$derived` / `$effect` as class fields;
