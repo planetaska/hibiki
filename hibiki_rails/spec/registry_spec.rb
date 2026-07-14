@@ -38,7 +38,7 @@ RSpec.describe RegistryTestChannel, type: :channel do
   end
 end
 
-RSpec.describe Hibiki::Rails::Railtie do
+RSpec.describe Hibiki::Rails::Engine do
   it "wires dispose_all into the Rails reloader (to_prepare)" do
     connection = double("connection", close: nil)
     channel = double("channel", connection:)

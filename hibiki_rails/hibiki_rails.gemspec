@@ -23,7 +23,8 @@ Gem::Specification.new do |spec|
   spec.metadata["source_code_uri"] = spec.homepage
   spec.metadata["rubygems_mfa_required"] = "true"
 
-  spec.files = Dir["lib/**/*.rb", "README.md"]
+  spec.files = Dir["lib/**/*.rb", "app/assets/javascripts/*.js",
+                   "config/importmap.rb", "README.md"]
   spec.require_paths = ["lib"]
 
   spec.add_dependency "actioncable", ">= 8.0"
