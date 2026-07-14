@@ -1,21 +1,18 @@
 # frozen_string_literal: true
 
-# Stage-2 spike channel on hibiki_rails: the render target is a Phlex
-# component re-rendered ON THE SAME INSTANCE (signal identity lives in the
-# instance, so re-instantiating would reset state). One render effect per
-# component — this is the hibiki_phlex `render_effect` prototype, kept
-# spike-local until Phase 4.
+# Stage-2 spike channel, now the live proof of hibiki_phlex composing with
+# hibiki_rails: one render effect per component, re-rendered ON THE SAME
+# INSTANCE (signal identity lives in the instance, so re-instantiating
+# would reset state), HTML pushed through the channel's broadcast helper.
 class TodosChannel < ApplicationCable::Channel
   include Hibiki::Rails::Channel
 
   def build_graph
     @list = TodoList.new
 
-    # The render effect: its first run performs the dep-collecting initial
-    # render (signals read inside view_template subscribe it, through
-    # plain method calls); each rerun re-renders the same instance.
-    Hibiki::Effect.new do
-      html = @list.rerender
+    # First run = the dep-collecting initial render (signals read inside
+    # view_template subscribe it, through plain method calls).
+    Hibiki::Phlex.render_effect(@list) do |html|
       Rails.logger.info("[hibiki-spike] render_effect TodoList (#{html.bytesize} bytes)")
       broadcast_replace target: "todos", html:
     end

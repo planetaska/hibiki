@@ -9,7 +9,7 @@
 # `==` and never see in-place mutation, so add/toggle build a new array.
 class TodoList < Phlex::HTML
   include Hibiki::Reactive
-  include Rerenderable
+  include Hibiki::Phlex::Rerenderable
 
   state(:items) { [] } # array of { title:, done: }
   derived(:remaining) { items.count { |item| !item[:done] } }
