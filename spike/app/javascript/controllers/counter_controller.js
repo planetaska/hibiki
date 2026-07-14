@@ -1,11 +1,14 @@
 import { Controller } from "@hotwired/stimulus"
 import { createConsumer } from "@rails/actioncable"
-import { streamConnected } from "controllers/stream_connected"
+import { streamConnected } from "hibiki"
 
 // Drives CounterChannel: subscribes with the page's graph id and forwards
 // button clicks as channel actions. Rendering flows back separately, over
 // the turbo_stream_from subscription — which is why we wait for that
-// stream to connect before subscribing (see stream_connected.js).
+// stream to connect before subscribing (streamConnected, from the
+// packaged hibiki client). This page deliberately stays on the
+// Turbo-broadcast transport — it is the live proof of that path; the
+// todos page runs on the packaged controller + transmit transport.
 export default class extends Controller {
   static values = { cid: String }
 

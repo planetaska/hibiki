@@ -10,6 +10,7 @@
 class TodoList < Phlex::HTML
   include Hibiki::Reactive
   include Hibiki::Phlex::Rerenderable
+  include Hibiki::Rails::Helpers
 
   state(:items) { [] } # array of { title:, done: }
   derived(:remaining) { items.count { |item| !item[:done] } }
@@ -20,7 +21,7 @@ class TodoList < Phlex::HTML
       ul do
         items.each_with_index do |item, index|
           li do
-            button(data: { action: "todos#toggle", todos_index_param: index }) do
+            button(**on(:toggle, with: { index: })) do
               item[:done] ? "☑" : "☐"
             end
             span { " #{item[:title]}" }

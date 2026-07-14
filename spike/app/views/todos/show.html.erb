@@ -1,18 +1,20 @@
 <h1>Hibiki cable spike — todos (Phlex)</h1>
 
-<div data-controller="todos" data-todos-cid-value="<%= @cid %>">
-  <%= turbo_stream_from "todos", @cid %>
-
+<%# This page runs on the packaged client (hibiki_rails's vendored
+    Stimulus controller + Helpers): one channel subscription both ways,
+    no Turbo stream and no stream_connected wait — `received` is
+    registered at subscribe time, so the render effect's first transmit
+    always lands. The counter page deliberately stays on the
+    Turbo-broadcast transport as its live proof. %>
+<%= tag.div(**hibiki_island(TodosChannel, cid: @cid)) do %>
   <%# A throwaway instance as a paint-avoidance placeholder; the channel's
-      long-lived instance takes over from its first broadcast, which always
-      lands because the controller subscribes only after the Turbo stream
-      confirms (stream_connected.js). %>
+      long-lived instance takes over from its first transmit. %>
   <%= render TodoList.new %>
 
-  <form data-action="submit->todos#add">
-    <input type="text" data-todos-target="title" placeholder="new todo">
+  <%= tag.form(**on(:add, event: :submit)) do %>
+    <input type="text" name="title" placeholder="new todo">
     <button>add</button>
-  </form>
-</div>
+  <% end %>
+<% end %>
 
 <p><a href="/">&larr; ERB stage</a></p>
