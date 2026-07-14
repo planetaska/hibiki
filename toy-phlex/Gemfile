@@ -1,0 +1,26 @@
+source "https://rubygems.org"
+
+gem "rails", "~> 8.1.3"
+# The modern asset pipeline for Rails [https://github.com/rails/propshaft]
+gem "propshaft"
+# Use the Puma web server [https://github.com/puma/puma]
+gem "puma", ">= 5.0"
+# Use JavaScript with ESM import maps [https://github.com/rails/importmap-rails]
+gem "importmap-rails"
+
+# Deliberately absent (the point of this app): turbo-rails and
+# stimulus-rails. hibiki_rails still pulls turbo-rails in as a server-side
+# dependency (its Broadcasts helpers), but no Turbo or Stimulus JS is
+# pinned or served — the page runs on actioncable.esm.js plus one
+# first-party driver file.
+
+# The gems under test
+gem "hibiki", path: ".."
+gem "hibiki_phlex", path: "../hibiki_phlex"
+gem "hibiki_rails", path: "../hibiki_rails"
+# The whole view layer is Phlex — no ERB templates in this app
+gem "phlex-rails"
+
+group :development do
+  gem "debug", platforms: %i[ mri ], require: "debug/prelude"
+end

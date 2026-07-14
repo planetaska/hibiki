@@ -5,6 +5,8 @@ AllCops:
   Exclude:
     # The Phase 2 spike app is not gem code (mostly Rails-generated).
     - spike/**/*
+    # The full-Phlex toy app is not gem code either.
+    - toy-phlex/**/*
     # The incubating glue gems lint themselves (own standalone .rubocop.yml).
     - hibiki_rails/**/*
     - hibiki_phlex/**/*
