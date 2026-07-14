@@ -1,9 +1,10 @@
 # toy-phlex — the full-Phlex counter
 
-The spike app's counter, rebuilt with a 100% Phlex view layer
-([app/views/counter/show.rb](app/views/counter/show.rb) renders the whole
-document, doctype to `</html>`) to answer one question: **how much JS does a
-hibiki page need when the server owns all rendering?**
+The spike app's counter, rebuilt with a 100% Phlex view layer — every view
+is a Phlex class ([app/views/counter/show.rb](app/views/counter/show.rb)
+and the two fragment components), rendered inside the stock Rails ERB
+layout like a normal phlex-rails app — to answer one question: **how much
+JS does a hibiki page need when the server owns all rendering?**
 
 Answer: one first-party file. [app/javascript/application.js](app/javascript/application.js)
 is a generic ~40-line driver — it subscribes to the channel named by
