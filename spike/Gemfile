@@ -13,8 +13,9 @@ gem "turbo-rails"
 # Hotwire's modest JavaScript framework [https://stimulus.hotwired.dev]
 gem "stimulus-rails"
 
-# The gem under test — this spike exists to exercise it against Rails
+# The gems under test — this spike exists to exercise them against Rails
 gem "hibiki", path: ".."
+gem "hibiki_rails", path: "../hibiki_rails"
 # Phlex components for stage 2 (the re-render-same-instance question)
 gem "phlex-rails"
 # Use Redis adapter to run Action Cable in production

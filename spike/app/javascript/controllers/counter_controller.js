@@ -1,14 +1,17 @@
 import { Controller } from "@hotwired/stimulus"
 import { createConsumer } from "@rails/actioncable"
+import { streamConnected } from "controllers/stream_connected"
 
 // Drives CounterChannel: subscribes with the page's graph id and forwards
 // button clicks as channel actions. Rendering flows back separately, over
-// the turbo_stream_from subscription.
+// the turbo_stream_from subscription — which is why we wait for that
+// stream to connect before subscribing (see stream_connected.js).
 export default class extends Controller {
   static values = { cid: String }
 
-  connect() {
+  async connect() {
     this.consumer = createConsumer()
+    await streamConnected(this.element.querySelector("turbo-cable-stream-source"))
     this.subscription = this.consumer.subscriptions.create(
       { channel: "CounterChannel", cid: this.cidValue },
       {}
@@ -16,7 +19,7 @@ export default class extends Controller {
   }
 
   disconnect() {
-    this.subscription.unsubscribe()
+    this.subscription?.unsubscribe()
     this.consumer.disconnect()
   }
 

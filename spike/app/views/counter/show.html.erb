@@ -3,9 +3,10 @@
 <div data-controller="counter" data-counter-cid-value="<%= @cid %>">
   <%= turbo_stream_from "counter", @cid %>
 
-  <%# Initial values must match the graph's initial state in CounterChannel:
-      the effect's first broadcast fires in `subscribed`, before the Turbo
-      stream subscription is confirmed, so the page never receives it. %>
+  <%# Paint-avoidance placeholders only: the controller subscribes AFTER the
+      Turbo stream confirms (stream_connected.js), so the graph's first
+      broadcast always lands and replaces these. They no longer have to
+      match the graph's initial state. %>
   <%= render "count", count: 0, doubled: 0 %>
   <%= render "step", step: 1 %>
 

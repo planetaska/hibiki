@@ -3,9 +3,10 @@
 <div data-controller="todos" data-todos-cid-value="<%= @cid %>">
   <%= turbo_stream_from "todos", @cid %>
 
-  <%# A throwaway instance for the initial static render; the channel's
-      long-lived instance takes over from the first broadcast. Both start
-      from the same defaults, so the handoff is invisible. %>
+  <%# A throwaway instance as a paint-avoidance placeholder; the channel's
+      long-lived instance takes over from its first broadcast, which always
+      lands because the controller subscribes only after the Turbo stream
+      confirms (stream_connected.js). %>
   <%= render TodoList.new %>
 
   <form data-action="submit->todos#add">
