@@ -13,3 +13,4 @@ module Hibiki
 end
 
 require_relative "phlex/version"
+require_relative "phlex/rerenderable"
