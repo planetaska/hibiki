@@ -20,3 +20,4 @@ end
 
 require_relative "rails/version"
 require_relative "rails/graph_actor"
+require_relative "rails/channel"

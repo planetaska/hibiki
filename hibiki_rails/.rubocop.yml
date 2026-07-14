@@ -13,8 +13,17 @@ Style/StringLiterals:
 Style/Documentation:
   Enabled: false
 
-# Spec blocks are naturally long.
+# Spec blocks are naturally long, and specs define fixture channels whose
+# build_graph methods read like real apps — don't squeeze those.
 Metrics/BlockLength:
   Exclude:
     - spec/**/*
     - "*.gemspec"
+
+Metrics/AbcSize:
+  Exclude:
+    - spec/**/*
+
+Metrics/MethodLength:
+  Exclude:
+    - spec/**/*
