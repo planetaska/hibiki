@@ -30,7 +30,10 @@ module Hibiki
     # other public method would be picked up by Channel#action_methods and
     # become client-invocable.
     module Channel
-      def self.included(base) = base.extend(ClassMethods)
+      def self.included(base)
+        base.extend(ClassMethods)
+        base.include(Broadcasts)
+      end
 
       module ClassMethods
         private
