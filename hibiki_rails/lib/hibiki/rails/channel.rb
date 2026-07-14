@@ -70,6 +70,7 @@ module Hibiki
         # creates do their dependency-collecting first run right here, on
         # the graph thread.
         @__hibiki_actor.post { @__hibiki_root = Hibiki.root { build_graph } }
+        Hibiki::Rails.registry.register(self)
       end
 
       # ActionCable calls this even after a rejected subscription — hence
@@ -79,6 +80,7 @@ module Hibiki
         super
         return unless @__hibiki_actor
 
+        Hibiki::Rails.registry.unregister(self)
         @__hibiki_actor.post { @__hibiki_root.dispose }
         @__hibiki_actor.stop
       end
