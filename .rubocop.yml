@@ -5,6 +5,8 @@ AllCops:
   Exclude:
     # The Phase 2 spike app is not gem code (mostly Rails-generated).
     - spike/**/*
+    # The incubating glue gem lints itself (own standalone .rubocop.yml).
+    - hibiki_rails/**/*
 
 Style/StringLiterals:
   EnforcedStyle: double_quotes
