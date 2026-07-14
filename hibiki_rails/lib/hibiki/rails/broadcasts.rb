@@ -34,6 +34,19 @@ module Hibiki
       def broadcast_refresh
         Turbo::StreamsChannel.broadcast_refresh_to(*stream_name)
       end
+
+      # The Morph-everything style as one call: an effect that tracks
+      # whatever `deps` reads and answers changes with a debounced page
+      # refresh — one refresh per burst of actions, not one per action.
+      # The initial (dependency-collecting) run broadcasts immediately, as
+      # every Effect.new does. Requires the channel context (graph_actor).
+      def broadcast_refresh_effect(wait: 0.25, &deps)
+        scheduler = Debounce.new(actor: graph_actor, wait:)
+        Hibiki::Effect.new(scheduler:) do
+          deps.call
+          broadcast_refresh
+        end
+      end
     end
   end
 end

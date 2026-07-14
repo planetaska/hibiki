@@ -102,6 +102,10 @@ module Hibiki
       # Seam for a future pooled executor with per-graph ordering; today,
       # one worker thread per graph.
       def build_graph_actor = GraphActor.new(name: "hibiki-#{channel_name}"[0, 15])
+
+      # The channel's graph executor, for helpers that schedule work back
+      # onto the graph thread (Broadcasts#broadcast_refresh_effect).
+      def graph_actor = @__hibiki_actor
     end
   end
 end

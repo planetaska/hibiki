@@ -20,5 +20,6 @@ end
 
 require_relative "rails/version"
 require_relative "rails/graph_actor"
+require_relative "rails/debounce"
 require_relative "rails/broadcasts"
 require_relative "rails/channel"

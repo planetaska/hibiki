@@ -18,6 +18,18 @@ class BroadcastTestChannel < ActionCable::Channel::Base
   def rename(data) = @name.value = data["name"]
 end
 
+# Fixture for the debounced Morph-everything style.
+class RefreshTestChannel < ActionCable::Channel::Base
+  include Hibiki::Rails::Channel
+
+  def build_graph
+    @items = Hibiki::State.new(0)
+    broadcast_refresh_effect(wait: 0.05) { @items.value }
+  end
+
+  def bump = @items.value += 1
+end
+
 RSpec.describe Hibiki::Rails::Broadcasts do
   # The helpers are private on purpose (channel action-method safety);
   # this harness exposes them for direct assertions.
@@ -64,13 +76,17 @@ RSpec.describe Hibiki::Rails::Broadcasts do
   end
 end
 
-RSpec.describe BroadcastTestChannel, type: :channel do
+RSpec.shared_context "with an actor drain barrier" do
   def drain
     actor = subscription.instance_variable_get(:@__hibiki_actor)
     barrier = Queue.new
     actor.post { barrier << true }
     raise "graph actor did not drain within 2s" unless barrier.pop(timeout: 2)
   end
+end
+
+RSpec.describe BroadcastTestChannel, type: :channel do
+  include_context "with an actor drain barrier"
 
   it "gives channels the helpers, bound to [channel_name, cid]" do
     expect do
@@ -81,5 +97,22 @@ RSpec.describe BroadcastTestChannel, type: :channel do
     end.to have_broadcasted_to("broadcast_test:c9")
       .with(a_string_including("Hello, hibiki"))
       .and have_broadcasted_to("broadcast_test:c9").with(a_string_including("Hello, world"))
+  end
+end
+
+RSpec.describe RefreshTestChannel, type: :channel do
+  include_context "with an actor drain barrier"
+
+  it "answers a burst of actions with ONE debounced refresh" do
+    subscribe(cid: "c1")
+    drain # the initial (dependency-collecting) run broadcasts right away
+
+    expect do
+      3.times { perform :bump } # three flushes, one armed window
+      drain
+      sleep 0.1 # let the 0.05s window elapse
+      drain
+    end.to have_broadcasted_to("refresh_test:c1")
+      .with(a_string_including('action="refresh"')).once
   end
 end
