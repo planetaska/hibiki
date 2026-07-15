@@ -21,3 +21,9 @@
 </div>
 
 <p><a href="/phlex">Phlex stage &rarr;</a> &middot; <a href="/phlex-counter">Phlex counter &rarr;</a></p>
+
+<%# Fragment root ids are the replacement keys (Turbo target here, the
+    packaged client's getElementById on the island below) — they must be
+    page-unique, which is why the Phlex island's fragments carry
+    phlex-prefixed ids next to this page's count/step. %>
+<%= render CounterPhlex::Show.new(cid: SecureRandom.uuid) %>

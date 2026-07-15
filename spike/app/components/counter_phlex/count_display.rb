@@ -14,7 +14,7 @@ class CounterPhlex::CountDisplay < Phlex::HTML
   end
 
   def view_template
-    p(id: "count") do
+    p(id: "phlex-count") do
       plain "count: "
       strong { @count.value.to_s }
       plain " · doubled: "

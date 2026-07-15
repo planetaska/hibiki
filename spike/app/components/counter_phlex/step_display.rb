@@ -12,7 +12,7 @@ class CounterPhlex::StepDisplay < Phlex::HTML
   end
 
   def view_template
-    p(id: "step") do
+    p(id: "phlex-step") do
       plain "step: "
       strong { @step.value.to_s }
     end
