@@ -12,4 +12,5 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   root "counter#show"
   get "phlex", to: "todos#show"
+  get "phlex-counter", to: "counter_phlex#show"
 end
