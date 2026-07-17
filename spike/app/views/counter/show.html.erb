@@ -4,9 +4,10 @@
   <%= turbo_stream_from "counter", @cid %>
 
   <%# Paint-avoidance placeholders only: the controller subscribes AFTER the
-      Turbo stream confirms (stream_connected.js), so the graph's first
-      broadcast always lands and replaces these. They no longer have to
-      match the graph's initial state. %>
+      Turbo stream confirms (the packaged ChannelController awaits the
+      stream source above), so the graph's first broadcast always lands and
+      replaces these. They no longer have to match the graph's initial
+      state. %>
   <%= render "count", count: 0, doubled: 0 %>
   <%= render "step", step: 1 %>
 

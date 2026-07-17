@@ -1,40 +1,15 @@
-import { Controller } from "@hotwired/stimulus"
-import { createConsumer } from "@rails/actioncable"
-import { streamConnected } from "hibiki"
+import { ChannelController } from "hibiki"
 
-// Drives CounterChannel: subscribes with the page's graph id and forwards
-// button clicks as channel actions. Rendering flows back separately, over
-// the turbo_stream_from subscription — which is why we wait for that
-// stream to connect before subscribing (streamConnected, from the
-// packaged hibiki client). This page deliberately stays on the
-// Turbo-broadcast transport — it is the live proof of that path; the
-// todos page runs on the packaged controller + transmit transport.
-export default class extends Controller {
-  static values = { cid: String }
-
-  async connect() {
-    this.consumer = createConsumer()
-    await streamConnected(this.element.querySelector("turbo-cable-stream-source"))
-    this.subscription = this.consumer.subscriptions.create(
-      { channel: "CounterChannel", cid: this.cidValue },
-      {}
-    )
-  }
-
-  disconnect() {
-    this.subscription?.unsubscribe()
-    this.consumer.disconnect()
-  }
-
-  increment() {
-    this.subscription.perform("increment")
-  }
-
-  burst() {
-    this.subscription.perform("burst")
-  }
-
+// Drives CounterChannel on the packaged ChannelController base: the
+// identifier "counter" infers the channel name, increment/burst are
+// auto-forwarded from the view's data-action tokens, and only setStep is
+// declared because it builds a payload from the event. Rendering flows
+// back over the turbo_stream_from subscription — the base awaits that
+// stream source before subscribing — so this page stays the live proof
+// of the Turbo-broadcast transport (and now of the subclass shape); the
+// todos and /phlex-counter pages prove the generic controller + transmit.
+export default class extends ChannelController {
   setStep(event) {
-    this.subscription.perform("set_step", { step: event.target.value })
+    this.perform("set_step", { step: event.target.value })
   }
 }
