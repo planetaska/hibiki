@@ -21,7 +21,7 @@ module Hibiki
         app.config.to_prepare { Hibiki::Rails.registry.dispose_all }
       end
 
-      # importmap-rails apps get the "hibiki" pin with zero config (the
+      # importmap-rails apps get the "hibiki-rails" pin with zero config (the
       # guard keeps jsbundling/vite apps booting; they consume the npm
       # package — or a manual copy — instead).
       initializer "hibiki_rails.importmap", before: "importmap" do |app|

@@ -4,7 +4,7 @@ import { eagerLoadControllersFrom } from "@hotwired/stimulus-loading"
 eagerLoadControllersFrom("controllers", application)
 
 // The packaged hibiki client (vendored by the hibiki_rails engine, pinned
-// as "hibiki"). The identifier must be "hibiki" — the Ruby helpers
+// as "hibiki-rails"). The identifier must be "hibiki" — the Ruby helpers
 // hardcode it in data-controller.
-import HibikiController from "hibiki"
+import HibikiController from "hibiki-rails"
 application.register("hibiki", HibikiController)

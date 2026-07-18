@@ -4,4 +4,4 @@
 # initializer (importmap-rails reads every path in config.importmap.paths).
 # The app supplies the "@hotwired/stimulus" and "@rails/actioncable" pins —
 # both are part of the Rails 8 default stack.
-pin "hibiki", to: "hibiki.js"
+pin "hibiki-rails", to: "hibiki.js"

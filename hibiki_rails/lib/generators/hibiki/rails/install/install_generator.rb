@@ -21,10 +21,10 @@ module Hibiki
 
         REGISTER = <<~JS
 
-          // The packaged hibiki client (vendored by the hibiki_rails engine,
-          // pinned as "hibiki"). The identifier must be "hibiki" — the Ruby
-          // helpers hardcode it in data-controller.
-          import HibikiController from "hibiki"
+          // The packaged hibiki client (the "hibiki-rails" module: the engine's
+          // importmap pin, or the npm package in bundler apps). The identifier
+          // must be "hibiki" — the Ruby helpers hardcode it in data-controller.
+          import HibikiController from "hibiki-rails"
           application.register("hibiki", HibikiController)
         JS
 
@@ -81,9 +81,9 @@ module Hibiki
         private
 
         def bundler_note
-          say_status :skip, "#{IMPORTMAP} not found — with a JS bundler, make " \
-                            "\"@rails/actioncable\" resolvable instead " \
-                            "(e.g. npm/yarn add @rails/actioncable)", :yellow
+          say_status :skip, "#{IMPORTMAP} not found — with a JS bundler, " \
+                            "npm/yarn add hibiki-rails instead (it pulls in " \
+                            "@rails/actioncable)", :yellow
         end
       end
     end

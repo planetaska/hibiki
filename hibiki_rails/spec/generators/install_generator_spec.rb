@@ -42,7 +42,7 @@ RSpec.describe Hibiki::Rails::Generators::InstallGenerator do
     seed_stock_app
     run_generator(described_class, destination: @destination)
 
-    expect(File.read(index_js)).to include('import HibikiController from "hibiki"')
+    expect(File.read(index_js)).to include('import HibikiController from "hibiki-rails"')
       .and include('application.register("hibiki", HibikiController)')
     expect(File.read(application_helper))
       .to include("module ApplicationHelper\n  include Hibiki::Rails::Helpers\nend")
@@ -98,7 +98,7 @@ RSpec.describe Hibiki::Rails::Generators::InstallGenerator do
   it "points bundler apps at the npm package instead of pinning" do
     output = run_generator(described_class, destination: @destination)
 
-    expect(output).to include("npm/yarn add @rails/actioncable")
+    expect(output).to include("npm/yarn add hibiki-rails")
     expect(File.exist?(importmap)).to be(false)
     expect(File.exist?(cable_channel)).to be(true)
   end

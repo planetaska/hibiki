@@ -1,4 +1,4 @@
-import { ChannelController } from "hibiki"
+import { ChannelController } from "hibiki-rails"
 
 // Drives CounterChannel on the packaged ChannelController base: the
 // identifier "counter" infers the channel name, increment/burst are

@@ -14,7 +14,7 @@
 //    auto-forwarded to the channel, so a subclass only declares a method
 //    when it needs something custom:
 //
-//      import { ChannelController } from "hibiki"
+//      import { ChannelController } from "hibiki-rails"
 //
 //      // identifier "counter" infers CounterChannel (override with
 //      // `static channel = "..."` when the names don't line up)
@@ -48,7 +48,7 @@
 // Register the generic controller under the identifier "hibiki" (the
 // helpers hardcode it):
 //
-//   import HibikiController from "hibiki"
+//   import HibikiController from "hibiki-rails"
 //   application.register("hibiki", HibikiController)
 import { Controller } from "@hotwired/stimulus"
 import { createConsumer } from "@rails/actioncable"

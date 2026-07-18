@@ -1,4 +1,4 @@
-import { ChannelController } from "hibiki"
+import { ChannelController } from "hibiki-rails"
 
 // Drives <%= class_name %>Channel on the packaged ChannelController base.
 // Plain data-action tokens ("<%= identifier %>#increment") are
