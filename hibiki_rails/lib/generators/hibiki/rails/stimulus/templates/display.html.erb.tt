@@ -1,0 +1,5 @@
+<%%# The root id is the broadcast replacement key — keep it in sync with the
+    channel effect's target. %>
+<p id="<%= display_dom_id %>">
+  count: <strong><%%= count %></strong> &middot; doubled: <strong><%%= doubled %></strong>
+</p>

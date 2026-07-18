@@ -1,0 +1,11 @@
+<%% cid = local_assigns.fetch(:cid) { SecureRandom.uuid } %>
+<div data-controller="<%= identifier %>" data-<%= identifier %>-cid-value="<%%= cid %>">
+  <%%= turbo_stream_from "<%= stream_name %>", cid %>
+
+  <%%# Paint-avoidance placeholder only: the controller subscribes AFTER the
+      Turbo stream above confirms, so the graph's first broadcast replaces
+      this. %>
+  <%%= render "<%= view_dir %>/<%= file_name %>_display", count: 0, doubled: 0 %>
+
+  <p><button data-action="<%= identifier %>#increment">+1</button></p>
+</div>

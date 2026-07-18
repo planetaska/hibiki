@@ -1,0 +1,16 @@
+import { ChannelController } from "hibiki"
+
+// Drives <%= class_name %>Channel on the packaged ChannelController base.
+// Plain data-action tokens ("<%= identifier %>#increment") are
+// auto-forwarded as channel actions with no payload — declare a method
+// only when it must build a payload from the event:
+//
+//   setStep(event) {
+//     this.perform("set_step", { step: event.target.value })
+//   }
+export default class extends ChannelController {
+<% if nested? -%>
+  // The identifier "<%= identifier %>" cannot infer a namespaced channel.
+  static channel = "<%= class_name %>Channel"
+<% end -%>
+}
