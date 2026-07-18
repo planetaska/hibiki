@@ -101,7 +101,8 @@ Available inside effects (all bound to `stream_name`):
 The gem vendors its own JavaScript, turbo-rails-style: the engine puts
 `hibiki.js` on the app's asset path and merges the `"hibiki"` pin into the
 import map, so importmap-rails apps have no install step beyond
-registering the controller:
+registering the controller — `bin/rails g hibiki:rails:install` does it
+(plus the `Helpers` include below), or add the line yourself:
 
 ```js
 // app/javascript/controllers/index.js
@@ -163,6 +164,33 @@ attributes: `toy-phlex/` in the parent repo does it in ~40 lines. The
 helper interface's shape is inspired by
 [phlex-reactive](https://phlex-reactive.zoolutions.llc)'s `on(...)`
 actions.
+
+## Generators
+
+Each supported shape has a generator that scaffolds it as a *working*
+mini-example — one state, one derived, one action, one effect; run it,
+render the output from any page, click `+1`, watch it live-update — meant
+to be reshaped in place, not filled in from scratch:
+
+```sh
+bin/rails g hibiki:rails:install                  # one-time wiring: register line +
+                                                  # Helpers include (idempotent)
+bin/rails g hibiki:rails:stimulus NAME [VIEW_PATH]  # channel + ChannelController
+                                                    # subclass + view partial
+bin/rails g hibiki:rails:island NAME [VIEW_PATH]    # channel + helpers-stamped view
+                                                    # partial, no per-component JS
+bin/rails g hibiki:rails:phlex NAME                 # channel + Phlex component +
+                                                    # island wrapper (needs hibiki_phlex)
+```
+
+`VIEW_PATH` is the views directory under `app/views` (defaults to `NAME`);
+the emitted partial is self-contained (`cid` defaults to a per-render
+uuid), so `<%= render "counter/counter" %>` — or `<%= render
+CounterIsland.new %>` for the Phlex shape — is the only line a page needs.
+The `stimulus` shape works with zero wiring; `island` and `phlex` need the
+one-time `hibiki:rails:install` (they print a hint when it's missing).
+Namespaced names work (`admin/counter` pins `static channel` where the
+Stimulus identifier can't infer it).
 
 ## The initial-state pattern (Turbo transport)
 
