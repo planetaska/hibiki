@@ -22,14 +22,17 @@ module GeneratorHarness
   end
 
   # Syntax smoke over everything a generator emitted: compile (never run)
-  # each Ruby file directly and each ERB view through erubi — a SyntaxError
-  # in any template fails the example.
+  # each Ruby file directly and each ERB view through ActionView's erubi
+  # subclass (plain Erubi::Engine can't parse Rails' `<%= tag.div do %>`
+  # block-expression form) — a SyntaxError in any template fails the
+  # example.
   def expect_valid_generated_sources(destination)
     Dir[File.join(destination, "**/*.rb")].each do |path|
       RubyVM::InstructionSequence.compile(File.read(path), path)
     end
     Dir[File.join(destination, "**/*.erb")].each do |path|
-      RubyVM::InstructionSequence.compile(Erubi::Engine.new(File.read(path)).src, path)
+      src = ActionView::Template::Handlers::ERB::Erubi.new(File.read(path)).src
+      RubyVM::InstructionSequence.compile(src, path)
     end
   end
 end

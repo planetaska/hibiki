@@ -1,0 +1,14 @@
+<%%# Stamped through Hibiki::Rails::Helpers (hibiki_island / on) — never
+    write the underlying data attributes by hand, they are private to the
+    gem and version with its packaged JS. %>
+<%% cid = local_assigns.fetch(:cid) { SecureRandom.uuid } %>
+<%%= tag.div(**hibiki_island(<%= class_name %>Channel, cid:)) do %>
+  <%%= turbo_stream_from "<%= stream_name %>", cid %>
+
+  <%%# Paint-avoidance placeholder only: the controller subscribes AFTER the
+      Turbo stream above confirms, so the graph's first broadcast replaces
+      this. %>
+  <%%= render "<%= view_dir %>/<%= file_name %>_display", count: 0, doubled: 0 %>
+
+  <p><%%= tag.button("+1", **on(:increment)) %></p>
+<%% end %>
