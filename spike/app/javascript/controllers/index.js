@@ -2,9 +2,6 @@
 import { application } from "controllers/application"
 import { eagerLoadControllersFrom } from "@hotwired/stimulus-loading"
 eagerLoadControllersFrom("controllers", application)
-
-// The packaged hibiki client (vendored by the hibiki_rails engine, pinned
-// as "hibiki-rails"). The identifier must be "hibiki" — the Ruby helpers
-// hardcode it in data-controller.
-import HibikiController from "hibiki-rails"
-application.register("hibiki", HibikiController)
+// The packaged hibiki client is registered by the eager-loaded
+// hibiki_controller.js shim (file-backed so stimulus:manifest:update
+// can't drop it).
