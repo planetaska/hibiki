@@ -195,6 +195,9 @@ More detail in [docs-md/](docs-md/):
   what is and isn't isolated across threads, fibers, and Ractors.
 - [Status & limitations](docs-md/status-and-limitations.md) — what the signal
   core already guarantees.
+- [Fragment-level render effects](docs-md/fragment-level-render-effects.md) —
+  a deferred design note: collapsing per-fragment partials/components into
+  methods, each wrapped in its own effect.
 
 ## Development
 
