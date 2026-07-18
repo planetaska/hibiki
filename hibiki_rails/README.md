@@ -104,20 +104,24 @@ import map, so importmap-rails apps have no install step beyond
 registering the controller — `bin/rails g hibiki:rails:install` does it
 (plus the `Helpers` include below, the `ApplicationCable` boilerplate,
 and the `@rails/actioncable` pin — a stock app has neither until its
-first `rails g channel`), or add the line yourself:
+first `rails g channel`), or create the one-line shim yourself:
 
 ```js
-// app/javascript/controllers/index.js
-import HibikiController from "hibiki-rails"
-application.register("hibiki", HibikiController) // identifier must be "hibiki"
+// app/javascript/controllers/hibiki_controller.js
+export { default } from "hibiki-rails" // registers as "hibiki" — the helpers hardcode that identifier
 ```
+
+The registration is a file-backed shim on purpose: importmap apps
+eager-load it from the controllers directory, jsbundling apps get the
+matching import/register pair in `controllers/index.js` (the install
+generator appends it), and because it is derived from a real controller
+file, `bin/rails stimulus:manifest:update` regenerates it instead of
+dropping it.
 
 (jsbundling/vite apps: `npm install hibiki-rails` — the [npm
 package](https://www.npmjs.com/package/hibiki-rails) is the same module the
 engine vendors, and pulls in `@rails/actioncable`; release in lockstep with
-the gem. One caveat: `bin/rails stimulus:manifest:update` regenerates
-`controllers/index.js` from the controller files and drops the register
-line above — re-run `hibiki:rails:install` afterwards, it's idempotent.)
+the gem.)
 
 The client is one generic Stimulus controller that drives any *island*: a
 DOM subtree bound to one channel subscription. Islands are stamped with

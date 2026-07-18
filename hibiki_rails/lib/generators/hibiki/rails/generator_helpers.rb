@@ -11,6 +11,7 @@ module Hibiki
       # destination_root, so the install generator uses them too.
       module GeneratorHelpers
         INDEX_JS = "app/javascript/controllers/index.js"
+        SHIM = "app/javascript/controllers/hibiki_controller.js"
         APPLICATION_HELPER = "app/helpers/application_helper.rb"
         REGISTER_FRAGMENT = 'application.register("hibiki"'
         IMPORTMAP = "config/importmap.rb"
@@ -34,7 +35,9 @@ module Hibiki
 
         def name_parts = regular_class_path + [file_name]
 
-        def hibiki_registered? = wired?(INDEX_JS, REGISTER_FRAGMENT)
+        # The install generator's file-backed shim is the wiring artifact;
+        # the index.js fragment covers hand-wired (or pre-shim) apps.
+        def hibiki_registered? = exists?(SHIM) || wired?(INDEX_JS, REGISTER_FRAGMENT)
 
         def helpers_included? = wired?(APPLICATION_HELPER, "Hibiki::Rails::Helpers")
 
