@@ -102,7 +102,9 @@ The gem vendors its own JavaScript, turbo-rails-style: the engine puts
 `hibiki.js` on the app's asset path and merges the `"hibiki"` pin into the
 import map, so importmap-rails apps have no install step beyond
 registering the controller — `bin/rails g hibiki:rails:install` does it
-(plus the `Helpers` include below), or add the line yourself:
+(plus the `Helpers` include below, the `ApplicationCable` boilerplate,
+and the `@rails/actioncable` pin — a stock app has neither until its
+first `rails g channel`), or add the line yourself:
 
 ```js
 // app/javascript/controllers/index.js
@@ -173,8 +175,10 @@ render the output from any page, click `+1`, watch it live-update — meant
 to be reshaped in place, not filled in from scratch:
 
 ```sh
-bin/rails g hibiki:rails:install                  # one-time wiring: register line +
-                                                  # Helpers include (idempotent)
+bin/rails g hibiki:rails:install                  # one-time wiring: register line,
+                                                  # Helpers include, ApplicationCable
+                                                  # boilerplate + actioncable pin
+                                                  # (idempotent)
 bin/rails g hibiki:rails:stimulus NAME [VIEW_PATH]  # channel + ChannelController
                                                     # subclass + view partial
 bin/rails g hibiki:rails:island NAME [VIEW_PATH]    # channel + helpers-stamped view
