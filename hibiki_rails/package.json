@@ -1,0 +1,26 @@
+{
+  "name": "hibiki-rails",
+  "version": "0.1.0",
+  "description": "The packaged client for hibiki_rails — Svelte-5-style signals for Ruby, over Action Cable",
+  "type": "module",
+  "main": "app/assets/javascripts/hibiki.js",
+  "module": "app/assets/javascripts/hibiki.js",
+  "exports": {
+    ".": "./app/assets/javascripts/hibiki.js"
+  },
+  "files": [
+    "app/assets/javascripts/hibiki.js"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/planetaska/hibiki.git",
+    "directory": "hibiki_rails"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@hotwired/stimulus": ">= 3.2"
+  },
+  "dependencies": {
+    "@rails/actioncable": ">= 8.0"
+  }
+}
