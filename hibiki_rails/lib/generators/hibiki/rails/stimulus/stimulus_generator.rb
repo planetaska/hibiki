@@ -11,8 +11,9 @@ module Hibiki
       # Emits a working mini-example (one state, one derived, one action,
       # one broadcasting effect) meant to be reshaped in place: a channel,
       # a ChannelController subclass, and a self-contained view partial.
-      # Needs no wiring — the controller autoloads from the controllers
-      # directory and the views speak plain Stimulus.
+      # Importmap apps need no wiring — the controller eager-loads from the
+      # controllers directory; jsbundling apps get the import/register pair
+      # appended to controllers/index.js (stimulus:manifest:update format).
       class StimulusGenerator < ::Rails::Generators::NamedBase
         include GeneratorHelpers
 
@@ -30,6 +31,17 @@ module Hibiki
 
         def create_controller
           template "controller.js.tt", "app/javascript/controllers/#{file_path}_controller.js"
+        end
+
+        # Without an importmap there is no eager loader, so the manifest-style
+        # index.js must name every controller. Mirror the exact lines
+        # `stimulus:manifest:update` would emit for this file.
+        def register_controller
+          return if importmap?
+          return say_status :identical, INDEX_JS, :blue if wired?(INDEX_JS, %(register("#{identifier}")))
+          return manual_wiring(INDEX_JS, registration) unless exists?(INDEX_JS)
+
+          append_to_file INDEX_JS, "\n#{registration}"
         end
 
         def create_views
@@ -50,6 +62,16 @@ module Hibiki
         private
 
         def view_dir = view_path.presence || file_path
+
+        # Stimulus::Manifest's class-name convention: Admin__CounterController.
+        def js_class_name = "#{name_parts.map(&:camelize).join('__')}Controller"
+
+        def registration
+          <<~JS
+            import #{js_class_name} from "./#{file_path}_controller"
+            application.register("#{identifier}", #{js_class_name})
+          JS
+        end
       end
     end
   end

@@ -66,4 +66,50 @@ RSpec.describe Hibiki::Rails::Generators::StimulusGenerator do
 
     expect_valid_generated_sources(@destination)
   end
+
+  describe "index.js registration (jsbundling apps have no eager loader)" do
+    let(:index_js) { "app/javascript/controllers/index.js" }
+
+    def write(path, content)
+      full = File.join(@destination, path)
+      FileUtils.mkdir_p(File.dirname(full))
+      File.write(full, content)
+    end
+
+    it "appends the import/register pair when there is no importmap" do
+      write(index_js, %(import { application } from "./application"\n))
+
+      run_generator(described_class, ["admin/counter"], destination: @destination)
+
+      expect(generated(index_js))
+        .to include('import Admin__CounterController from "./admin/counter_controller"')
+        .and include('application.register("admin--counter", Admin__CounterController)')
+    end
+
+    it "registers once no matter how often it reruns" do
+      write(index_js, %(import { application } from "./application"\n))
+
+      run_generator(described_class, ["counter"], destination: @destination)
+      output = run_generator(described_class, ["counter"], destination: @destination)
+
+      expect(output).to include("identical")
+      expect(generated(index_js).scan('application.register("counter"').size).to eq(1)
+    end
+
+    it "leaves index.js alone in importmap apps" do
+      write("config/importmap.rb", "")
+      write(index_js, %(import { application } from "./application"\n))
+
+      run_generator(described_class, ["counter"], destination: @destination)
+
+      expect(generated(index_js)).not_to include("application.register")
+    end
+
+    it "prints the registration for hand-wiring when index.js is missing" do
+      output = run_generator(described_class, ["counter"], destination: @destination)
+
+      expect(output).to include("add this yourself")
+        .and include('application.register("counter", CounterController)')
+    end
+  end
 end

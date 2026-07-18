@@ -38,8 +38,6 @@ module Hibiki
           "connection.rb.tt" => "app/channels/application_cable/connection.rb"
         }.freeze
 
-        IMPORTMAP = "config/importmap.rb"
-
         # Same event: the stock importmap has no @rails/actioncable pin
         # until the first `rails g channel` adds it. The packaged client
         # imports it, so pin it here (the asset ships in actioncable).
@@ -74,20 +72,13 @@ module Hibiki
         end
 
         def pin_actioncable
-          return bundler_note unless exists?(IMPORTMAP)
+          return bundler_note unless importmap?
           return say_status :identical, IMPORTMAP, :blue if wired?(IMPORTMAP, "@rails/actioncable")
 
           append_to_file IMPORTMAP, PIN
         end
 
         private
-
-        def exists?(path) = File.exist?(File.join(destination_root, path))
-
-        def manual_wiring(path, snippet)
-          say_status :skip, "#{path} not found — add this yourself:", :yellow
-          say snippet
-        end
 
         def bundler_note
           say_status :skip, "#{IMPORTMAP} not found — with a JS bundler, make " \

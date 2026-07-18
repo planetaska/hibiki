@@ -194,7 +194,10 @@ CounterIsland.new %>` for the Phlex shape — is the only line a page needs.
 The `stimulus` shape works with zero wiring; `island` and `phlex` need the
 one-time `hibiki:rails:install` (they print a hint when it's missing).
 Namespaced names work (`admin/counter` pins `static channel` where the
-Stimulus identifier can't infer it).
+Stimulus identifier can't infer it). In apps without an importmap
+(jsbundling/vite), where `controllers/index.js` has no eager loader, the
+`stimulus` generator also appends the controller's import/register pair
+to it — the same lines `stimulus:manifest:update` would emit.
 
 ## The initial-state pattern (Turbo transport)
 

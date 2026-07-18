@@ -13,6 +13,7 @@ module Hibiki
         INDEX_JS = "app/javascript/controllers/index.js"
         APPLICATION_HELPER = "app/helpers/application_helper.rb"
         REGISTER_FRAGMENT = 'application.register("hibiki"'
+        IMPORTMAP = "config/importmap.rb"
 
         private
 
@@ -37,9 +38,20 @@ module Hibiki
 
         def helpers_included? = wired?(APPLICATION_HELPER, "Hibiki::Rails::Helpers")
 
+        # importmap-rails apps eager-load the controllers directory;
+        # jsbundling apps register each controller in index.js by hand.
+        def importmap? = exists?(IMPORTMAP)
+
+        def exists?(path) = File.exist?(File.join(destination_root, path))
+
         def wired?(path, fragment)
           full = File.join(destination_root, path)
           File.exist?(full) && File.read(full).include?(fragment)
+        end
+
+        def manual_wiring(path, snippet)
+          say_status :skip, "#{path} not found — add this yourself:", :yellow
+          say snippet
         end
       end
     end
