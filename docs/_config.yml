@@ -61,9 +61,19 @@ plugins:
 jekyll_vitepress:
   branding:
     site_title: Hibiki Documentation
+		logo:
+      default: /assets/img/logo.svg
+      alt: Hibiki Logo
+      width: 24
+      height: 24
   syntax:
     light_theme: github
     dark_theme: github.dark
+  github_star:
+    enabled: true
+    repository: planetaska/hibiki
+    text: Star
+    show_count: true
 
 # Collections for Jekyll VitePress
 collections:

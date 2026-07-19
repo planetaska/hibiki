@@ -15,11 +15,21 @@ hero:
       link: /getting-started/
     - theme: alt
       text: GitHub
-      link: https://github.com/you/project
+      link: https://github.com/planetaska/hibiki
 features:
   - icon: ⚡
-    title: Fast
+    title: Opt-in DSL
     details: Feature description
     link_text: Learn more
-    link: /getting-started/
+    link: /getting-started/#two-flavors
+  - icon: ⚡
+    title: Rune style syntax
+    details: Feature description
+    link_text: Learn more
+    link: /getting-started/#the-three-primitives
+  - icon: ⚡
+    title: Class-based reactivity
+    details: Feature description
+    link_text: Learn more
+    link: /class-based-reactivity/
 ---
