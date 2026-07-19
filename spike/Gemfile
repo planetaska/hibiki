@@ -16,7 +16,7 @@ gem "stimulus-rails"
 # The gems under test — this spike exists to exercise them against Rails
 gem "hibiki", path: ".."
 gem "hibiki_phlex", path: "../hibiki_phlex"
-gem "hibiki_rails", path: "../hibiki_rails"
+gem "hibiki_rails", path: "../../hibiki-rails"
 # Phlex components for stage 2 (the re-render-same-instance question)
 gem "phlex-rails"
 # Use Redis adapter to run Action Cable in production

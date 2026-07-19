@@ -1,18 +1,18 @@
 PATH
+  remote: ../../hibiki-rails
+  specs:
+    hibiki_rails (0.1.0)
+      actioncable (>= 7.1)
+      hibiki (~> 0.1)
+      railties (>= 7.1)
+      turbo-rails (>= 2.0)
+
+PATH
   remote: ../hibiki_phlex
   specs:
     hibiki_phlex (0.1.0)
       hibiki (~> 0.1)
       phlex (>= 2.4, < 2.5)
-
-PATH
-  remote: ../hibiki_rails
-  specs:
-    hibiki_rails (0.1.0)
-      actioncable (>= 8.0)
-      hibiki (~> 0.1)
-      railties (>= 8.0)
-      turbo-rails (>= 2.0)
 
 PATH
   remote: ..

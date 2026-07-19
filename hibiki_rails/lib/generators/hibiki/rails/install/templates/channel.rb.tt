@@ -1,8 +1,0 @@
-# frozen_string_literal: true
-
-# Stock ActionCable boilerplate (`rails g channel` would create the same
-# file) — the hibiki:rails:* generators emit channels that inherit it.
-module ApplicationCable
-  class Channel < ActionCable::Channel::Base
-  end
-end
