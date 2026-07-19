@@ -1,15 +1,10 @@
----
-title: Lifecycle in detail
-nav_order: 2
----
-
 # Lifecycle in detail
 
 Hibiki's lifecycle model is Solid's owner tree: every effect and every root
 is an **owner**, and whatever gets created while its block runs — child
 effects, cleanup blocks — belongs to it and is torn down with it. This page
-spells out the exact rules; the short version lives in the
-[Advanced Usage guide]({% link _guides/advanced-usage.md %}).
+spells out the exact rules; the short version lives in the Advanced Usage
+guide.
 
 ## The owner tree
 

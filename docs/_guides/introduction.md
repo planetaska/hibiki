@@ -5,7 +5,7 @@ nav_order: 1
 
 # Introduction
 
-Hibiki  (hi-bi-ki; IPA: [çi.bi.ki]) (響き, "echo, resonance") brings Svelte-5-style signals to Ruby: three small primitives — `state`, `derived`, `effect` — that track their own dependencies at runtime. You never wire an observer or declare what depends on what; any signal read while a computation runs subscribes it, automatically.
+Hibiki (hi-bi-ki; [çi.bi.ki]) (響き, "echo, resonance") brings Svelte-5-style signals to Ruby: three small primitives — `state`, `derived`, `effect` — that track their own dependencies at runtime. You never wire an observer or declare what depends on what; any signal read while a computation runs subscribes it, automatically.
 
 ```ruby
 require "hibiki"

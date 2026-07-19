@@ -17,19 +17,19 @@ hero:
       text: GitHub
       link: https://github.com/planetaska/hibiki
 features:
-  - icon: ⚡
-    title: Opt-in DSL
-    details: Feature description
-    link_text: Learn more
-    link: /getting-started/#two-flavors
-  - icon: ⚡
+  - icon: ᛟ
     title: Rune style syntax
-    details: Feature description
+    details: The three primitives from Svelte 5's runes. Writable state, lazy derived values, and eager effects.
     link_text: Learn more
     link: /getting-started/#the-three-primitives
-  - icon: ⚡
+  - icon: 𖣂
+    title: Opt-in DSL
+    details: Bare state / derived / effect helpers when you include Hibiki::DSL — or skip it and use the plain classes.
+    link_text: Learn more
+    link: /getting-started/#two-flavors
+  - icon: ᚨ
     title: Class-based reactivity
-    details: Feature description
+    details: Declare signals with class-level macros and use them as plain attributes. Svelte 5 rune fields, in Ruby.
     link_text: Learn more
     link: /class-based-reactivity/
 ---

@@ -193,6 +193,8 @@ More detail in [docs-md/](docs-md/):
   rejected transparency designs, with the failure cases spelled out.
 - [Threading model](docs-md/threading-model.md) — fiber-confined bookkeeping,
   what is and isn't isolated across threads, fibers, and Ractors.
+- [Lifecycle in detail](docs-md/lifecycle-in-detail.md) — the owner tree:
+  effect adoption, cleanup ordering, roots, and disposal semantics.
 - [Status & limitations](docs-md/status-and-limitations.md) — what the signal
   core already guarantees.
 - [Fragment-level render effects](docs-md/fragment-level-render-effects.md) —

@@ -61,7 +61,7 @@ plugins:
 jekyll_vitepress:
   branding:
     site_title: Hibiki Documentation
-		logo:
+    logo:
       default: /assets/img/logo.svg
       alt: Hibiki Logo
       width: 24
