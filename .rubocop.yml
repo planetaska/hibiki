@@ -11,8 +11,6 @@ AllCops:
     - spike/**/*
     # The full-Phlex toy app is not gem code either.
     - toy-phlex/**/*
-    # The incubating glue gem lints itself (own standalone .rubocop.yml).
-    - hibiki_phlex/**/*
 
 Style/StringLiterals:
   EnforcedStyle: double_quotes
