@@ -24,4 +24,4 @@ counter.increment      # prints "count is now 1"
 counter.doubled        # => 2
 ```
 
-Signals are per-instance and created lazily; subclasses inherit all declarations. Use the block form for mutable defaults (a positional default is one shared object, the same gotcha as Rails attribute defaults).
+Signals are per-instance and created lazily; subclasses inherit all declarations. Use the block form for mutable defaults (a positional default is one shared object, the same gotcha as Rails attribute defaults) — the [Mutable state defaults reference]({% link _references/mutable-defaults.md %}) walks through the failure modes and the correct update patterns.
