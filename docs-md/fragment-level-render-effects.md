@@ -2,8 +2,10 @@
 
 Status: designed, deliberately deferred. This page records the idea so the
 design isn't re-derived from scratch when a page finally needs it. It
-concerns the glue gems incubating in this repo (`hibiki_rails/`,
-`hibiki_phlex/`), not the signal core.
+concerns the glue gems
+([hibiki_rails](https://github.com/planetaska/hibiki-rails),
+[hibiki_phlex](https://github.com/planetaska/hibiki-phlex)), not the
+signal core.
 
 ## The tax today: one renderable unit per fragment
 
