@@ -17,6 +17,11 @@ class TodosChannel < ApplicationCable::Channel
       Rails.logger.info("[hibiki-spike] render_effect TodoList (#{html.bytesize} bytes)")
       transmit({ html: })
     end
+
+    # The single-value shape next to the whole-component one: tracks the
+    # component's derived through a plain method read, transmits just
+    # <span id="hibiki-value-remaining">N</span>.
+    transmit_value(:remaining) { @list.remaining }
   end
 
   def add(data)

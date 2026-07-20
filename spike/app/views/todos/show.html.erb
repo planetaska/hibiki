@@ -15,6 +15,11 @@
     <input type="text" name="title" placeholder="new todo">
     <button>add</button>
   <% end %>
+
+  <%# The reactive-value shape, live-proven next to the whole-component
+      swap above: one named placeholder, kept fresh by the channel's
+      transmit_value(:remaining) — no fragment class, no extra island. %>
+  <p>remaining (fragment): <%= reactive :remaining, 0 %></p>
 <% end %>
 
 <p><a href="/">&larr; ERB stage</a> &middot; <a href="/phlex-counter">Phlex counter &rarr;</a></p>
