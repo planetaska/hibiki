@@ -32,9 +32,10 @@ class CounterChannel < ApplicationCable::Channel
     end
 
     # The reactive-value shape next to the broadcast effects: transmits
-    # just <span id="hibiki-value-doubled">N</span> over this channel's own
-    # subscription (not the Turbo stream), which the ChannelController
-    # subclass swaps by id — same helper, works on the subclass shape.
+    # { value: { name:, text: } } over this channel's own subscription
+    # (not the Turbo stream); the ChannelController subclass writes it
+    # into every data-hibiki-value="doubled" site — same helper, works on
+    # the subclass shape, and the page shows it in two places.
     transmit_value(:doubled) { doubled.value }
   end
 

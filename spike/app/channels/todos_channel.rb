@@ -20,7 +20,8 @@ class TodosChannel < ApplicationCable::Channel
 
     # The single-value shape next to the whole-component one: tracks the
     # component's derived through a plain method read, transmits just
-    # <span id="hibiki-value-remaining">N</span>.
+    # { value: { name: "remaining", text: N } } — the page shows it in
+    # two places (one outside the island), all kept fresh by this effect.
     transmit_value(:remaining) { @list.remaining }
   end
 

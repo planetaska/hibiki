@@ -13,9 +13,11 @@
 
   <%# The reactive-value shape on the subclass/Turbo-broadcast page: the
       count/step fragments above ride Turbo broadcasts, but reactive +
-      transmit_value always use CounterChannel's own subscription, which
-      the ChannelController base's received() swaps by id — so a single
-      value composes with the broadcast transport, no extra controller. %>
+      transmit_value always use CounterChannel's own subscription, whose
+      value messages the ChannelController base's received() writes into
+      every matching placeholder — so a single value composes with the
+      broadcast transport, no extra controller. Second site below,
+      outside this controller element. %>
   <p>doubled (reactive value): <%= reactive :doubled, 0 %></p>
 
   <p>
@@ -27,6 +29,11 @@
     </label>
   </p>
 </div>
+
+<%# The same `doubled` value OUTSIDE the controller element: reactive
+    values match document-wide, so this site updates from the same
+    transmit_value message as the one inside the island. %>
+<p>doubled again (outside the island): <%= reactive :doubled, 0, tag_name: :strong %></p>
 
 <p><a href="/phlex">Phlex stage &rarr;</a> &middot; <a href="/phlex-counter">Phlex counter &rarr;</a></p>
 

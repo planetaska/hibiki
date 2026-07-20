@@ -1,4 +1,8 @@
-<h1>Hibiki cable spike — todos (Phlex)</h1>
+<%# The same `remaining` value as inside the island below — reactive
+    values match document-wide, so a placeholder OUTSIDE the island (a
+    header badge) updates too, and every site keeps its own tag/styling
+    (a <strong> here, a <span> below). %>
+<h1>Hibiki cable spike — todos (Phlex) — <%= reactive :remaining, 0, tag_name: :strong %> left</h1>
 
 <%# This page runs on the packaged client (hibiki_rails's vendored
     Stimulus controller + Helpers): one channel subscription both ways,
@@ -17,9 +21,10 @@
   <% end %>
 
   <%# The reactive-value shape, live-proven next to the whole-component
-      swap above: one named placeholder, kept fresh by the channel's
-      transmit_value(:remaining) — no fragment class, no extra island. %>
-  <p>remaining (fragment): <%= reactive :remaining, 0 %></p>
+      swap above: named placeholders, kept fresh by the channel's
+      transmit_value(:remaining) — no fragment class, no extra island.
+      The header badge above is the same value's second site. %>
+  <p>remaining (reactive value): <%= reactive :remaining, 0 %></p>
 <% end %>
 
 <p><a href="/">&larr; ERB stage</a> &middot; <a href="/phlex-counter">Phlex counter &rarr;</a></p>
