@@ -30,6 +30,12 @@ class CounterChannel < ApplicationCable::Channel
       broadcast_replace target: "step", partial: "counter/step",
                         locals: { step: @step.value }
     end
+
+    # The reactive-value shape next to the broadcast effects: transmits
+    # just <span id="hibiki-value-doubled">N</span> over this channel's own
+    # subscription (not the Turbo stream), which the ChannelController
+    # subclass swaps by id — same helper, works on the subclass shape.
+    transmit_value(:doubled) { doubled.value }
   end
 
   def increment = @count.value += @step.value
