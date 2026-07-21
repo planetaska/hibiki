@@ -2,6 +2,10 @@
   url: /introduction/
   collections:
     - guides
+- title: Rails
+  url: /rails-introduction/
+  collections:
+    - rails
 - title: Reference
   url: /threading-model/
   collections: 

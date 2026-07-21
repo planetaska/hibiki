@@ -1,9 +1,9 @@
 ---
-title: Advanced Usage
+title: Advanced usage
 nav_order: 4
 ---
 
-# Advanced Usage
+# Advanced usage
 
 ## Untracked reads
 

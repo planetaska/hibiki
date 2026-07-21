@@ -80,6 +80,9 @@ collections:
   guides:
     output: true
     permalink: "/:name/"
+  rails:
+    output: true
+    permalink: "/:name/"
   references:
     output: true
     permalink: "/:name/"

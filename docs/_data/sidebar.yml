@@ -1,4 +1,6 @@
 - title: Guides
   collection: guides
+- title: Rails Integration
+  collection: rails
 - title: References
   collection: references
