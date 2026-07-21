@@ -18,6 +18,7 @@ For jsbundling/vite apps, `npm install hibiki-rails` — the [npm package](https
 
 | `hibiki_rails` gem | `hibiki-rails` npm | notes |
 | ------------------ | ------------------ | ----- |
+| 0.2.0              | 0.2.0              | reactive values (`data-hibiki-value`) |
 | 0.1.0              | 0.1.0              | initial release |
 
 ## Islands and helpers
