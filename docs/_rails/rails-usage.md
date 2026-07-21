@@ -1,11 +1,11 @@
 ---
 title: Rails usage
-nav_order: 5
+nav_order: 4
 ---
 
 # Rails usage
 
-Most of your reactive logic should live in *Channels*:
+Most of your reactive logic lives in *channels*. Include `Hibiki::Rails::Channel`, build the graph in `build_graph`, and write actions as plain methods:
 
 ```ruby
 class CounterChannel < ApplicationCable::Channel
@@ -40,23 +40,17 @@ The page supplies a per-page-load graph id (`cid`) and listens on the matching s
 ```erb
 <div data-controller="counter" data-counter-cid-value="<%= @cid %>">
   <%= turbo_stream_from "counter", @cid %>
-  <%# placeholder, see the initial-state pattern below %>
+  <%# placeholder — see the initial-state pattern below %>
   <%= render "count", count: 0, doubled: 0 %>
   ...
 </div>
 ```
 
-with `@cid = SecureRandom.uuid` in the controller action. The channel broadcasts to `[channel_name, cid]` — override `stream_name` (and/or `cid`) to derive identity differently.
+with `@cid = SecureRandom.uuid` in the controller action. The channel broadcasts to `[channel_name, cid]`; override `stream_name` (and/or `cid`) to derive identity differently.
 
 ## The initial-state pattern (Turbo transport)
 
-Islands on the Turbo-broadcast transport instead (the "Usage" example
-above) have an ordering problem the transmit transport doesn't: the
-graph's effects do their first run inside `subscribed` — usually before
-the page's `turbo_stream_from` subscription has confirmed — so the first
-broadcast would be lost. Fix the ordering on the client with the packaged
-`streamConnected` helper: wait for Turbo to stamp the `connected`
-attribute on the stream source, then subscribe the graph channel.
+Pages on the Turbo-broadcast transport, like the example above, have an ordering problem the transmit transport doesn't: the graph's effects do their first run inside `subscribed` — usually before the page's `turbo_stream_from` subscription has confirmed — so the first broadcast would be lost. Fix the ordering on the client with the packaged `streamConnected` helper: wait for Turbo to stamp the `connected` attribute on the stream source, then subscribe the graph channel.
 
 ```js
 // in the Stimulus controller driving the channel
@@ -71,6 +65,4 @@ async connect() {
 }
 ```
 
-With that in place the server-rendered initial HTML is only a
-paint-avoidance placeholder — the first broadcast always lands and
-replaces it, so it doesn't have to match the graph's initial state.
+With that in place, the server-rendered initial HTML is only a paint-avoidance placeholder — the first broadcast always lands and replaces it, so it doesn't have to match the graph's initial state. (The generated `stimulus` and `island` shapes already do all of this.)
