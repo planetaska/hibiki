@@ -16,8 +16,8 @@ gem "importmap-rails"
 
 # The gems under test
 gem "hibiki", path: ".."
-gem "hibiki_phlex", path: "../hibiki_phlex"
-gem "hibiki_rails", path: "../hibiki_rails"
+gem "hibiki_phlex", path: "../../hibiki-phlex"
+gem "hibiki_rails", path: "../../hibiki-rails"
 # The whole view layer is Phlex — no ERB templates in this app
 gem "phlex-rails"
 
