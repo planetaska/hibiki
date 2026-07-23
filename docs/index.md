@@ -10,6 +10,9 @@ hero:
     width: 320
     height: 320
   actions:
+    - theme: alt
+      text: Introduction
+      link: /introduction/
     - theme: brand
       text: Get Started
       link: /getting-started/
