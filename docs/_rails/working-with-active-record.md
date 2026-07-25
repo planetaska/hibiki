@@ -218,7 +218,7 @@ Every keystroke writes `title`, `valid?` and `error` re-derive, and the [reactiv
 
 ## Other writers: bridging `after_commit` into the graph
 
-Everything so far assumed the channel's own actions are the only writers. They aren't — another user, a background job, the console. The graph can't see those writes either, so something has to carry "this table changed" from wherever the write happened to every live graph that cares.
+Everything so far assumed the channel's own actions are the only writers. They rarely are — most writes in a Rails app happen in a controller action, and the rest come from background jobs, other users' channels, or the console. The graph can't see any of those, so something has to carry "this table changed" from wherever the write happened to every live graph that cares.
 
 The model's half is a plain ping — no payload, no HTML, just the fact of change. `after_commit`, not `after_save`, so subscribers re-query only after the data is actually visible:
 
@@ -255,6 +255,74 @@ Two refinements worth knowing:
 - **One invalidation path, if you prefer.** With the bridge in place, the channel's own actions get invalidated twice — once by their explicit `invalidate`, once by the ping (a harmless extra re-render). You can instead drop `invalidate` from the mutators entirely and let the `after_commit` ping be the *only* invalidation path — self-writes and other-writes become indistinguishable, at the cost of a pubsub round-trip of latency on your own actions.
 - **Storminess.** A burst of commits means a burst of pings, and each subscriber re-queries per ping. If that ever hurts, debounce at the render effect (`Hibiki::Phlex.render_effect(@list, scheduler: ...)` — see [Phlex support]({{ "/phlex-support/" | relative_url }})) rather than trying to coalesce the pings themselves.
 
+## Writes from controllers and jobs
+
+The bridge is caller-agnostic on purpose. `after_commit` fires on whichever thread did the write, so `Todo.create!` in `TodosController#create`, in a background job, or in `bin/rails console` all reach every subscribed graph without the writer knowing hibiki exists. There is nothing to notify from the controller, and no channel to reach for: you write the database, the model pings, the graphs re-query. That's also why the ping carries no payload — it says *the table moved*, not *here is what changed*, so a writer has nothing to assemble.
+
+Four things break that story in practice. Three are ActiveRecord and ActionCable facts rather than hibiki ones, but they all surface the same way — the write lands, the page doesn't move — so they're worth knowing before you go looking for the bug in your graph.
+
+**Bulk writes skip the callback.** `update_all`, `delete_all`, `insert_all`, `upsert_all`, `update_column`/`update_columns`, `touch_all`, and raw SQL never run `after_commit` — and those are exactly what a job reaches for. Ping explicitly when you use them:
+
+```ruby
+class ArchiveDoneTodos < ApplicationJob
+  def perform
+    Todo.where(done: true).update_all(archived: true)
+    ActionCable.server.broadcast("todos:changed", {})   # update_all ran no callbacks
+  end
+end
+```
+
+**The `async` cable adapter doesn't cross processes.** It is a per-process pubsub, and it is the Rails default in development:
+
+```yaml
+# config/cable.yml
+development:
+  adapter: async   # in-process only
+```
+{: data-title="config/cable.yml"}
+
+A controller's ping still works — the web process owns both the writer and the graphs — and so does a job's, as long as jobs run in-process. Move the worker to its own process and that same ping goes nowhere, with no error on either side. Use `solid_cable` or `redis` as soon as anything writes from outside the web process.
+
+**`after_commit` fires per record.** A job that saves 500 rows sends 500 pings, and every subscriber re-queries once per ping. Suppress the per-record ping for that path and send one at the end of the batch instead — the job knows where its batch ends, and the render-effect debounce above can only guess.
+
+**A global streamable wakes everyone.** `"todos:changed"` makes every subscriber re-query on every write to the table, including tenants whose query can't return the row that changed. Scope the streamable to whatever scopes the query:
+
+```ruby
+class Todo < ApplicationRecord
+  belongs_to :account
+
+  after_commit { ActionCable.server.broadcast("account:#{account_id}:todos", {}) }
+end
+```
+
+```ruby
+def subscribed
+  super
+  return if subscription_rejected?
+
+  stream_from "account:#{current_user.account_id}:todos" do |_message|
+    graph_actor&.post { Hibiki.batch { @list.invalidate } }
+  end
+end
+```
+
+Derive that stream name from the connection's identity, as above, not from a client-supplied param. The pings carry no data, so the worst a mis-scoped subscription leaks is the *timing* of another tenant's writes — but the habit is cheap and the next thing you put on a stream may not be empty.
+{: .warning }
+
+Finally, if you'd rather not name ActionCable in the model, give the ping one home that the callback and the bulk-write paths can share:
+
+```ruby
+module TodoChanges
+  def self.notify = ActionCable.server.broadcast("todos:changed", {})
+end
+
+class Todo < ApplicationRecord
+  after_commit { TodoChanges.notify }
+end
+```
+
+Broadcasting from each controller action *instead* of from the model works too, but it is the write-through pattern's weakness one layer up: every writer has to remember, and the one that forgets fails silently. Keep the ping on the model, where the write can't get past it.
+
 ## Choosing the right pattern
 
 | Pattern | Reach for it when |
@@ -262,6 +330,6 @@ Two refinements worth knowing:
 | Snapshot + write-through | A small page, a first pass — accept the per-mutator re-fetch discipline |
 | Version signal + lazy derived query | The default for anything list-shaped |
 | Reactive form object | Editing a single record; live validation and dirty state |
-| `after_commit` bridge | Rows change outside the channel's own actions |
+| `after_commit` bridge | Rows change outside the channel's own actions — controllers, jobs, other users |
 
 The version-signal pattern is the backbone; the form object sits beside it for edit screens, and the bridge layers on top when there are other writers. And whichever you pick, the two boundary rules never bend: records stop at the boundary, and every database write is paired with a signal write.
