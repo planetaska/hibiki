@@ -111,5 +111,26 @@ fragment granularity instead of text-node granularity.
    the API question (explicit `reactive_fragment` vs. something more
    automatic) with a concrete use case instead of speculation.
 
+   **Update (2026-07-26): a page now needs it.** A paginated 200-row index
+   with a growing window, measured end to end: paging through the list costs
+   ~1.28 MB to deliver a 236 KB list (5.4x amplification, because each page
+   re-sends the whole window), and a write to a row the list's own filter
+   *excludes* still pushes a 159 KB repaint with no visible change. Both
+   numbers come straight from "one renderable unit per fragment" — the
+   fragment here is the whole list.
+
+   It also sharpens what the API has to cover. A list doesn't want *named*
+   fragments; it wants a **keyed** one — an effect per row, appending for new
+   ids, removing for gone ones, replacing for changed ones. That is a
+   different shape from `reactive_fragment :count_display`, and it is
+   probably the one that decides the design, since the ERB/`hibiki_rails`
+   side needs it just as much as Phlex does.
+
+   Note this is *not* blocked on the wire protocol. On the Turbo transport,
+   `Turbo::Streams::Broadcasts` already provides append/prepend/remove; what
+   is missing is a render effect whose unit is the delta. An effect cannot
+   know why it re-ran, so a container-grained effect can only ever re-emit
+   the container.
+
 Until then, the workaround is cheap and boring: one small component (or
 partial) per fragment, one `render_effect` each.
