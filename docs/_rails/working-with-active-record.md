@@ -234,6 +234,8 @@ The channel's half subscribes to the ping — and here is the one rule you must 
 class TodosChannel < ApplicationCable::Channel
   include Hibiki::Rails::Channel
 
+  private # ← keep lifecycle hooks private; see the note below
+
   def subscribed
     super                              # builds the graph (or rejects)
     return if subscription_rejected?
@@ -249,6 +251,8 @@ end
 ```
 
 Now a row created in the console, a job, or another user's tab bumps `db_version` in every subscribed graph, each re-queries once, and each connected page repaints. That's the whole multi-user story: the ping fans out the *invalidation*, and each graph's lazy derived fans in the *data*.
+
+**Keep `subscribed` private.** ActionCable builds a channel's client-invocable actions from *the public methods the class adds*, and its own `subscribed`/`unsubscribed` are private on the base class — so a **public** override here is a method a client can `perform` by name, which would build a second graph on the connection. hibiki_rails subtracts both hooks (and `build_graph`) from `action_methods` since 0.3.0, so this is belt-and-braces; write them private anyway, because the habit is what protects the methods it does *not* know about.
 
 Two refinements worth knowing:
 
@@ -296,6 +300,8 @@ end
 ```
 
 ```ruby
+private
+
 def subscribed
   super
   return if subscription_rejected?

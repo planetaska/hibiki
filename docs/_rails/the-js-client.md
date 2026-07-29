@@ -18,6 +18,7 @@ For jsbundling/vite apps, `npm install hibiki-rails` — the [npm package](https
 
 | `hibiki_rails` gem | `hibiki-rails` npm | notes |
 | ------------------ | ------------------ | ----- |
+| 0.3.0              | 0.3.0              | `input` + debounce, the `visible` sentinel, event lists, `confirm:`/`reset:`, correct checkbox and multi-select payloads, subscribe params |
 | 0.2.0              | 0.2.0              | reactive values (`data-hibiki-value`) |
 | 0.1.0              | 0.1.0              | initial release |
 
@@ -35,9 +36,56 @@ The client is one generic Stimulus controller that drives any *island*: a DOM su
 <% end %>
 ```
 
-- `hibiki_island(channel, cid:)` — the island root: one subscription, identified by the page's `cid`.
-- `on(action, event:, with:)` — forward a DOM event (`:click` default, `:change`, `:submit`) as a channel action, with `with:` as its payload. A changed control also sends `{ name => value }`; a submitted form sends its FormData and is reset after performing.
+- `hibiki_island(channel, cid:, params:)` — the island root: one subscription, identified by the page's `cid`. See [Subscribe params](#subscribe-params) for `params:`.
+- `on(action, event:, with:, debounce:, confirm:, reset:)` — forward an event as a channel action. See [Events and modifiers](#events-and-modifiers).
 - `reactive(name, placeholder)` / `reactive_attrs(name)` — placeholder for a single reactive value, paired with the channel's `transmit_value` (see [Reactive values]({{ "/reactive-values/" | relative_url }})).
+
+## Events and modifiers
+
+The left side of `->` names an **event**, and that is all it ever names. DOM events are a subset: `:click` (the default), `:change`, `:input`, `:submit`, plus the `:visible` pseudo-event. Everything else — how long to wait, whether to ask first, whether to reset — is a separate attribute scoped to the control, so the token list stays parseable by whitespace and one element can answer several events:
+
+```erb
+<%= tag.button(**on(:load_more, event: %i[click visible], with: { shown: rows.size })) %>
+```
+
+| option | what it does |
+| ------ | ------------ |
+| `event:` | one event or a list. A list stamps one `event->action` token each. |
+| `with:` | a hash merged into every payload from this control. |
+| `debounce:` | milliseconds to let the gesture settle before performing. `:input` gets **250 ms by default** — pass `debounce: 0` to send every keystroke. The payload is built when the action fires, so the last value wins. |
+| `confirm:` | a `window.confirm` message. Declining performs nothing (and does not submit the form). Note that `data-turbo-confirm` does *not* work on a hibiki control — it isn't a Turbo-driven form. |
+| `reset:` | `false` keeps a submitted form's inputs. The default resets them, which is right for an "add" form and wrong for an edit one: the reset runs synchronously, before the server has replied, so a failed commit would discard what the user typed. |
+
+What a changed control contributes to its payload under its own `name`: a checkbox sends its **checked state** as a boolean, a multi-select sends an **array** of its selected values, everything else sends `value`. A submitted form sends its `FormData`.
+
+`visible` is backed by an `IntersectionObserver`, always present in the client. It fires **once per observation** and re-attaches to the replacement element after each fragment swap, which is what lets a load-more control double as an infinite-scroll sentinel and keep paging when one page didn't fill the viewport. Because an observer can fire again before a swap lands, pair it with a generation token in `with:` and make the action a no-op when the token is stale.
+
+## Subscribe params
+
+`params:` hands the channel values at subscribe time, reaching it as `params[:key]` beside `cid`. It is how a channel learns *which* record its page is about — the subscription is the only server-side hook that runs before the graph is built:
+
+```erb
+<%= tag.div(**hibiki_island(BookChannel, cid:, params: { record_id: @book.id })) do %>
+```
+
+**They are client-supplied and untrusted, exactly like query params on a request.** Anyone can open a socket and send whatever they like, so a channel may use one only to **look up a record inside a scope it chooses itself**, and must `reject` when that lookup fails:
+
+```ruby
+private
+
+def record_id = @record_id ||= current_user.books.where(id: params[:record_id]).pick(:id)
+
+def subscribed
+  return reject unless record_id   # before super: no graph for an unknown id
+
+  super
+  return if subscription_rejected?
+
+  stream_from "book:#{record_id}:changed"   # built from what the lookup returned
+end
+```
+
+Never interpolate a param into a streamable name, a class name, a column name, or a scope. The streamable a channel streams from is always derived server-side from the record it has already loaded and authorized — otherwise a client naming its own streamable is reading other people's broadcasts. The client cannot override `channel` or `cid` through `params:`.
 
 ## The transmit transport
 
