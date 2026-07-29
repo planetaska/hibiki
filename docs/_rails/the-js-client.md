@@ -22,6 +22,8 @@ For jsbundling/vite apps, `npm install hibiki-rails` — the [npm package](https
 | 0.2.0              | 0.2.0              | reactive values (`data-hibiki-value`) |
 | 0.1.0              | 0.1.0              | initial release |
 
+Upgrading: the [changelog](https://github.com/planetaska/hibiki-rails/blob/main/CHANGELOG.md) carries the per-release detail. **0.3.0 fixes a security issue affecting Rails 7.1 and 7.2 apps only** — channel lifecycle methods were client-invocable there, because the ActionCable hook the gem used to hide them exists on 8.x alone.
+
 ## Islands and helpers
 
 The client is one generic Stimulus controller that drives any *island*: a DOM subtree bound to one channel subscription. Islands are stamped with the opt-in `Hibiki::Rails::Helpers` — include it where you want the bare names (`ApplicationHelper` for ERB, individual Phlex components); the gem never includes it for you:
