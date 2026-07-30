@@ -42,6 +42,75 @@ RSpec.describe Hibiki::Effect do
     expect(seen).to eq([2, 6])
   end
 
+  describe "the equality gate" do
+    # Svelte's $derived compares, and so does Hibiki — on the reading effect's
+    # side, at the batch flush, because Derived#invalidate has already notified
+    # downstream by the time it knows its new value.
+    it "does not re-run when a derived recomputes to an == value" do
+      runs = 0
+      count = Hibiki::State.new(1)
+      parity = Hibiki::Derived.new { count.value.even? }
+      described_class.new do
+        runs += 1
+        parity.value
+      end
+
+      count.value = 3 # invalidates parity, whose value is still false
+      expect(runs).to eq(1)
+    end
+
+    it "re-runs when the derived's value really does change" do
+      seen = []
+      count = Hibiki::State.new(1)
+      parity = Hibiki::Derived.new { count.value.even? }
+      described_class.new { seen << parity.value }
+
+      count.value = 2
+      expect(seen).to eq([false, true])
+    end
+
+    it "leaves the subscription intact across a suppressed run" do
+      # A skipped run must not look like a disposal: the next real change still
+      # has to arrive.
+      seen = []
+      count = Hibiki::State.new(1)
+      parity = Hibiki::Derived.new { count.value.even? }
+      described_class.new { seen << parity.value }
+
+      count.value = 3 # suppressed
+      count.value = 4 # must still land
+      expect(seen).to eq([false, true])
+    end
+
+    it "runs when one of several sources changed and the others did not" do
+      seen = []
+      count = Hibiki::State.new(1)
+      label = Hibiki::State.new("a")
+      parity = Hibiki::Derived.new { count.value.even? }
+      described_class.new { seen << [parity.value, label.value] }
+
+      label.value = "b" # parity unchanged, but label is a source too
+      expect(seen).to eq([[false, "a"], [false, "b"]])
+    end
+
+    it "swallows an update from a derived that returns the object it mutated" do
+      # Svelte's documented caveat, and ours: == on the same object is true, so
+      # the gate cannot see an in-place mutation. Pinned as intended behaviour.
+      items = []
+      version = Hibiki::State.new(0)
+      list = Hibiki::Derived.new do
+        version.value
+        items
+      end
+      seen = []
+      described_class.new { seen << list.value.size }
+
+      items << :new
+      version.value = 1
+      expect(seen).to eq([0])
+    end
+  end
+
   describe "#dispose" do
     it "stops future re-runs" do
       runs = 0
@@ -146,6 +215,33 @@ RSpec.describe Hibiki::Effect do
 
       b.value = "b2" # live branch still does
       expect(schedules).to eq(2)
+    end
+
+    it "is not called at all when nothing the effect read changed" do
+      # What makes a debounce mitigation unnecessary rather than merely cheaper:
+      # a no-op wave never reaches the scheduler, so nothing is queued to fire.
+      scheduled = []
+      count = Hibiki::State.new(1)
+      parity = Hibiki::Derived.new { count.value.even? }
+      described_class.new(scheduler: ->(e) { scheduled << e }) { parity.value }
+
+      count.value = 3
+      expect(scheduled).to be_empty
+      count.value = 2 # a real change still schedules
+      expect(scheduled.size).to eq(1)
+    end
+
+    it "run is ungated: when the scheduler says run, it runs" do
+      runs = 0
+      count = Hibiki::State.new(1)
+      parity = Hibiki::Derived.new { count.value.even? }
+      effect = described_class.new do
+        runs += 1
+        parity.value
+      end
+
+      effect.run
+      expect(runs).to eq(2)
     end
 
     it "run is a no-op once disposed (a late debounced run loses to dispose)" do

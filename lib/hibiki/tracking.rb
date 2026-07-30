@@ -60,12 +60,18 @@ module Hibiki
     # Called on every read: if someone reactive is currently computing,
     # they now depend on us — record both directions of the edge, so the
     # observer can sever it before its next rerun.
+    #
+    # The VALUE travels with the edge: an observer that remembers what it saw
+    # can decide later whether anything it reads actually changed (Svelte's
+    # $derived compares; see Observer#sources_changed?). `peek` is the
+    # documented read-without-an-edge, and we're already clean here — a
+    # Derived recomputes before it registers — so it costs a cache read.
     def register_dependency
       observer = Hibiki.current_observer
       return unless observer
 
       subscribers << observer
-      observer.add_source(self)
+      observer.add_source(self, peek)
     end
 
     def unsubscribe(observer) = subscribers.delete(observer)
@@ -77,16 +83,34 @@ module Hibiki
   end
 
   # ---- shared observer behaviour ----------------------------------------------
-  # The reverse edges of Trackable: what an observer read on its last run.
+  # The reverse edges of Trackable: what an observer read on its last run, and
+  # the value each one had when it read it.
   module Observer
-    def sources = (@sources ||= Set.new)
-    def add_source(source) = sources << source
+    # source => the value we saw for it. A Hash rather than a Set because the
+    # remembered value is what makes the equality gate possible; last read in
+    # a run wins, which is the value the run actually acted on.
+    def sources = (@sources ||= {})
+    def add_source(source, seen) = sources[source] = seen
 
     # Solid clears deps before rerun (cleanNode); we mirror that, so stale
     # branches of dynamic deps (flag ? a : b) stop invalidating us.
     def clear_sources
-      sources.each { |source| source.unsubscribe(self) }
+      sources.each_key { |source| source.unsubscribe(self) }
       sources.clear
+    end
+
+    # The equality gate, asked at flush time (see Effect#invalidate): did any
+    # value we read actually change? Svelte's $derived compares; we compare on
+    # the observer's side instead of the producer's, because Derived#invalidate
+    # has already notified downstream by the time it knows its new value.
+    #
+    # `peek` resolves a dirty source without subscribing us to it — no untrack
+    # needed, since a Derived#recompute makes itself the observer. `any?`
+    # short-circuits in the useful direction: sources are in read order, so a
+    # changed first source spares the rest a validation recompute, and the run
+    # recomputes them only if it reads them this time.
+    def sources_changed?
+      sources.any? { |source, seen| source.peek != seen }
     end
   end
 

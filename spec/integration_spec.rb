@@ -167,6 +167,54 @@ RSpec.describe "reactive graphs" do
     end
   end
 
+  describe "the equality gate" do
+    it "runs the effect when one diamond leg changed and the other did not" do
+      log = []
+      s = state(2)
+      changing = derived { s.value * 10 }
+      constant = derived { s.value.positive? }
+      effect { log << [changing.value, constant.value] }
+
+      s.value = 3
+      expect(log).to eq([[20, true], [30, true]])
+    end
+
+    it "skips the effect when every leg recomputes to an == value" do
+      log = []
+      s = state(2)
+      d1 = derived { s.value.positive? }
+      d2 = derived { s.value.zero? }
+      effect { log << [d1.value, d2.value] }
+
+      s.value = 3 # both legs unchanged: nothing for the effect to do
+      expect(log).to eq([[true, false]])
+    end
+
+    it "re-collects a derived's dependencies even when the gate skips the effect" do
+      # Invariant 3 under the gate: validation goes through recompute, so a
+      # derived that switches branches to an EQUAL value still moves its
+      # subscriptions — the old branch goes quiet, the new one bites.
+      runs = 0
+      flag = state(true)
+      a = state("X")
+      b = state("X")
+      picked = derived { flag.value ? a.value : b.value }
+      effect do
+        runs += 1
+        picked.value
+      end
+
+      flag.value = false # picked: "X" -> "X", so the effect is skipped
+      expect(runs).to eq(1)
+
+      a.value = "A2" # stale branch: no notification reaches anyone
+      expect(runs).to eq(1)
+
+      b.value = "B2" # live branch, and a real change
+      expect(runs).to eq(2)
+    end
+  end
+
   describe "effects on derived state" do
     it "sees consistent values through a linear chain" do
       seen = []

@@ -47,6 +47,29 @@ RSpec.describe "Hibiki.untrack" do
   end
 end
 
+RSpec.describe "the equality gate's validation window" do
+  it "validates a gated effect without subscribing whoever is mid-run" do
+    # A write inside an effect's own run flushes (the write's implicit batch)
+    # while that effect is still the current observer, so validation happens
+    # inside someone else's tracking window. It reads through peek, so no edge
+    # is created — otherwise the writing effect would quietly inherit the
+    # validated effect's dependencies.
+    gate_dep = Hibiki::State.new(1)
+    constant = Hibiki::Derived.new { gate_dep.value.positive? }
+    gated = Hibiki::Effect.new { constant.value }
+
+    side = Hibiki::State.new(0)
+    writer = Hibiki::Effect.new do
+      side.value
+      gate_dep.value = gate_dep.peek + 1 # bumps, validates, gate skips
+    end
+
+    expect(constant.subscribers).to contain_exactly(gated)
+    expect(gate_dep.subscribers).to contain_exactly(constant)
+    expect(side.subscribers).to contain_exactly(writer)
+  end
+end
+
 RSpec.describe "Hibiki.on_cleanup" do
   it "runs the cleanup before the effect re-runs" do
     order = []
@@ -126,6 +149,25 @@ RSpec.describe "Hibiki.on_cleanup" do
 
     effect.dispose
     expect(cleaned).to be(true)
+  end
+
+  it "runs a validation recompute under the validating effect's ownership" do
+    # The equality gate may recompute a derived to find out whether it changed.
+    # An on_cleanup inside that block has to land somewhere, and the effect
+    # whose gate asked is where it would have landed had the effect's own run
+    # done the recompute — so no "no current owner" warning, and the cleanup
+    # comes down with the effect.
+    cleaned = 0
+    version = Hibiki::State.new(1)
+    maker = Hibiki::Derived.new do
+      Hibiki.on_cleanup { cleaned += 1 }
+      version.value.positive?
+    end
+    effect = Hibiki::Effect.new { maker.value }
+
+    expect { version.value = 2 }.not_to output.to_stderr # skipped, but owned
+    effect.dispose
+    expect(cleaned).to eq(2) # the initial run's registration, and validation's
   end
 
   it "warns and never runs the block outside any owner" do

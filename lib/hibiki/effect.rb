@@ -39,9 +39,21 @@ module Hibiki
     # re-run is handed to it right where it would have happened — after the
     # batch dedup, so the flush's error isolation covers a raising scheduler
     # too, and N batched writes mean one scheduler call.
+    #
+    # Past the batching? check we are at the flush, which is where the equality
+    # gate belongs: every write in the wave has landed, so asking the sources
+    # whether anything changed reads a consistent graph (a diamond validates
+    # once, against both legs). Nothing changed means nothing to do — not even
+    # a scheduler call, so a debounced broadcast never fires for a no-op.
+    #
+    # own(self) because validation may recompute a derived whose block
+    # registers an on_cleanup or creates an effect: this effect's own run is
+    # where that would otherwise have landed. Deriveds are values, not owners —
+    # a block with side effects was already at the mercy of whoever reads first.
     def invalidate
       return if @disposed
       return Hibiki.schedule(self) if Hibiki.batching?
+      return unless Hibiki.own(self) { sources_changed? }
       return @scheduler.call(self) if @scheduler
 
       run

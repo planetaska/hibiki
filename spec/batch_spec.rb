@@ -64,6 +64,26 @@ RSpec.describe "Hibiki.batch" do
     expect(runs).to eq(1)
   end
 
+  # The one deliberate change these semantics took in 0.2.0 (Phase 1.75): the
+  # equality gate compares what an effect last READ, so a batch that cancels
+  # itself out leaves it nothing to do. Each write here is a genuine change —
+  # it is the net result that is not.
+  it "does not re-run an effect when a batch nets to no change" do
+    runs = 0
+    a = Hibiki::State.new(1)
+    Hibiki::Effect.new do
+      runs += 1
+      a.value
+    end
+
+    Hibiki.batch do
+      a.value = 2
+      a.value = 1
+    end
+
+    expect(runs).to eq(1)
+  end
+
   it "never lets the effect observe intermediate values" do
     seen = []
     a = Hibiki::State.new(1)
