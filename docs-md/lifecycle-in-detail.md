@@ -34,6 +34,43 @@ One subtlety: `Hibiki.untrack` suppresses only dependency *registration*.
 The owner slot is left alone, so effects created inside an `untrack` block
 are still adopted and torn down normally.
 
+## When an effect re-runs
+
+An effect re-runs when something it read changed — and only then. A write does
+not schedule effects directly; it invalidates, and the decision to run is made
+at the end of the outermost batch (every write is an implicit batch of one, so
+an unbatched write decides as it returns):
+
+1. the write lands, or doesn't: `State#value=` returns early on an `==` value,
+   so an equal write notifies nobody;
+2. invalidation propagates — deriveds mark themselves dirty and pass it on,
+   effects are queued and deduplicated;
+3. at the flush, each queued effect compares every value it read on its last
+   run against that value now. A dirty derived recomputes here to answer the
+   question. If everything compares `==`, the effect does not run, and if it
+   has a scheduler, the scheduler is not called either.
+
+So the same value arriving by a new route is not a change:
+
+```ruby
+version = state(0)
+names = derived { version.value; load_names } # re-reads on every bump
+effect { render(names.value) }
+
+version.value += 1 # names re-loads; if the list is equal, nothing renders
+```
+
+This is the gate Svelte's `$derived` has, placed on the reading side because a
+derived has already told its subscribers to run by the time it knows its new
+value. Two rules follow from it:
+
+- **A derived's block must not have side effects.** The gate may recompute a
+  derived to find out whether it changed, so the recompute can happen outside
+  the effect that reads it — anything the block creates or registers belongs to
+  whichever effect's gate asked. Deriveds are values, not owners.
+- **`Effect#run` bypasses the gate.** A scheduler holding a deferred re-run
+  runs the block when it calls `run`, no questions asked.
+
 ## What a re-run tears down
 
 Before an effect re-runs (and likewise when it is disposed), in this order:

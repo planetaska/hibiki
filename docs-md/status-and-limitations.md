@@ -11,6 +11,20 @@ Already in place:
 - **Glitch freedom** — every write is an implicit batch (Solid's
   `runUpdates`), so diamond-shaped graphs never run effects with
   inconsistent intermediate values.
+- **Equality gate** — an effect re-runs only when at least one of the values
+  it read actually changed (`==`). Svelte's `$derived` compares; Hibiki
+  compares on the reading side, at the flush, against what the effect last
+  read — so a write that ripples through a derived to the same value costs a
+  recompute and nothing else. Two consequences worth knowing:
+  - a derived that returns the same object it mutated compares equal to
+    itself, so the gate swallows the update (Svelte documents the same
+    caveat). Return a new object — see
+    [mutable defaults](mutable-defaults.md);
+  - an effect that must fire on every write rather than on every *change* — a
+    heartbeat, a log line, a counter — should read the value that genuinely
+    changes (`effect { version.value; log(...) }`) rather than a derived
+    summary that often doesn't. `Effect#run` bypasses the gate, so a
+    scheduler that decides to run always runs.
 - **Error isolation** — a raising effect doesn't take the rest of a flush
   down with it: the queue always completes, then the first error re-raises.
   Set `Hibiki.error_handler = ->(error, effect) { ... }` (Solid's
