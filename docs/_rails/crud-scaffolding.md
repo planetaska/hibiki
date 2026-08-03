@@ -13,10 +13,7 @@ controller, a console — repaints every open list.
 
 Everything is derived from the model's schema (columns, types, `belongs_to`
 reflections, validators) or from the same `NAME field:type` argument list Rails'
-own scaffold takes. Nothing in the generator knows what a "book" is.
-
-Your `rails g scaffold` is untouched. These live under their own namespace and
-nothing registers as Rails' `scaffold_controller`.
+own scaffold takes.
 
 ## Before you run it
 
@@ -31,18 +28,17 @@ bin/rails g hibiki:rails:install
 That registers the client, includes the helpers, and writes the `ApplicationCable`
 boilerplate a stock app doesn't have until its first `rails g channel`. See
 [Quick start]({{ "/rails-quick-start/" | relative_url }}) if you haven't done it.
-The scaffold generators check and print a `hint` if it's missing, but they will
-still write their files — a generated page whose island never subscribes looks
-like a dead page, not like a missing install.
 
 ## The two commands
 
 ```sh
+# Full scaffold, this creates:
 # Model, migration, fixtures, route, and the reactive resource
 bin/rails g hibiki:rails:scaffold Book title:string available:boolean author:references
 bin/rails db:migrate
 
-# For a model you already have — the schema is read for you
+# For existing model, use scaffold_controller:
+# The schema is automatically read for you
 bin/rails g hibiki:rails:scaffold_controller Book
 ```
 
@@ -51,7 +47,7 @@ its migration, its fixtures and the route all come from Rails, unchanged. Only
 the controller half is replaced. It **requires at least one field**: the
 migration has not run by the time the views are generated, so there is no schema
 to read yet and the argument list is the only source of truth. For an existing
-model, use `scaffold_controller` — that is the path where introspection works.
+model, use `scaffold_controller`.
 
 `hibiki:rails:scaffold_controller` is the overlay. It is separately invokable on
 purpose, and re-running it is a normal thing to do — after adding validators, or
@@ -60,7 +56,7 @@ a column, or when you want a different field order.
 Namespaced names work (`admin/book`), as they do for the [component-shape
 generators]({{ "/generators/" | relative_url }}).
 
-## What it writes
+## What the scaffold writes
 
 Per resource, with `Book` as the example:
 
@@ -95,8 +91,8 @@ paths from the `app/*` glob at boot — see the restart notice below.
 | Option | Effect |
 | --- | --- |
 | `--css=NAME` | Markup variant for **every** generated view: `daisyui`, `tailwind` or `none`. Absent means detect — DaisyUI, then Tailwind, then stock. |
-| `--infinite-scroll` | Grow the window on scroll instead of numbering pages |
-| `--skip-pagination` | No windowing at all — skips both modes |
+| `--infinite-scroll` | Grow the page on scroll instead of standard pagination |
+| `--skip-pagination` | Skips pagination altogether |
 | `--skip-search` | Omit the search box and the `LIKE` terms behind it |
 | `--page-size=N` | Rows per page (default 20) |
 | `--skip-routes` | Don't touch `config/routes.rb` |
@@ -112,23 +108,16 @@ renders, and `#go_to_page` short-circuits on its first guard. One constant
 instead of `<% if paginated? %>` branching across five files. If you later want
 pages back, set the constant.
 
-## Field order is yours, and choosing it costs nothing
+## Field order decides generated form fields order
 
-With no field list the columns follow whatever `columns_hash` reports — which,
+With no field list, the columns follow whatever `columns_hash` reports — which,
 for an app built from `schema.rb`, is alphabetical. A generated form can end up
 reading "Available, Intro, Title" where a person would have led with the title.
-There is no authored order to recover from a schema, so the argument list is the
-lever:
+There is no authored order to recover from a schema, so the argument list is the only clue:
 
 ```sh
 bin/rails g hibiki:rails:scaffold_controller Book title:string intro:text available:boolean
 ```
-
-**The list chooses only the order.** Against a model that already exists the
-generator still reads that model for everything else, so the live validation
-clauses, a number field's `min:`/`max:` and a `belongs_to`'s display label all
-survive the choice. A `belongs_to` is named by its association, never its foreign
-key: `author:references`, not `author_id:references`.
 
 A field the model has no column for is still generated, from the argument list
 alone, and named in the post-install output. It may be a column whose migration
@@ -136,10 +125,7 @@ is still to come, and a silently missing field is the worse failure — but noth
 about it was read from the model, so it carries no validator, no bound and no
 association label.
 
-The generated views are also just views. Reordering them by hand afterwards is
-fine and nothing depends on the order.
-
-## It edits models, not just creates files
+## Injection notice for pre-existing models
 
 This is the part that separates it from `rails g scaffold`, and the part to know
 before you run it against an app you care about. **Three files you already own
@@ -151,39 +137,38 @@ and all leave anything you already declared alone.
 cosmetic: the row partial prints the association's label, and the show page hands
 that same partial a live record, so without it the show page raises on arrival.
 
-**Every model a `belongs_to` points at** gains two things Rails' own
-`author:references` never writes:
+**Every model a `belongs_to` points at** gains two things (which Rails' own
+`author:references` never writes):
 
 - the **`has_many` half** — without it, the destroy button this generator emitted
   raises `ActiveRecord::InvalidForeignKey`;
-- **a ping of its own**, because a row prints the parent's *label* rather than its
+- **a broadcast ping of its own**, because a row prints the parent's *label* rather than its
   id. Rename an author and every open books index would otherwise keep showing
   the old name.
 
 **`config/routes.rb`** gains `resources :books`, unless `--skip-routes`.
 
-Two behaviours in there are worth stating rather than leaving you to discover.
+Two behaviours in there are worth stating (rather than leaving you to discover):
 
 ### `dependent:` follows the association, not the column
 
-Required association → `dependent: :destroy`. `optional: true` →
-`dependent: :nullify`.
+- Required association → `dependent: :destroy`.
+- `optional: true` →`dependent: :nullify`.
 
 Column nullability is the wrong signal: `belongs_to_required_by_default` means a
 nullable foreign key routinely backs a required association, and `:nullify` there
 leaves rows that fail their own validations. This is a line you own — change it
 and re-running the generator will leave your choice alone.
 
-### The ping is collection-grained
+### The broadcast ping is collection-grained
 
-Reaching each child's own member streamable would mean loading every child inside
+Reaching each child's own member streamable (e.g broadcasting Author name change for all books related to that author) would mean loading every child inside
 the callback, unbounded, on every parent write. So the ping goes to the
-collection. The consequence, measured rather than theorised: renaming a parent
-repaints every open **index**, but an open child **show** page keeps the stale
-label until reload. The injected comment says so, because it looks like a bug
-otherwise.
+collection. The consequence: renaming a parent (the Author)
+repaints every open **index**, but an open child (the author's Book) **show** page keeps the stale
+label (author's name) until reload. The injected comment explains this - because otherwise it looks like a bug.
 
-## Live validation is only what a form can check
+## Live validation is limited to what a form can check
 
 Per-field errors appear as you type, and they are derived from the model — but
 only from the rules a form can actually evaluate before a round trip: presence,
@@ -193,7 +178,7 @@ exemption for the value in hand.
 A validator gated on `if:`, `unless:` or `on:` depends on the record rather than
 the field, so it contributes **nothing live**. It still runs at commit, still
 lands in `#errors`, and the same per-field slots mirror it there with no change
-at all — so nothing is lost, it just arrives one round trip later.
+at all — so nothing is lost.
 
 **The clauses are generated once**, into a file the generator then stops owning.
 Add validators to the model and re-run `scaffold_controller` to derive them
@@ -211,10 +196,7 @@ Every notice the generator prints exists because the thing it warns about fails
 `app/forms/` is almost certainly new, and **Rails computes autoload paths from
 the `app/*` glob at boot**. Until you restart, the new constants raise
 `NameError`. This is also why the query object lives in `app/models` rather than
-a tidier `app/queries` — one new directory is enough of a trap.
-
-The same rule catches initializers: they do not reload. If you change one, the
-server has to come back up.
+a tidier `app/queries`.
 
 ### `css` — rebuild your stylesheet
 
@@ -229,7 +211,7 @@ The generator picks the association's first string column. If that is wrong, edi
 ### `order` — you can choose the field order
 
 Printed when the order came from the schema and there are more than two columns,
-with the command that would pick it. See "Field order is yours", above.
+with the command that would pick it. See "Field order decides generated form fields order", above.
 
 ### `fields` — a field with no column behind it
 
@@ -265,12 +247,12 @@ generated page will be live until it does.
 
 ## Loading and connection state
 
-Every reactivity in this stack is server-side, so every gesture is a round trip.
+Every reactivity in this stack is server-side, so every interaction is a round trip.
 The client stamps what it knows about that trip on the island root and on the
 control that fired it; the generated app turns those attributes into something a
 user can see.
 
-**The mechanism is documented once, on [the JS client page]({{ "/the-js-client/"
+**The mechanism is documented on [the JS client page]({{ "/the-js-client/"
 | relative_url }})** — the states, the attributes, the reserved payload key and
 the timing knobs. What follows is only what the generator does with it.
 
@@ -321,19 +303,16 @@ the generated code carries a comment at that line for whoever meets it there.
 
 ## What to do next
 
-The generated app is a **starting point, not a framework**. Every file it writes
+The generated app is a **starting point**. Every file it writes
 is ordinary Rails code with no gem-side magic reading it back, and the generator
-stops owning a file the moment it writes it. Reshape it in place.
+stops owning a file the moment it writes it. Reshape it as needed.
 
 The most common next steps:
 
 - **Add validators, then re-run `scaffold_controller`** to derive the live
-  clauses from them. Your field list, if you passed one, has to be passed again —
-  the notice prints the full command including it.
-- **Reorder or drop fields** in the views by hand. Nothing depends on the order.
-- **Restart after the first run**, and any time a new `app/*` directory appears.
-- **Add the uniqueness validators** the `unique` notices ask for, if you have
-  unique indexes.
+  clauses from them.
+- **Reorder or drop fields** in the views.
+- **Restart server after the first run**.
 
 And to understand what you were handed:
 
