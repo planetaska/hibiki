@@ -18,11 +18,29 @@ own scaffold takes. Nothing in the generator knows what a "book" is.
 Your `rails g scaffold` is untouched. These live under their own namespace and
 nothing registers as Rails' `scaffold_controller`.
 
+## Before you run it
+
+The generated views are stamped through `Hibiki::Rails::Helpers` and driven by
+the gem's packaged Stimulus controller, so the one-time install has to have
+happened first:
+
+```sh
+bin/rails g hibiki:rails:install
+```
+
+That registers the client, includes the helpers, and writes the `ApplicationCable`
+boilerplate a stock app doesn't have until its first `rails g channel`. See
+[Quick start]({{ "/rails-quick-start/" | relative_url }}) if you haven't done it.
+The scaffold generators check and print a `hint` if it's missing, but they will
+still write their files — a generated page whose island never subscribes looks
+like a dead page, not like a missing install.
+
 ## The two commands
 
 ```sh
 # Model, migration, fixtures, route, and the reactive resource
 bin/rails g hibiki:rails:scaffold Book title:string available:boolean author:references
+bin/rails db:migrate
 
 # For a model you already have — the schema is read for you
 bin/rails g hibiki:rails:scaffold_controller Book
@@ -239,6 +257,11 @@ validator costs a query on every save, and whether to pay that is your call.
 ### `skip` — a column the generator left out
 
 With the reason.
+
+### `hint` — the client isn't wired
+
+`hibiki:rails:install` hasn't run, or has been partly undone. Nothing on the
+generated page will be live until it does.
 
 ## Loading and connection state
 
