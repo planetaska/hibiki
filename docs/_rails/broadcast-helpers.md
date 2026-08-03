@@ -1,6 +1,6 @@
 ---
 title: Broadcast helpers
-nav_order: 10
+nav_order: 12
 ---
 
 # Broadcast helpers
@@ -26,7 +26,11 @@ Replace the element with DOM id `target`. The rendering options are whatever Tur
 
 ## `broadcast_morph(target:, **rendering)`
 
-Same replace, but delivered as a Turbo 8 morph (`method="morph"`). Morphing patches the existing DOM instead of swapping the subtree, so focus, scroll position, and unchanged elements survive the update. Prefer it for fragments the user interacts with; plain `broadcast_replace` is fine for display-only fragments.
+Same replace, but delivered as a Turbo 8 morph (`method="morph"`). Morphing patches the existing DOM instead of swapping the subtree, so focus, scroll position, and unchanged elements survive the update.
+
+**Reach for morph wherever a form can be open inside the fragment**, and treat plain `broadcast_replace` as the display-only case. A replace under an open inline form moves focus to `<body>` and drops the caret; a morph keeps both, because idiomorph pairs subtrees by id and Turbo passes `ignoreActiveValue`. On a growing list morphed at the very bottom of the document, scroll position and every element's rect measure identically before and after.
+
+That last property has a price, and it is the one thing morph asks of your markup: **every child of the morphed container needs a stable id**. Rows, the empty-state paragraph, a trailing load-more wrapper — all of them. Idiomorph pairs by id, and an id-less trailing node is matched *positionally* against the last row and rebuilt, which is exactly the node most likely to be under the reader's cursor. Ids also have to be stable across a row's own display/edit switch, or the swap that opens the form reads as a delete plus an insert.
 
 ## `broadcast_refresh`
 
@@ -42,6 +46,32 @@ def build_graph
   broadcast_refresh_effect { @list.items }  # any change to items → one refresh per burst
 end
 ```
+
+## What a channel-rendered partial can read
+
+A partial rendered from a channel is rendered **outside a request**, and that is a bigger difference than it looks. There is no controller, so:
+
+- `action_name` is `nil` and `controller_name` is `"application"`
+- `params` and `session` are empty
+- instance variables a controller would have set do not exist
+
+**Nothing raises.** A partial that branches on `action_name == "edit"` simply takes the other branch, forever, and a partial that reads `@book` renders a blank. This is the failure mode to design against, because it looks like a rendering bug rather than a missing-context one.
+
+The fix is to give the partial everything through locals, with defaults, and to say so at the top:
+
+```erb
+<%# locals: (books:, page: 1, editing_id: nil) -%>
+```
+
+A strict-locals header turns a forgotten local into an error at render time instead of a `nil` three lines later — worth it for any partial two code paths render, which is every partial a render effect touches (the controller paints it first, the effect repaints it after).
+
+`assigns:` does work, and is the escape hatch for a legacy partial you can't rewrite:
+
+```ruby
+broadcast_replace target: "book", partial: "books/book", assigns: { book: }
+```
+
+Treat it as an escape hatch rather than the normal way. It re-creates the implicit coupling that made the partial hard to render from two places to begin with.
 
 ## Where these broadcasts go
 

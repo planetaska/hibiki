@@ -1,6 +1,6 @@
 ---
 title: Working with ActiveRecord
-nav_order: 8
+nav_order: 9
 ---
 
 # Working with ActiveRecord
@@ -216,6 +216,8 @@ end
 
 Every keystroke writes `title`, `valid?` and `error` re-derive, and the [reactive value]({{ "/reactive-values/" | relative_url }}) repaints the error live — no round-trip to the database until `save`. Unsaved edits, dirty checking, and cross-field validation all become ordinary deriveds over the form's signals.
 
+That form object is worth writing by hand once, because it is the shape everything else here builds on. After that, `Hibiki::Rails::ReactiveForm` writes it for you — `reactive_attributes Todo, :title, :done` generates the states, the hydrator and the writer, and adds wire-type casting, dirty tracking, and the model's own errors mirrored into per-field slots. See [Reactive forms]({{ "/reactive-forms/" | relative_url }}).
+
 ## Other writers: bridging `after_commit` into the graph
 
 Everything so far assumed the channel's own actions are the only writers. They rarely are — most writes in a Rails app happen in a controller action, and the rest come from background jobs, other users' channels, or the console. The graph can't see any of those, so something has to carry "this table changed" from wherever the write happened to every live graph that cares.
@@ -335,7 +337,9 @@ Broadcasting from each controller action *instead* of from the model works too, 
 |---|---|
 | Snapshot + write-through | A small page, a first pass — accept the per-mutator re-fetch discipline |
 | Version signal + lazy derived query | The default for anything list-shaped |
-| Reactive form object | Editing a single record; live validation and dirty state |
+| [Reactive form object]({{ "/reactive-forms/" | relative_url }}) | Editing a single record; live validation and dirty state |
 | `after_commit` bridge | Rows change outside the channel's own actions — controllers, jobs, other users |
 
 The version-signal pattern is the backbone; the form object sits beside it for edit screens, and the bridge layers on top when there are other writers. And whichever you pick, the two boundary rules never bend: records stop at the boundary, and every database write is paired with a signal write.
+
+For a standard CRUD resource, all three arrive together: [`hibiki:rails:scaffold`]({{ "/crud-scaffolding/" | relative_url }}) generates the version signal, the form object and the `after_commit` bridge — including the half Rails' own scaffold never writes, on each model a `belongs_to` points at. Reading the generated channel beside this page is a reasonable way to see the patterns composed.

@@ -1,6 +1,6 @@
 ---
 title: Troubleshooting
-nav_order: 12
+nav_order: 14
 ---
 
 # Troubleshooting
@@ -35,6 +35,14 @@ If frames flow but a specific control does nothing, check the wiring between the
 - For the Stimulus shape in a jsbundling/vite app, the controller must be registered in `controllers/index.js` (the generator appends it; `stimulus:manifest:update` also regenerates it).
 - Check the browser **Console** tab for JS errors — a controller that throws in `connect()` never subscribes, and everything downstream stays dead.
 
+## A new class raises `NameError` in development
+
+If a class you just added under `app/` is not found — typically after running a generator that created a whole directory, like `app/forms/` — **restart the server**. Rails computes its autoload paths from the `app/*` glob **at boot**, so a directory that did not exist when the server started is not an autoload root, and nothing inside it is autoloadable no matter how many times the code reloader runs.
+
+Adding a file to a directory Rails already knows about is fine and needs no restart. It is the new *directory* that doesn't reload.
+
+The same rule catches `config/initializers/`: initializers run once at boot and do not reload. Change one and the server has to come back up.
+
 ## Updates arrive but the page doesn't change
 
 - On the broadcast/transmit fragment transports, fragments are matched by **DOM id**: the `target:` in `broadcast_replace` (or the root id of a transmitted fragment) must equal the id of an element actually on the page. Typos here fail silently.
@@ -46,10 +54,15 @@ On the Turbo-broadcast transport, effects do their first run before the page's `
 
 ## Signals change but effects don't re-run
 
-Two core-library rules surface often in channels:
+Three core-library rules surface often in channels:
 
 - Writing an **equal** value (`==`) is a deliberate no-op — it does not notify subscribers.
+- An effect re-runs only when a value it actually read has **changed** (`==`), compared at the batch flush. So an action can write signals, invalidate deriveds, re-query the database, and still correctly broadcast **nothing**. See [when an effect re-runs]({{ "/lifecycle-in-detail/" | relative_url }}).
 - Mutating a value in place (`items << item`, `hash[:k] = v`) doesn't write the signal at all, so nothing is notified. Assign a new value instead: `self.items = items + [item]`. See [the mutable-defaults reference]({{ "/mutable-defaults/" | relative_url }}).
+
+The second one is worth sitting with before treating a silent action as a bug. An action that toggles a row already in the state it was asked for, or that writes a row excluded by the current filter, costs **zero bytes on the wire** — that is the gate working, not a fault. It is also why the client clears its busy indicator on a [post-batch ack]({{ "/the-js-client/" | relative_url }}) rather than on an incoming render: waiting for bytes that never come would leave a spinner on forever.
+
+The trap in the other direction: an effect that must fire on every *write* rather than every *change* should read a value that genuinely changes — a version counter, not a re-queried list that happens to compare equal.
 
 ## State resets in development
 
