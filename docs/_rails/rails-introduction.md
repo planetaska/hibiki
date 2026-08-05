@@ -16,4 +16,4 @@ A graph lives per cable connection (in practice: per browser tab): it is built w
 
 For Phlex apps, a second sister gem, `hibiki_phlex`, turns Phlex components into reactive components with a render effect per component (see [Phlex support]({{ "/phlex-support/" | relative_url }})).
 
-Supports Rails >= 7.1, Ruby >= 3.4.
+Supports Rails >= 8.0, Ruby >= 3.4.

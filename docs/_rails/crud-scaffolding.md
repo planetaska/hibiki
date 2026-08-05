@@ -68,7 +68,8 @@ Per resource, with `Book` as the example:
 | `app/models/book_row.rb` | A `Data` projection: one plain value per row, so the graph never holds a live record |
 | `app/forms/book_form.rb` | A [reactive form]({{ "/reactive-forms/" | relative_url }}) over the model's attributes |
 | `app/controllers/books_controller.rb` | Scaffold-shaped; still serves the first paint and the non-JS path |
-| `app/views/books/*` | `index`/`show`/`new`/`edit` plus `_list`, `_book`, `_book_form`, `_form`, `_controls`, `_pagination`, `_field_error`, `_busy` |
+| `app/views/books/*` | `index`/`show`/`new`/`edit` plus `_list`, `_book`, `_book_form`, `_form`, `_controls`, `_pagination`, `_field_error` (or the Phlex equivalents under `--phlex`) |
+| `app/assets/stylesheets/hibiki_busy.css` | The loading and connection recipes. **Per app, not per resource** — a second scaffold finds it and leaves it alone |
 
 Two of those are worth knowing about before you read the code.
 
@@ -96,6 +97,7 @@ paths from the `app/*` glob at boot — see the restart notice below.
 | `--skip-search` | Omit the search box and the `LIKE` terms behind it |
 | `--page-size=N` | Rows per page (default 20) |
 | `--skip-routes` | Don't touch `config/routes.rb` |
+| `--phlex` | Phlex components under `app/views/**.rb` instead of ERB templates |
 
 `--css=none` means no *styling* class. The `hbk-*` hooks the loading state needs
 are structural, not decorative, and stay in every variant.
@@ -256,9 +258,11 @@ user can see.
 | relative_url }})** — the states, the attributes, the reserved payload key and
 the timing knobs. What follows is only what the generator does with it.
 
-`app/views/books/_busy.html.erb` is the app's half of the contract: a small
-`<style>` block, rendered once per page and deliberately outside the island, that
-maps the client's attributes onto five sites.
+`app/assets/stylesheets/hibiki_busy.css` is the app's half of the contract: a
+stylesheet that maps the client's attributes onto five sites. It is written once
+per app rather than once per resource — every rule keys on an attribute the
+client stamps, and none of them mentions a model — and the generator wires it in
+for you.
 
 | Site | What you see |
 | --- | --- |
@@ -273,9 +277,23 @@ Three things about that file are worth knowing.
 **It is app code, not gem code.** Rewrite it, restyle it, delete sites you don't
 want. Nothing in the gem reads it.
 
-**It is an inline `<style>`** — no build step, and no guess about which asset
-pipeline your app uses. If you turn on a Content-Security-Policy that forbids
-inline styles, move it into `app/assets/stylesheets`.
+**It gets onto the page one of four ways**, and the post-install output tells you
+which. A cssbundling or tailwindcss-rails entry stylesheet gets an `@import`; a
+layout already using `stylesheet_link_tag :app` or `:all` needs nothing at all,
+because Propshaft's bulk helper picks the file up; anything else gets a
+`stylesheet_link_tag` injected into the layout. Only when none of those applies
+does the generator print the line for you to add — and if you ignore it the
+failure is silent, because the file is on disk and simply nothing links it.
+
+**Its rules are unlayered on purpose.** Two of them set `display` on elements
+that also carry Tailwind utility classes, and unlayered declarations beat
+`@layer utilities` whatever the link order. Wrap the file in a layer and every
+control spinner becomes permanently visible.
+
+> Scaffolded before 0.5.0? These rules used to be an inline `<style>` in
+> `app/views/<resource>/_busy.html.erb`. A generator never deletes, so re-running
+> leaves that partial on disk with nothing rendering it. The post-install output
+> names it; delete it.
 
 **No generated view gained an `if loading` branch**, and that is deliberate.
 During a round trip the list on screen is *stale*, not absent — the
@@ -288,6 +306,65 @@ Two smaller choices you may want to keep if you rewrite it: buttons and links ar
 and text inputs are deliberately left alone (a debounced search fires while the
 user is still typing, and dimming the field they are typing into reads as a
 fault).
+
+## Phlex instead of ERB
+
+`--phlex` emits Phlex components under `app/views/books/*.rb` instead of ERB
+templates:
+
+```sh
+bin/rails g hibiki:rails:scaffold Book title:string author:references --phlex
+```
+
+It needs the `phlex-rails` gem and `bin/rails g phlex:install`, whose initializer
+autoloads `app/views` under the `Views` namespace. The generator warns if either
+is missing and writes the files anyway, so the scaffold can come first — but the
+warning matters: without that initializer every generated page raises
+`NameError` on its first request.
+
+> Not to be confused with the `hibiki_phlex` gem, which is a different idiom.
+> There the *component* owns reactive state and a render effect re-renders it.
+> Here the *channel* owns the state, so these components are ordinary stateless
+> views that get their locals as keyword arguments. See
+> [Phlex support]({{ "/phlex-support/" | relative_url }}) for the other one.
+
+**Only the view layer changes.** The channels, the query object, the
+`ReactiveForm`, the model injections, every action and the whole `data-hibiki-*`
+protocol are identical either way. Outside the templates the difference is two
+lines: the controller renders `Views::Books::Index.new(...)` explicitly at each
+site, and the channels broadcast `renderable:` instead of `partial:`.
+
+Naming follows Phlex rather than Rails partials — no leading underscore, no
+`.html.erb`, and no `_book`/`_book_form` rename, because a component is reached
+by constant:
+
+| ERB | Phlex |
+| --- | --- |
+| `app/views/books/index.html.erb` | `app/views/books/index.rb` → `Views::Books::Index` |
+| `app/views/books/_book.html.erb` | `app/views/books/row.rb` → `Views::Books::Row` |
+| `app/views/books/_book_form.html.erb` | `app/views/books/row_form.rb` → `Views::Books::RowForm` |
+
+The strict-locals header becomes a keyword initializer, which is a genuine
+upgrade: Ruby enforces it, so a wrong local raises at the call site naming the
+argument instead of rendering blank.
+
+Four differences from ERB show up in the generated code and are worth
+recognising, because none of them is a style choice:
+
+- Phlex renders `String`, `Symbol`, `Integer` and `Float` and **raises** on
+  anything else, so date, time and decimal columns are emitted with `to_s`.
+- Phlex **omits a `false`-valued attribute**, so the page control's `data-turbo`
+  is the string `"false"` — as a boolean it would vanish and Turbo Drive would
+  take the click back.
+- Phlex emits **no whitespace between siblings**, so the components space their
+  inline neighbours explicitly. Without that, `Title:` runs into its value.
+- `options_for_select` outputs directly and raises if its return value is passed
+  on, so both select sites take their options from a block.
+
+The one thing you give up is idiomatic Phlex in the full-page form: it is built
+on the `form_with` builder rather than hand-rolled elements, which keeps
+`form.label` / `form.collection_select` and therefore for/id pairing and the
+`min:`/`max:` injection.
 
 ## Sorting, and where empty values land
 
