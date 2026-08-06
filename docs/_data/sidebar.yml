@@ -2,5 +2,7 @@
   collection: guides
 - title: Rails Integration
   collection: rails
-- title: References
+- title: Rails References
+  collection: ref_rails
+- title: Core References
   collection: references

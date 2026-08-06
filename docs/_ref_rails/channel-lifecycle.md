@@ -1,6 +1,6 @@
 ---
 title: Channel lifecycle
-nav_order: 11
+nav_order: 7
 ---
 
 # Channel lifecycle

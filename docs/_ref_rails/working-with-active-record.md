@@ -1,6 +1,6 @@
 ---
 title: Working with ActiveRecord
-nav_order: 9
+nav_order: 1
 ---
 
 # Working with ActiveRecord

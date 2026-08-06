@@ -86,6 +86,9 @@ collections:
   references:
     output: true
     permalink: "/:name/"
+  ref_rails:
+    output: true
+    permalink: "/:name/"
 
 defaults:
   - scope:

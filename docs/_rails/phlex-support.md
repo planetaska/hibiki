@@ -1,16 +1,9 @@
 ---
 title: Phlex support
-nav_order: 8
+nav_order: 7
 ---
 
 # Phlex support
-
-> **Two different Phlex idioms live in this project, and this page is the first
-> one.** Here a *component* owns reactive state and a render effect re-renders
-> it. The CRUD scaffold's `--phlex` flag is the other: there the *channel* owns
-> the state, so its components are ordinary stateless views and `hibiki_phlex`
-> is not involved at all. If you are looking for that, it is on
-> [CRUD scaffolding]({{ "/crud-scaffolding/" | relative_url }}).
 
 Phlex support comes from the gem `hibiki_phlex`: reactive components. A Phlex component is a plain Ruby object, so `Hibiki::Reactive` gives it per-instance signals read as ordinary method calls — no `.value` anywhere in `view_template` — and a **render effect** re-renders it whenever one of those signals changes.
 
@@ -94,3 +87,11 @@ Phlex components are one-shot: an instance renders once, and a second `call` rai
 
 - the gemspec allows only verified Phlex minors (`>= 2.4, < 2.5`), and
 - a contract spec pins the upstream behavior itself, so bumping the bound fails loudly in CI if the internals moved.
+
+## Avoid confusion with CRUD scaffolding
+
+**Two different Phlex idioms live in this project.** Here a *component* owns reactive state and a render effect re-renders
+it. The CRUD scaffold's `--phlex` flag is the other: there the *channel* owns
+the state, so its components are ordinary stateless views and `hibiki_phlex`
+is not involved at all. If you are looking for that, it is on
+[CRUD scaffolding notes]({{ "/crud-notes/#phlex-instead-of-erb" | relative_url }}).

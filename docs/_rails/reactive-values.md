@@ -1,6 +1,6 @@
 ---
 title: Reactive values
-nav_order: 7
+nav_order: 6
 ---
 
 # Reactive values
@@ -28,7 +28,5 @@ end
 This is transport- and shape-agnostic: `transmit_value` always uses the channel's own `transmit`, which every `ChannelController` handles — so it works the same whether the page runs the generic packaged controller or a `ChannelController` subclass, and it composes with a page whose other fragments ride Turbo broadcasts: one channel can serve a fragment over broadcast and a value over transmit at the same time. A subclass that overrides `received` should call `super` (or handle the `value` message itself) to keep reactive values live.
 
 Cost and caveats: this is cheap — it rides the island's existing subscription and controller (no new Stimulus instance, no new channel), adding just one server-side effect and a tiny payload per value. Values are text, never markup — the client assigns `textContent`, so nothing is interpreted as HTML; for markup, use a fragment. And when several values always change together, one partial/component fragment beats N spans.
-
-The `data-hibiki-*` attributes the helpers emit are a private contract with the vendored JS — they version together; don't hand-write them in app code. The protocol does have a **client-written half**, though: `data-hibiki-busy` and `data-hibiki-state` are stamped at runtime by the client and no helper emits them. Those your app is meant to *read* — from CSS — and still never to write. See [loading and connection state]({{ "/the-js-client/" | relative_url }}).
 
 The helper interface's shape is inspired by [phlex-reactive](https://phlex-reactive.zoolutions.llc)'s `on(...)` actions.
