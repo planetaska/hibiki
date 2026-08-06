@@ -63,7 +63,7 @@ The fix is to give the partial everything through locals, with defaults, and to 
 <%# locals: (books:, page: 1, editing_id: nil) -%>
 ```
 
-A strict-locals header turns a forgotten local into an error at render time instead of a `nil` three lines later — worth it for any partial two code paths render, which is every partial a render effect touches (the controller paints it first, the effect repaints it after).
+A strict-locals header turns a forgotten local into an error at render time instead of a `nil` three lines later — worth it for any partial that two code paths render, which is every partial a render effect touches (the controller paints it first, the effect repaints it after).
 
 `assigns:` does work, and is the escape hatch for a legacy partial you can't rewrite:
 

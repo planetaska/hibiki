@@ -108,13 +108,15 @@ counter.increment      # prints "count is now 1"
 counter.doubled        # => 2
 ```
 
-Signals are per-instance and created lazily; subclasses inherit all declarations. Use the block form for mutable defaults — a positional default is one object shared by every instance; see [Mutable state defaults](docs-md/mutable-defaults.md) for the details.
+Signals are per-instance and created lazily; subclasses inherit all declarations. Use the block form for mutable defaults — a positional default is one object shared by every instance; see [Mutable state defaults](https://planetaska.github.io/hibiki/mutable-defaults/) for the details.
 
 ## Documentation
 
-Documentation site: <https://planetaska.github.io/hibiki/>
+Full documentation: <https://planetaska.github.io/hibiki/>
 
-More detail in plain markdown: [docs-md/](docs-md/)
+- [Guide](https://planetaska.github.io/hibiki/introduction/) — getting started, class-based reactivity, advanced usage
+- [Rails](https://planetaska.github.io/hibiki/rails-introduction/) — the `hibiki_rails` and `hibiki_phlex` integration, generators, CRUD scaffolding
+- [Reference](https://planetaska.github.io/hibiki/threading-model/) — threading model, lifecycle in detail, status and limitations
 
 ## Development
 

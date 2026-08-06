@@ -5,23 +5,23 @@ nav_order: 4
 
 # CRUD scaffolding
 
-To help increase productivity, `hibiki_rails` comes with its own sets of scaffolding. Just like `rails g scaffold` gives you a resource that works by reloading the page, Hibiki's scaffold generators give you the same resource, but **live**: search, filtering, sorting and pagination do not require page loads, rows edit in place, and a write from anywhere — another tab, another user, the plain controller, a console — re-renders every open index list.
+`hibiki_rails` comes with its own scaffold generators. Just like `rails g scaffold` gives you a resource that works by reloading the page, Hibiki's scaffold generators give you the same resource, but **live**: search, filtering, sorting and pagination do not require page loads, rows edit in place, and a write from anywhere — another tab, another user, the plain controller, a console — re-renders every open index list.
 
-By default, every required information for resources is derived from the model's schema (columns, types, `belongs_to` reflections, validators), or from the same `field:type` argument list that Rails' own scaffold takes. Once generated, you can then customize the scaffolded resource to fit your needs.
+Everything the generator needs is derived from the model's schema (columns, types, `belongs_to` reflections, validators), or from the same `field:type` argument list that Rails' own scaffold takes. Once it has run, reshape the result to fit your needs.
 
-The generator also serves as a best practice example. We tested different approaches and measured the best pattern for a reactive scaffold. The core concept for the generator is: you should be able to build on top of the scaffold, not tearing down and rebuild.
+The output doubles as a worked example: several approaches were measured before settling on the pattern it emits. The guiding principle is that you should be able to build **on top of** the scaffold rather than tear it down and start over.
 
 ## Basic scaffold commands
 
 You can run the scaffold in two styles:
 
-#### 1. Full Scaffold
+### 1. Full scaffold
 
 ```sh
 bin/rails g hibiki:rails:scaffold RESOURCE_NAME FIELD:TYPE
 ```
 
-The full scaffold creates: model, migration, fixtures, route, and the reactive resource. It works just like regualr Rails scaffolds.
+The full scaffold creates the model, migration, fixtures, route and the reactive resource. It works just like a regular Rails scaffold.
 
 Example:
 
@@ -31,9 +31,9 @@ bin/rails g hibiki:rails:scaffold Book title:string available:boolean author:ref
 bin/rails db:migrate
 ```
 
-#### 2. Scaffold from existing model
+### 2. Scaffold from an existing model
 
-For existing model, use `scaffold_controller` like you would in regular Rails. The resource schema is automatically derived from your existing model.
+For a model you already have, use `scaffold_controller` like you would in regular Rails. The resource schema is derived from that model for you.
 
 Example:
 
@@ -42,23 +42,23 @@ Example:
 bin/rails g hibiki:rails:scaffold_controller Book
 ```
 
-#### Scaffolding with style
+### Scaffolding with style
 
-Hibiki's scaffold supports TailwindCSS and DaisyUI if you wish to use them for styling, and provides a basic pre-built style for you. If you wish to use them, simply add a `--css` argument for the scaffold.
+The scaffold supports Tailwind CSS and DaisyUI pre-built styling. To pick a variant, pass a `--css` argument.
 
 Example:
 
 ```sh
-# This creates reactive views with TailwindCSS styling
+# This creates reactive views with Tailwind CSS styling
 bin/rails g hibiki:rails:scaffold Book title:string ... --css=tailwind
 
-# Or if you have DaisyUI installed
+# Or, if you have DaisyUI installed
 bin/rails g hibiki:rails:scaffold Book title:string ... --css=daisyui
 ```
 
-#### Infinite scroll
+### Infinite scroll
 
-The generator can also generator a basic infinite scroll page for you. This is achieved with IntersectionObserver. Since Hibiki is a reactive library, supporting infinite scroll becomes trivial and comes with minimal overhead.
+The generator can create an infinite-scroll index page instead of a paginated one, backed by an `IntersectionObserver`. Because the index list is already reactive, the cost is minimal.
 
 Example:
 
@@ -67,9 +67,9 @@ Example:
 bin/rails g hibiki:rails:scaffold Book title:string ... --infinite-scroll
 ```
 
-#### Phlex support
+### Phlex support
 
-Phlex is supported if you wish to use it. The generator will now create Phlex component views instead of regular ERB pages.
+Generating Phlex views is supported if you wish to use it. Pass `--phlex` and the generator writes Phlex component views instead of ERB templates.
 
 Example:
 
@@ -78,9 +78,9 @@ Example:
 bin/rails g hibiki:rails:scaffold Book title:string ... --phlex
 ```
 
-#### Rails's own resources are also generated
+### Rails' own resources are generated too
 
-`hibiki:rails:scaffold` subclasses Rails' own resource generator, so the model, its migration, its fixtures and the route all come from Rails, unchanged. This way, you can expect all regular Rails resources are still available when you need them (e.g for third party tools).
+`hibiki:rails:scaffold` subclasses Rails' own resource generator, so the model, its migration, its fixtures and the route all come from Rails, unchanged. Everything a regular Rails resource gives you is still there when you need it — for third-party tooling, for instance.
 
 Namespaced names work (`admin/book`), as they do for the [component-shape generators]({{ "/generators/" | relative_url }}).
 
@@ -103,13 +103,13 @@ Per resource, with `Book` as the example:
 
 | Option | Effect |
 | --- | --- |
-| `--css=NAME` | Class name markup variant for every generated view: `daisyui`, `tailwind` or `none`. Absent means detect — DaisyUI, then Tailwind, then stock. |
-| `--infinite-scroll` | Grow the page on scroll instead of standard pagination |
-| `--skip-pagination` | Skips pagination altogether |
+| `--css=NAME` | Class-name markup variant for every generated view: `daisyui`, `tailwind` or `none`. Absent means detect — daisyUI, then Tailwind, then stock. |
+| `--infinite-scroll` | Grow the page on scroll instead of paginating it |
+| `--skip-pagination` | Skip pagination altogether |
 | `--skip-search` | Omit the search box and the `LIKE` terms behind it |
 | `--page-size=N` | Rows per page (default 20) |
 | `--skip-routes` | Don't touch `config/routes.rb` |
-| `--phlex` | Phlex components under `app/views/**.rb` instead of ERB templates |
+| `--phlex` | Phlex components under `app/views/<resource>/` instead of ERB templates |
 
 ## What to do next
 
@@ -117,12 +117,13 @@ The generated app is a **starting point**. Every file it writes is ordinary Rail
 
 The most common next steps:
 
-- **Add validators**, then add by hand or re-run `scaffold_controller` to derive the live validation messages from them.
+- **Restart the server after the first run.** `app/forms/` is almost certainly a new directory, and Rails computes its autoload paths at boot — until you restart, the new constants raise `NameError`.
+- **Add validators to the model**, then either write the live validation clauses into the form by hand or re-run `scaffold_controller` to derive them again.
 - **Reorder or drop fields** in the views.
-- **Restart server after the first time you ran the generator**.
 
 And to understand what you were handed:
 
+- [CRUD notes]({{ "/crud-notes/" | relative_url }}) — what the generator modifies in files you already own, the post-install notices, and the choices behind the output.
 - [The JS client]({{ "/the-js-client/" | relative_url }}) — the island, the helpers, the events, and the loading/connection attributes.
 - [Reactive values]({{ "/reactive-values/" | relative_url }}) — the counts sentence and the sort label, which live outside the replaced fragment.
 - [Reactive forms]({{ "/reactive-forms/" | relative_url }}) — what `app/forms/book_form.rb` is.

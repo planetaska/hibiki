@@ -6,6 +6,7 @@
   url: /rails-introduction/
   collections:
     - rails
+    - ref_rails
 - title: Reference
   url: /threading-model/
   collections: 

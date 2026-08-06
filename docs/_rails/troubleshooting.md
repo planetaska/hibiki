@@ -19,7 +19,7 @@ If there is no `/cable` connection at all, ActionCable itself isn't set up — c
 
 ## Is the server sending?
 
-Watch the Rails server log while you click (most cable lines are debug-level, which development's default log level shows):
+Watch the Rails server log while you click (most cable lines are debug-level, which development's default log level includes):
 
 - The subscription logs as `CounterChannel is transmitting the subscription confirmation` (or a rejection).
 - Each action logs its signature, e.g. `CounterChannel#increment({...})`.

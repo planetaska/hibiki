@@ -2,9 +2,10 @@
 title: Loading state
 nav_order: 4
 ---
+
 # Loading and connection state
 
-Every reactivity in this stack is server-side, so every gesture is a round trip. The client stamps what it knows about that trip on the island; turning those attributes into something a user can see is CSS the app owns.
+All reactivity in this stack is server-side, so every gesture is a round trip. The client stamps what it knows about that trip on the island; turning those attributes into something a user can see is CSS the app owns.
 
 ```
 island root      data-hibiki-busy      present while an action is in flight
@@ -39,7 +40,7 @@ Note what is *not* in that table: a first-paint loading state. There is no such 
 
 ### Actions performed before the subscription confirms
 
-ActionCable's `Subscription#perform` silently returns false on a socket that isn't open yet, and on the Turbo-broadcast path the window before confirmation is about three serialised round trips — tens of milliseconds on localhost, about a second on a real link. Clicks in that window used to vanish.
+ActionCable's `Subscription#perform` silently returns false on a socket that isn't open yet, and on the Turbo-broadcast path the window before confirmation is about three serialized round trips — tens of milliseconds on localhost, about a second on a real link. Clicks in that window used to vanish.
 
 They are now **queued and flushed** when the server confirms the subscription.
 
@@ -74,6 +75,7 @@ class SlowLink extends HibikiController {
 
 export default SlowLink
 ```
+
 ### Two things this is not
 
 **Not optimistic UI.** Svelte can update before the server answers because the client owns the state; hibiki deliberately does not. Pending feedback *is* the substitute.

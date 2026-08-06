@@ -30,7 +30,7 @@ end
 {: data-title="The TodoList we will be working on"}
 
 Everything here is view- and transport-agnostic — the same patterns apply to the ERB-partial style, with the channel holding the signals instead of a component.
-In other words: if you are working with ERB/ViewComponent partials, you should define `state, derived, etc...` inside the Channel file.
+In other words: if you are working with ERB or ViewComponent partials, declare your `state` and `derived` values inside the channel rather than in a component.
 {: .tip }
 
 ## What not to do
@@ -128,7 +128,7 @@ The deficiency is the discipline it demands: every mutator must remember its `se
 Invert the relationship. Instead of caching data in state and refilling it, hold an **invalidation token** and let a derived own the query:
 
 ```ruby
-state :db_version, 0 # a temporary token
+state :db_version, 0 # the invalidation token
 
 derived(:items) do
   db_version   # the tracked dependency — the query re-runs when it bumps

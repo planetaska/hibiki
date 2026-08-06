@@ -25,7 +25,7 @@ The handlers apply exactly as in a stock channel; the only difference is that th
 
 ## 2. `Hibiki.error_handler` — effect errors
 
-When an action's write invalidates effects, those effects re-run *after* the action body — so an error raised inside an effect isn't in the action's stack and `rescue_from` alone may not be where you want to reason about it. The core gem provides an app-level hook for exactly this:
+When an action's write invalidates effects, those effects re-run *after* the action body — so an error raised inside an effect is not on the action's own stack, and `rescue_from` may not be where you want to reason about it. The core gem provides an app-level hook for exactly this:
 
 ```ruby
 # e.g. in an initializer

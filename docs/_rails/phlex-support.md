@@ -88,10 +88,6 @@ Phlex components are one-shot: an instance renders once, and a second `call` rai
 - the gemspec allows only verified Phlex minors (`>= 2.4, < 2.5`), and
 - a contract spec pins the upstream behavior itself, so bumping the bound fails loudly in CI if the internals moved.
 
-## Avoid confusion with CRUD scaffolding
+## Not the same as the scaffold's `--phlex`
 
-**Two different Phlex idioms live in this project.** Here a *component* owns reactive state and a render effect re-renders
-it. The CRUD scaffold's `--phlex` flag is the other: there the *channel* owns
-the state, so its components are ordinary stateless views and `hibiki_phlex`
-is not involved at all. If you are looking for that, it is on
-[CRUD scaffolding notes]({{ "/crud-notes/#phlex-instead-of-erb" | relative_url }}).
+**Two different Phlex idioms live in this project.** On this page a *component* owns reactive state, and a render effect re-renders it. The CRUD scaffold's `--phlex` flag is the other one: there the *channel* owns the state, so its components are ordinary stateless views and `hibiki_phlex` is not involved at all. If that is what you are after, see [Phlex instead of ERB]({{ "/crud-notes/#phlex-instead-of-erb" | relative_url }}).

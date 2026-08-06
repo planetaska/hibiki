@@ -24,7 +24,7 @@ For jsbundling/vite apps, `npm install hibiki-rails` — the [npm package](https
 | 0.2.0              | 0.2.0              | reactive values (`data-hibiki-value`) |
 | 0.1.0              | 0.1.0              | initial release |
 
-Upgrading: the [changelog](https://github.com/planetaska/hibiki-rails/blob/main/CHANGELOG.md) carries the per-release detail. One historical note: **0.3.0 fixed a security issue affecting Rails 7.1 and 7.2 apps only** — channel lifecycle methods were client-invocable there, because the ActionCable hook the gem used to hide them exists on 8.x alone. It matters for 0.4.0 and earlier; from 0.5.0 the gem requires Rails 8.0, so those versions cannot run it at all.
+Upgrading: the [changelog](https://github.com/planetaska/hibiki-rails/blob/main/CHANGELOG.md) carries the per-release detail. One historical note: **0.3.0 fixed a security issue affecting Rails 7.1 and 7.2 apps only** — channel lifecycle methods were client-invocable there, because the ActionCable hook the gem used to hide them exists on 8.x alone. It matters for 0.4.0 and earlier; from 0.5.0 the gem requires Rails 8.0, so those Rails versions cannot run it at all.
 
 ## Islands and helpers
 
@@ -46,7 +46,7 @@ The client is one generic Stimulus controller that drives any *island*: a DOM su
 
 ## Events and modifiers
 
-The left side of `->` names an **event**, and that is all it ever names. DOM events are a subset: `:click` (the default), `:change`, `:input`, `:submit`, plus the `:visible` pseudo-event. Everything else — how long to wait, whether to ask first, whether to reset — is a separate attribute scoped to the control, so the token list stays parseable by whitespace and one element can answer several events:
+`on` stamps the control with one `event->action` token per event, and the left side of that arrow names an **event** — that is all it ever names. DOM events are a subset: `:click` (the default), `:change`, `:input`, `:submit`, plus the `:visible` pseudo-event. Everything else — how long to wait, whether to ask first, whether to reset — is a separate attribute scoped to the control, so the token list stays parseable by whitespace and one element can answer several events:
 
 ```erb
 <%= tag.button(**on(:load_more, event: %i[click visible], with: { shown: rows.size })) %>
@@ -54,7 +54,7 @@ The left side of `->` names an **event**, and that is all it ever names. DOM eve
 
 | option | what it does |
 | ------ | ------------ |
-| `event:` | one event or a list. A list stamps one `event->action` token each. |
+| `event:` | one event, or a list of them. |
 | `with:` | a hash merged into every payload from this control. |
 | `debounce:` | milliseconds to let the gesture settle before performing. `:input` gets **250 ms by default** — pass `debounce: 0` to send every keystroke. The payload is built when the action fires, so the last value wins. |
 | `confirm:` | a `window.confirm` message. Declining performs nothing (and does not submit the form). Note that `data-turbo-confirm` does *not* work on a hibiki control — it isn't a Turbo-driven form. |

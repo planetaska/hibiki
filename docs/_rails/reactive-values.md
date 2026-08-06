@@ -23,10 +23,12 @@ def build_graph
 end
 ```
 
-`reactive(name, placeholder = "", tag_name: :span)` emits `<span data-hibiki-value="remaining">0</span>`; `transmit_value` wraps the block in an effect that transmits the fresh value whenever a signal the block reads changes, and the client writes it into **every** placeholder carrying that name — like styling by class name, one value may appear any number of times, anywhere on the page (including outside the island, e.g. a header badge). The name joins the two halves and must be page-unique across channels. Each placeholder keeps its own tag, classes, and attributes across updates (only its text changes), so different sites can style the same value differently. In Phlex components, stamp the placeholder yourself by splatting the attributes: `span(**reactive_attrs(:remaining)) { "0" }`.
+`reactive(name, placeholder = "", tag_name: :span)` emits `<span data-hibiki-value="remaining">0</span>`. `transmit_value` wraps the block in an effect that transmits the fresh value whenever a signal the block reads changes, and the client writes it into **every** placeholder carrying that name — much like styling by class name, one value may appear any number of times, anywhere on the page, including outside the island (a header badge, say).
+
+The name is what joins the two halves, so it must be page-unique across channels. Each placeholder keeps its own tag, classes and attributes across updates — only its text changes — so different sites can style the same value differently. In Phlex components, stamp the placeholder yourself by splatting the attributes: `span(**reactive_attrs(:remaining)) { "0" }`.
 
 This is transport- and shape-agnostic: `transmit_value` always uses the channel's own `transmit`, which every `ChannelController` handles — so it works the same whether the page runs the generic packaged controller or a `ChannelController` subclass, and it composes with a page whose other fragments ride Turbo broadcasts: one channel can serve a fragment over broadcast and a value over transmit at the same time. A subclass that overrides `received` should call `super` (or handle the `value` message itself) to keep reactive values live.
 
 Cost and caveats: this is cheap — it rides the island's existing subscription and controller (no new Stimulus instance, no new channel), adding just one server-side effect and a tiny payload per value. Values are text, never markup — the client assigns `textContent`, so nothing is interpreted as HTML; for markup, use a fragment. And when several values always change together, one partial/component fragment beats N spans.
 
-The helper interface's shape is inspired by [phlex-reactive](https://phlex-reactive.zoolutions.llc)'s `on(...)` actions.
+The shape of this helper interface is inspired by [phlex-reactive](https://phlex-reactive.zoolutions.llc)'s `on(...)` actions.

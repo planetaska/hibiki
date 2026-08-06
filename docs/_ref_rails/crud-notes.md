@@ -5,7 +5,16 @@ nav_order: 5
 
 # CRUD notes
 
-Two of those are worth knowing about before you read the code.
+Background for [`hibiki:rails:scaffold`]({{ "/crud-scaffolding/" | relative_url
+}}): why the generated code looks the way it does, what it changes in files you
+already own, and what each post-install notice is warning you about. None of it
+is needed to run the generator — read it before you start reshaping the output,
+or when something it emitted surprises you.
+
+## Two of the generated files, explained
+
+The scaffold's file list holds no surprises except these two, and both exist for
+a reason that isn't obvious from the outside.
 
 **`book_row.rb` exists because `ActiveRecord#==` compares class and id only.** A
 reloaded record is `==` to the stale one it replaces, so re-assigning a signal
@@ -21,7 +30,7 @@ hand-copied scope in the controller is where that drifts. It lives in
 `app/models` rather than a tidier `app/queries` because Rails computes autoload
 paths from the `app/*` glob at boot — see the restart notice below.
 
-### Options notes
+## Notes on two options
 
 `--css=none` means no *styling* class. The `hbk-*` hooks the loading state needs
 are structural, not decorative, and stay in every variant.
@@ -34,12 +43,13 @@ renders, and `#go_to_page` short-circuits on its first guard. One constant
 instead of `<% if paginated? %>` branching across five files. If you later want
 pages back, set the constant.
 
-## Field order decides generated form fields order
+## Field order decides the generated field order
 
 With no field list, the columns follow whatever `columns_hash` reports — which,
 for an app built from `schema.rb`, is alphabetical. A generated form can end up
 reading "Available, Intro, Title" where a person would have led with the title.
-There is no authored order to recover from a schema, so the argument list is the only clue:
+A schema carries no authored order to recover, so the argument list is the only
+clue the generator has:
 
 ```sh
 bin/rails g hibiki:rails:scaffold_controller Book title:string intro:text available:boolean
@@ -74,12 +84,13 @@ that same partial a live record, so without it the show page raises on arrival.
 
 **`config/routes.rb`** gains `resources :books`, unless `--skip-routes`.
 
-Two behaviours in there are worth stating (rather than leaving you to discover):
+Two of those behaviors are worth stating outright, rather than leaving you to
+discover them:
 
 ### `dependent:` follows the association, not the column
 
 - Required association → `dependent: :destroy`.
-- `optional: true` →`dependent: :nullify`.
+- `optional: true` → `dependent: :nullify`.
 
 Column nullability is the wrong signal: `belongs_to_required_by_default` means a
 nullable foreign key routinely backs a required association, and `:nullify` there
@@ -88,11 +99,13 @@ and re-running the generator will leave your choice alone.
 
 ### The broadcast ping is collection-grained
 
-Reaching each child's own member streamable (e.g broadcasting Author name change for all books related to that author) would mean loading every child inside
-the callback, unbounded, on every parent write. So the ping goes to the
-collection. The consequence: renaming a parent (the Author)
-repaints every open **index**, but an open child (the author's Book) **show** page keeps the stale
-label (author's name) until reload. The injected comment explains this - because otherwise it looks like a bug.
+Reaching each child's own member streamable — pushing an author's new name to
+every book that belongs to them — would mean loading every child inside the
+callback, unbounded, on every parent write. So the ping goes to the collection
+instead. The consequence: renaming an author repaints every open books
+**index**, but an open book **show** page keeps the stale author name until it
+is reloaded. The injected comment says as much, because otherwise it reads as a
+bug.
 
 ## Live validation is limited to what a form can check
 
@@ -137,7 +150,7 @@ The generator picks the association's first string column. If that is wrong, edi
 ### `order` — you can choose the field order
 
 Printed when the order came from the schema and there are more than two columns,
-with the command that would pick it. See "Field order decides generated form fields order", above.
+with the command that would pick it. See [Field order](#field-order-decides-the-generated-field-order), above.
 
 ### `fields` — a field with no column behind it
 
@@ -173,7 +186,7 @@ generated page will be live until it does.
 
 ## Loading and connection state
 
-Every reactivity in this stack is server-side, so every interaction is a round trip.
+All reactivity in this stack is server-side, so every interaction is a round trip.
 The client stamps what it knows about that trip on the island root and on the
 control that fired it; the generated app turns those attributes into something a
 user can see.
@@ -273,7 +286,7 @@ upgrade: Ruby enforces it, so a wrong local raises at the call site naming the
 argument instead of rendering blank.
 
 Four differences from ERB show up in the generated code and are worth
-recognising, because none of them is a style choice:
+recognizing, because none of them is a style choice:
 
 - Phlex renders `String`, `Symbol`, `Integer` and `Float` and **raises** on
   anything else, so date, time and decimal columns are emitted with `to_s`.
