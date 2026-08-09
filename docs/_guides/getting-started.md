@@ -49,7 +49,7 @@ y.value # => 11
 
 ## The three primitives
 
-**`state(v)`** — a writable signal. Reading `.value` registers a dependency; writing notifies subscribers. Writing an `==`-equal value is a no-op.
+**`state(v)`** — a writable signal. Reading `.value` registers a dependency; writing notifies subscribers. Writing an `==`-equal value is a no-op — overridable per signal with `equals:`; see [Custom equality]({% link _guides/advanced-usage.md %}#custom-equality-equals).
 
 ```ruby
 counter = state(0)

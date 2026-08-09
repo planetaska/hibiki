@@ -36,6 +36,31 @@ batch do
 end # prints "Grace Hopper" — once, not twice
 ```
 
+## Custom equality (`equals:`)
+
+A signal's equality decides two things: whether a write is a no-op, and whether an effect that read the signal actually re-runs at the batch flush. By default both questions are answered by `==`. Every signal can override this with `equals:` — Solid's `createSignal(value, { equals })` option, which `createMemo` takes too, so `derived` accepts it as well:
+
+- omitted or `nil` — `==`, the default behavior
+- a callable — a custom comparator, called with `(prev, next)`; truthy means "unchanged"
+- `false` — never equal: every write notifies, even of an `==`-equal value
+
+```ruby
+# Float tolerance: writes within 0.2 of the held value are no-ops
+temperature = state(20.0, equals: ->(prev, nxt) { (prev - nxt).abs < 0.2 })
+
+# Event streams: every push counts, repeats included
+clicks = state(nil, equals: false)
+clicks.value = :click # notifies
+clicks.value = :click # notifies again
+
+# A derived can smooth over its own recomputes the same way
+level = derived(equals: ->(a, b) { (a - b).abs < 0.01 }) { raw.value / peak.value }
+```
+
+The comparator is consulted at *both* places equality guards the graph — the write (`value=`) and the effect equality gate at the batch flush — so a change your comparator can see is never swallowed downstream, and a change it calls equal costs nothing.
+
+One caveat carries over from `==`: equality only ever sees assignments. Mutate an object held in a signal and re-assign it, and the comparator gets the same object on both sides — `equals: false` is the only setting that still notifies there.
+
 ## Lifecycle: `root` and `on_cleanup`
 
 Effects created while another effect runs are *owned* by it and disposed automatically when the owner re-runs or is disposed. For everything else there is `Hibiki.root` (Solid's `createRoot`): an ownership scope you tear down yourself — the anchor for long-lived graphs (a session, a connection) whose teardown is an external event.

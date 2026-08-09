@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`equals:` — a per-signal equality override** on `State` and `Derived`, and
+  passed through by the `state`/`derived` helpers in `Hibiki::DSL` and
+  `Hibiki::Reactive`. Solid's `createSignal(value, { equals })` shape:
+  omitted/`nil` keeps `==`; a callable is a custom comparator, called with
+  `(prev, next)`, truthy meaning "unchanged"; `equals: false` means every write
+  notifies. The override is honored at both places equality guards the graph —
+  the write gate (`State#value=`) and the effect equality gate at the batch
+  flush (new `Trackable#changed_from?`, consulted by
+  `Observer#sources_changed?`). Signals that don't pass `equals:` behave
+  exactly as before.
+
 ## [0.2.0] - 2026-07-29
 
 ### Changed
