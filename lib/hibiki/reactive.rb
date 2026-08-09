@@ -34,16 +34,16 @@ module Hibiki
       # instance, instance_exec'd, and untracked: first touch may happen
       # inside some effect's tracking window, and a default that reads other
       # signals must not subscribe that outer observer.
-      def state(name, default = nil, &default_block)
+      def state(name, default = nil, equals: nil, &default_block)
         init = proc do
-          State.new(default_block ? Hibiki.untrack { instance_exec(&default_block) } : default)
+          State.new(default_block ? Hibiki.untrack { instance_exec(&default_block) } : default, equals:)
         end
         define_method(name) { __hibiki_signal(name, init).value }
         define_method(:"#{name}=") { |new_value| __hibiki_signal(name, init).value = new_value }
       end
 
-      def derived(name, &)
-        init = proc { Derived.new { instance_exec(&) } }
+      def derived(name, equals: nil, &)
+        init = proc { Derived.new(equals:) { instance_exec(&) } }
         define_method(name) { __hibiki_signal(name, init).value }
       end
 

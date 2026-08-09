@@ -6,8 +6,12 @@ module Hibiki
     include Trackable # observed by downstream deriveds/effects
     include Observer  # observes its own dependencies
 
-    def initialize(&block)
+    # equals: per-signal equality (Solid's createMemo takes it too). A derived
+    # has no write gate, so it matters only at the flush gate — observers ask
+    # changed_from?, which consults it (see Trackable).
+    def initialize(equals: nil, &block)
       @block = block
+      @equals = equals
       @dirty = true
     end
 

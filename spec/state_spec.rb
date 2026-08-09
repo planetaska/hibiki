@@ -40,6 +40,51 @@ RSpec.describe Hibiki::State do
     counter.value = 1
   end
 
+  describe "equals:" do
+    # ActiveRecord-shaped equality: == says "same row" even when the
+    # attributes moved. The comparator sees what == cannot.
+    let(:record_class) do
+      Struct.new(:id, :name) do
+        def ==(other) = self.class == other.class && id == other.id
+      end
+    end
+
+    it "notifies when the comparator sees a change == would swallow" do
+      row = described_class.new(record_class.new(1, "old"), equals: ->(a, b) { a.name == b.name })
+      Hibiki.track(observer) { row.value }
+
+      expect(observer).to receive(:invalidate)
+      row.value = record_class.new(1, "new") # == the held row, but renamed
+    end
+
+    it "drops a write the comparator calls equal, even when == differs" do
+      level = described_class.new(1, equals: ->(a, b) { a.abs == b.abs })
+      Hibiki.track(observer) { level.value }
+
+      expect(observer).not_to receive(:invalidate)
+      level.value = -1
+    end
+
+    it "always notifies with equals: false, even for an == value" do
+      name = described_class.new("ruby", equals: false)
+      Hibiki.track(observer) { name.value }
+
+      expect(observer).to receive(:invalidate)
+      name.value = "ruby"
+    end
+
+    it "calls the comparator with (prev, next), like Solid's equals" do
+      args = nil
+      comparator = lambda do |prev, next_value|
+        args = [prev, next_value]
+        false
+      end
+      sig = described_class.new(:old, equals: comparator)
+      sig.value = :new
+      expect(args).to eq(%i[old new])
+    end
+  end
+
   describe "#peek" do
     it "returns the current value without subscribing" do
       counter = described_class.new(0)

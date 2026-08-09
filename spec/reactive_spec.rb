@@ -26,6 +26,21 @@ RSpec.describe Hibiki::Reactive do
     expect(b.count).to eq(0)
   end
 
+  it "passes equals: through to the underlying signal" do
+    klass = Class.new do
+      include Hibiki::Reactive
+
+      state :level, 1, equals: ->(a, b) { a.abs == b.abs }
+    end
+    instance = klass.new
+    seen = []
+    Hibiki::Effect.new { seen << instance.level }
+
+    instance.level = -1 # comparator-equal: dropped at the write gate
+    instance.level = 2
+    expect(seen).to eq([1, 2])
+  end
+
   it "accepts a write before the first read" do
     counter = counter_class.new
     counter.count = 7

@@ -76,6 +76,20 @@ module Hibiki
 
     def unsubscribe(observer) = subscribers.delete(observer)
 
+    # The flush gate's question, answered by the source so its own equality
+    # decides (Solid's `equals` option, on createSignal and createMemo alike):
+    # nil → `==` as always, false → never equal (every write notifies),
+    # callable → comparator(prev, next). Both gates consult the same @equals —
+    # a comparator honored on write but not at flush would let the batch
+    # flush silently swallow the very change the write announced.
+    def changed_from?(seen)
+      case @equals
+      when nil then peek != seen
+      when false then true
+      else !@equals.call(seen, peek)
+      end
+    end
+
     def notify
       # dup: invalidation may mutate the set while we iterate
       subscribers.dup.each(&:invalidate)
@@ -102,15 +116,17 @@ module Hibiki
     # The equality gate, asked at flush time (see Effect#invalidate): did any
     # value we read actually change? Svelte's $derived compares; we compare on
     # the observer's side instead of the producer's, because Derived#invalidate
-    # has already notified downstream by the time it knows its new value.
+    # has already notified downstream by the time it knows its new value. The
+    # comparison itself is delegated to each source (changed_from?), so a
+    # per-signal `equals:` is honored here too.
     #
-    # `peek` resolves a dirty source without subscribing us to it — no untrack
-    # needed, since a Derived#recompute makes itself the observer. `any?`
-    # short-circuits in the useful direction: sources are in read order, so a
-    # changed first source spares the rest a validation recompute, and the run
-    # recomputes them only if it reads them this time.
+    # changed_from?'s `peek` resolves a dirty source without subscribing us to
+    # it — no untrack needed, since a Derived#recompute makes itself the
+    # observer. `any?` short-circuits in the useful direction: sources are in
+    # read order, so a changed first source spares the rest a validation
+    # recompute, and the run recomputes them only if it reads them this time.
     def sources_changed?
-      sources.any? { |source, seen| source.peek != seen }
+      sources.any? { |source, seen| source.changed_from?(seen) }
     end
   end
 

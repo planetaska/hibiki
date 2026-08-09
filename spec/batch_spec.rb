@@ -84,6 +84,37 @@ RSpec.describe "Hibiki.batch" do
     expect(runs).to eq(1)
   end
 
+  # Both suppressions above ride on the signal's equality (== unless equals:
+  # overrides it). A signal opting out with equals: false opts out at both
+  # gates: the write queues the effect, and the flush cannot call it unchanged.
+  it "re-runs once for a batched == write when the signal is equals: false" do
+    runs = 0
+    a = Hibiki::State.new(1, equals: false)
+    Hibiki::Effect.new do
+      runs += 1
+      a.value
+    end
+
+    Hibiki.batch { a.value = 1 }
+    expect(runs).to eq(2)
+  end
+
+  it "re-runs once for a batch netting to no change when the signal is equals: false" do
+    runs = 0
+    a = Hibiki::State.new(1, equals: false)
+    Hibiki::Effect.new do
+      runs += 1
+      a.value
+    end
+
+    Hibiki.batch do
+      a.value = 2
+      a.value = 1
+    end
+
+    expect(runs).to eq(2) # one flush run, not one per write
+  end
+
   it "never lets the effect observe intermediate values" do
     seen = []
     a = Hibiki::State.new(1)

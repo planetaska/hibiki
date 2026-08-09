@@ -5,8 +5,11 @@ module Hibiki
   class State
     include Trackable
 
-    def initialize(value)
+    # equals: per-signal equality (Solid's createSignal(value, { equals })).
+    # nil → `==`; false → always notify; callable → comparator(prev, next).
+    def initialize(value, equals: nil)
       @value = value
+      @equals = equals
     end
 
     def value
@@ -22,7 +25,14 @@ module Hibiki
     def call = value
 
     def value=(new_value)
-      return if new_value == @value
+      # The write gate: the signal's equality decides whether this write is a
+      # no-op. Its twin is the flush gate, Trackable#changed_from? — keep them
+      # answering the same way.
+      case @equals
+      when nil then return if new_value == @value
+      when false then nil # always notify
+      else return if @equals.call(@value, new_value)
+      end
 
       @value = new_value
       # Solid wraps every write in runUpdates; mirroring that, an unbatched

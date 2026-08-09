@@ -93,6 +93,38 @@ RSpec.describe Hibiki::Effect do
       expect(seen).to eq([[false, "a"], [false, "b"]])
     end
 
+    # The two-gate trap from the AR exploration (ar-equality-notes.md): == is
+    # asked at the write AND here at the flush. A comparator honored only on
+    # write would notify, then have the flush compare fresh-vs-seen with ==
+    # ("same row, unchanged") and skip the rerun anyway. This spec goes red if
+    # changed_from? stops consulting @equals.
+    it "re-runs through a batch flush when the comparator sees a change == cannot" do
+      record_class = Struct.new(:id, :name) do
+        def ==(other) = self.class == other.class && id == other.id
+      end
+      seen = []
+      row = Hibiki::State.new(record_class.new(1, "draft"), equals: ->(a, b) { a.name == b.name })
+      described_class.new { seen << row.value.name }
+
+      Hibiki.batch { row.value = record_class.new(1, "published") }
+      expect(seen).to eq(%w[draft published])
+    end
+
+    it "honors a derived's equals: (a recompute within tolerance is no change)" do
+      runs = 0
+      raw = Hibiki::State.new(1.0)
+      smoothed = Hibiki::Derived.new(equals: ->(a, b) { (a - b).abs < 0.01 }) { raw.value }
+      described_class.new do
+        runs += 1
+        smoothed.value
+      end
+
+      raw.value = 1.001 # recomputes, but the derived calls it unchanged
+      expect(runs).to eq(1)
+      raw.value = 2.0 # beyond tolerance — still compared against 1.0, the last value read
+      expect(runs).to eq(2)
+    end
+
     it "swallows an update from a derived that returns the object it mutated" do
       # Svelte's documented caveat, and ours: == on the same object is true, so
       # the gate cannot see an in-place mutation. Pinned as intended behaviour.
