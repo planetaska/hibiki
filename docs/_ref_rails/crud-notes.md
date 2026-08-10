@@ -11,18 +11,26 @@ already own, and what each post-install notice is warning you about. None of it
 is needed to run the generator — read it before you start reshaping the output,
 or when something it emitted surprises you.
 
-## Two of the generated files, explained
+## Two pieces of the generated code, explained
 
-The scaffold's file list holds no surprises except these two, and both exist for
+The scaffold's output holds no surprises except these two, and both exist for
 a reason that isn't obvious from the outside.
 
-**`book_row.rb` exists because `ActiveRecord#==` compares class and id only.** A
-reloaded record is `==` to the stale one it replaces, so re-assigning a signal
-from a fresh query would be a silent no-op — hibiki treats an equal write as
-nothing happened. The projection is a `Data`, whose structural `==` is what lets
-the rows derived notice a change at all. It carries every attribute except the
-timestamps, plus one label per `belongs_to`, so the row partial never walks an
-association off the graph thread.
+**The rows are frozen because `ActiveRecord#==` compares class and id only.** A
+reloaded record is `==` to the stale one it replaces, so a derived re-querying
+after a change would look unchanged to the default equality — hibiki treats an
+equal value as nothing happened, and the repaint would be silently skipped.
+The generated channels therefore compare by attributes instead, passing
+`equals: Hibiki::Rails.record_equals` on the `rows` and `row` deriveds, and the
+query hands them records that are **frozen, `readonly!` and `strict_loading`**
+— records enter the graph only as immutable snapshots, and every stale-record
+footgun fails loud instead of silently: an attribute write raises
+`FrozenError`, `save` raises `ActiveRecord::ReadOnlyRecord`, and walking an
+association the query didn't preload raises
+`ActiveRecord::StrictLoadingViolationError` instead of firing a lazy query off
+the graph thread. (Scaffolds generated before 0.6.0 projected rows through a
+generated `book_row.rb` `Data` class instead; it keeps working, and a `--force`
+re-run moves the app over and leaves the now-dead file for you to delete.)
 
 **`book_query.rb` is not optional once a page size exists.** The controller's
 first paint and the channel's `rows` derived must apply the same window, and a
@@ -68,10 +76,8 @@ before you run it against an app you care about. **Three files you already own
 are modified.** All three edits are idempotent, all are announced in the output,
 and all leave anything you already declared alone.
 
-**The model being scaffolded** gains one `delegate` per `belongs_to` and the
-`after_commit` broadcast the whole thing hangs off. The delegate is not
-cosmetic: the row partial prints the association's label, and the show page hands
-that same partial a live record, so without it the show page raises on arrival.
+**The model being scaffolded** gains the `after_commit` broadcast the whole
+thing hangs off.
 
 **Every model a `belongs_to` points at** gains two things (which Rails' own
 `author:references` never writes):
@@ -144,8 +150,9 @@ what it cannot find.
 
 ### `assoc` — the display label is a guess
 
-The generator picks the association's first string column. If that is wrong, edit
-`app/models/book_row.rb` and the form views.
+The generator picks the association's first string column. If that is wrong,
+edit the generated views — the label is read as `book.author&.name` wherever a
+row prints it.
 
 ### `order` — you can choose the field order
 

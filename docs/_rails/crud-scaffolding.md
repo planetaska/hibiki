@@ -91,12 +91,12 @@ Per resource, with `Book` as the example:
 | File | What it is |
 | --- | --- |
 | `app/channels/books_channel.rb` | The list island's graph: a `db_version` token, the search/filter/sort/page signals, the `rows`/`counts`/`remaining` deriveds, one render effect, and the client-invocable actions |
-| `app/channels/book_channel.rb` | The show page's graph — one live record |
-| `app/models/book_query.rb` | The query, in one place, plus `PAGE_SIZE` and the `SEARCHABLE`/`FILTERABLE`/`SORTABLE` allowlists |
-| `app/models/book_row.rb` | A `Data` projection: one plain value per row, so the graph never holds a live record |
+| `app/channels/book_channel.rb` | The show page's graph — one record, held as a frozen read-only snapshot |
+| `app/models/book_query.rb` | The query, in one place, plus `PAGE_SIZE` and the `SEARCHABLE`/`FILTERABLE`/`SORTABLE` allowlists. Its `rows` are frozen, read-only, `strict_loading` records — see [CRUD notes]({{ "/crud-notes/" | relative_url }}) |
 | `app/forms/book_form.rb` | A [reactive form]({{ "/reactive-forms/" | relative_url }}) over the model’s attributes |
 | `app/controllers/books_controller.rb` | Regular Rails scaffold; still serves the first render and the non-JS path |
-| `app/views/books/*` | `index`/`show`/`new`/`edit` plus `_list`, `_book`, `_book_form`, `_form`, `_controls`, `_pagination`, `_field_error` (or the Phlex equivalents) |
+| `app/views/books/*` | `index`/`show`/`new`/`edit` plus `_list`, `_book`, `_book_form`, `_form`, `_controls` (or the Phlex equivalents) |
+| `app/views/shared/*` | The page control, the field-error line and the form-error summary — once per app, shared by every scaffolded resource. A second scaffold finds them and leaves them alone |
 | `app/assets/stylesheets/hibiki_busy.css` | The loading and connection styles. Per app — a second scaffold finds it and leaves it alone |
 
 ## Options

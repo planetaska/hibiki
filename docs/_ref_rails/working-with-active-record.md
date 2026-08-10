@@ -61,6 +61,9 @@ end
 
 `ActiveRecord#==` compares class and id only — a reloaded record equals the stale one even though `done` flipped, so the fresh array `==` the old array, and [writing an `==`-equal value is a no-op by design]({{ "/getting-started/" | relative_url }}). Nothing notifies, nothing repaints, and there's no error to tell you why.
 
+Since hibiki_rails 0.6.0 this exact trap is caught **in development**: when a write is dropped by `==` but the two values' `attributes` differ, a warning lands in the log naming this page. Production behavior is unchanged — the write is still a no-op.
+{: .tip }
+
 **Don't read the database from a derived with no signal dependency.**
 
 ```ruby
@@ -122,6 +125,22 @@ end
 `Data` rows compare structurally, so the re-assignment after a toggle genuinely differs and the render effect re-runs. This works, and for a small page it's fine.
 
 The deficiency is the discipline it demands: every mutator must remember its `self.items = fetch`. Forget one and you're back to the silent-stale-UI failure above — with nothing to catch it. The next pattern removes that class of bug.
+
+### Opt-in: comparing records by attributes
+
+If projecting into `Data` rows is more ceremony than a page deserves, hibiki 0.3's per-signal equality gives the snapshot pattern a forgiving variant: pass `Hibiki::Rails.record_equals` and hold the records themselves — **frozen**, so the unfixable half stays unreachable:
+
+```ruby
+state(:items, equals: Hibiki::Rails.record_equals) { fetch }
+
+private
+
+def fetch = Todo.order(:id).strict_loading.map { it.readonly!; it.freeze }
+```
+
+`record_equals` compares class + `attributes`, recurses through arrays, and falls back to `==` for everything else — so a re-assignment after a toggle genuinely differs and the repaint happens, with no projection class to maintain. The comparator is honored at *both* of hibiki's equality gates (the write gate and the flush-time check), which is why it must be the signal's `equals:` rather than something you check by hand. The freeze triple is not optional decoration: `#freeze` makes an attribute write raise, `readonly!` makes `save` raise, and `strict_loading` makes an unpreloaded association walk raise — each of the mutate-in-place mistakes above turns from silent staleness into an exception.
+
+This is sugar for the snapshot pattern, not a license to put live records in signals. A comparator can't see a mutation that never enters the write path, and it syncs nothing another writer changed — the boundary rules below still hold. It is also what the [scaffold]({{ "/crud-scaffolding/" | relative_url }}) generates for its `rows`.
 
 ## Better solution: a version signal and a lazy derived query
 
@@ -342,4 +361,4 @@ Broadcasting from each controller action *instead* of from the model works too, 
 
 The version-signal pattern is the backbone; the form object sits beside it for edit screens, and the bridge layers on top when there are other writers. And whichever you pick, the two boundary rules never bend: records stop at the boundary, and every database write is paired with a signal write.
 
-For a standard CRUD resource, all three arrive together: [`hibiki:rails:scaffold`]({{ "/crud-scaffolding/" | relative_url }}) generates the version signal, the form object and the `after_commit` bridge — including the half Rails' own scaffold never writes, on each model a `belongs_to` points at. Reading the generated channel beside this page is a reasonable way to see the patterns composed.
+For a standard CRUD resource, all three arrive together: [`hibiki:rails:scaffold`]({{ "/crud-scaffolding/" | relative_url }}) generates the version signal, the form object and the `after_commit` bridge — including the half Rails' own scaffold never writes, on each model a `belongs_to` points at. Its rows cross the boundary as frozen `record_equals`-compared snapshots, the opt-in variant above. Reading the generated channel beside this page is a reasonable way to see the patterns composed.
