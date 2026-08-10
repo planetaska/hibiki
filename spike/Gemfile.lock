@@ -10,7 +10,7 @@ PATH
   specs:
     hibiki_rails (0.5.1)
       actioncable (>= 8.0)
-      hibiki (~> 0.2)
+      hibiki (~> 0.3)
       railties (>= 8.0)
       turbo-rails (>= 2.0)
 
