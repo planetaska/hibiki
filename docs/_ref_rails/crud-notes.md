@@ -126,10 +126,11 @@ lands in `#errors`, and the same per-field slots mirror it there with no change
 at all — so nothing is lost.
 
 **The clauses are generated once**, into a file the generator then stops owning.
-Add validators to the model and re-run `scaffold_controller` to derive them
-again, or write them into the form by hand. What re-runs cannot do is find rules
-that don't exist yet: it is the check *before* the round trip that has to be
-re-derived, never the one after.
+Add validators to the model and run `bin/rails g hibiki:rails:form Book` to
+derive them again — it rewrites only the form and the two form views, and asks
+before replacing anything you edited — or write them into the form by hand.
+What re-runs cannot do is find rules that don't exist yet: it is the check
+*before* the round trip that has to be re-derived, never the one after.
 
 ## Read the post-install output
 
@@ -167,7 +168,8 @@ first and re-run.
 ### `form` — `live_errors` is thin
 
 The model declares no validators this generator can use before a round trip. The
-notice names which of the three reasons applies.
+notice names which of the three reasons applies, and prints the catch-up command
+on its own line: `bin/rails g hibiki:rails:form Book`, once validators exist.
 
 ### `unique` — a unique index with no validator
 

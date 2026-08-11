@@ -180,6 +180,7 @@ it applies a payload, so a channel action cannot mass-assign past the list.
 And `live_errors` is always *defined*, even when it starts empty, so
 `#error_for` and every field's error partial stay branch-free.
 
-Nothing there is generated more than once. Add validators to the model and
-re-run the generator to derive the clauses again, or write them in by hand — the
-file is yours from the moment it lands.
+Nothing there is generated more than once. Add validators to the model and run
+`bin/rails g hibiki:rails:form Book` to derive the clauses again (it rewrites
+only the form and the two form views), or write them in by hand — the file is
+yours from the moment it lands.

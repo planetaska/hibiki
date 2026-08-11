@@ -42,6 +42,24 @@ Example:
 bin/rails g hibiki:rails:scaffold_controller Book
 ```
 
+### 3. Re-derive the form after adding validators
+
+The live validation in the generated form is derived from the model's
+validators — and a full scaffold runs before its own migration, so it starts
+with none. Once you have migrated and added validators, one command catches the
+form up:
+
+```sh
+# Rewrites the ReactiveForm and the two form views. Nothing else is touched.
+bin/rails g hibiki:rails:form Book
+```
+
+It re-derives everything validator-shaped — the live validation clauses, a
+number field's `min:`/`max:`, requiredness — and leaves the rest of the
+scaffold's output alone. You are asked per file before anything you edited is
+replaced. Pass `--skip-views` to rewrite only `app/forms/book_form.rb`; the
+view layer and `--css` variant are detected from the files the scaffold left.
+
 ### Scaffolding with style
 
 The scaffold supports Tailwind CSS and DaisyUI pre-built styling. To pick a variant, pass a `--css` argument.
@@ -118,7 +136,7 @@ The generated app is a **starting point**. Every file it writes is ordinary Rail
 The most common next steps:
 
 - **Restart the server after the first run.** `app/forms/` is almost certainly a new directory, and Rails computes its autoload paths at boot — until you restart, the new constants raise `NameError`.
-- **Add validators to the model**, then either write the live validation clauses into the form by hand or re-run `scaffold_controller` to derive them again.
+- **Add validators to the model**, then run `bin/rails g hibiki:rails:form Book` to derive the live validation clauses from them — or write the clauses into the form by hand.
 - **Reorder or drop fields** in the views.
 
 And to understand what you were handed:
