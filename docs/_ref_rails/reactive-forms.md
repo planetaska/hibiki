@@ -53,6 +53,16 @@ composing deriveds over the fields, and inheriting declarations in a subclass.
 | `#errors` | `{ title: ["can't be blank"] }` |
 | `#error_for(:title)` | The first message, or nil |
 
+## Collections
+
+`reactive_association :songs` declares one more signal — `song_ids`, over a
+`has_many :through` — hydrated from the record's own ids reader and committed
+through the association writer, which does the join-row bookkeeping. Each id
+is cast through the *target* model's primary-key type, since channel payloads
+arrive as strings. [Multi-select associations]({{ "/multiselect/" |
+relative_url }}) covers the macro and the generator that builds a whole
+searchable dropdown on top of it.
+
 ## Two layers of validation, on purpose
 
 Hand-written error deriveds give **per-keystroke feedback**. They are

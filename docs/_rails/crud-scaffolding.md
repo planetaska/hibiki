@@ -60,6 +60,24 @@ scaffold's output alone. You are asked per file before anything you edited is
 replaced. Pass `--skip-views` to rewrite only `app/forms/book_form.rb`; the
 view layer and `--css` variant are detected from the files the scaffold left.
 
+### 4. Add a multi-select for a `has_many :through`
+
+A scaffolded resource can grow a searchable dropdown multi-select over a join
+— tag the songs onto an album, live, with the join model generated for you if
+it doesn't exist yet:
+
+```sh
+# Adds a songs dropdown to the album's inline edit form; creates Track
+# (and its migration) when missing
+bin/rails g hibiki:rails:multiselect Album Song Track
+```
+
+The channel gains one `include`; everything else lives in a generated concern
+and a view partial. [Multi-select associations]({{ "/multiselect/" |
+relative_url }}) covers the design — in particular why the selection lives in
+the graph, which is what lets the search filter narrow 100k options without
+ever dropping a checked one.
+
 ### Scaffolding with style
 
 The scaffold supports Tailwind CSS and DaisyUI pre-built styling. To pick a variant, pass a `--css` argument.
@@ -137,6 +155,7 @@ The most common next steps:
 
 - **Restart the server after the first run.** `app/forms/` is almost certainly a new directory, and Rails computes its autoload paths at boot — until you restart, the new constants raise `NameError`.
 - **Add validators to the model**, then run `bin/rails g hibiki:rails:form Book` to derive the live validation clauses from them — or write the clauses into the form by hand.
+- **Add a multi-select over a join** with `bin/rails g hibiki:rails:multiselect Book Tag BookTag` — see [Multi-select associations]({{ "/multiselect/" | relative_url }}).
 - **Reorder or drop fields** in the views.
 
 And to understand what you were handed:
