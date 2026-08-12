@@ -13,9 +13,11 @@ The output doubles as a worked example: several approaches were measured before 
 
 ## Basic scaffold commands
 
+### Two scaffold styles
+
 You can run the scaffold in two styles:
 
-### 1. Full scaffold
+#### 1. Full scaffold
 
 ```sh
 bin/rails g hibiki:rails:scaffold RESOURCE_NAME FIELD:TYPE
@@ -31,7 +33,7 @@ bin/rails g hibiki:rails:scaffold Book title:string available:boolean author:ref
 bin/rails db:migrate
 ```
 
-### 2. Scaffold from an existing model
+#### 2. Scaffold from an existing model
 
 For a model you already have, use `scaffold_controller` like you would in regular Rails. The resource schema is derived from that model for you.
 
@@ -42,29 +44,20 @@ Example:
 bin/rails g hibiki:rails:scaffold_controller Book
 ```
 
-### 3. Re-derive the form after adding validators
+### Re-derive the form after adding validators
 
-The live validation in the generated form is derived from the model's
-validators — and a full scaffold runs before its own migration, so it starts
-with none. Once you have migrated and added validators, one command catches the
-form up:
+The live validation in the generated form is derived from the model's validators — and a full scaffold runs before its own migration, so it starts empty. Once you have migrated and added validators, we provide a convenient command to re-generate the reactive form with inferred live error messages:
 
 ```sh
 # Rewrites the ReactiveForm and the two form views. Nothing else is touched.
 bin/rails g hibiki:rails:form Book
 ```
 
-It re-derives everything validator-shaped — the live validation clauses, a
-number field's `min:`/`max:`, requiredness — and leaves the rest of the
-scaffold's output alone. You are asked per file before anything you edited is
-replaced. Pass `--skip-views` to rewrite only `app/forms/book_form.rb`; the
-view layer and `--css` variant are detected from the files the scaffold left.
+It re-derives everything validator-shaped — the live validation clauses, a number field's `min:`/`max:`, requiredness — and leaves the rest of the scaffold's output alone. You are asked per file before anything you edited is replaced. Pass `--skip-views` to rewrite only `app/forms/book_form.rb`; the view layer and `--css` variant are detected from the files the scaffold left.
 
-### 4. Add a multi-select for a `has_many :through`
+### Add a multi-select for a `has_many :through`
 
-A scaffolded resource can grow a searchable dropdown multi-select over a join
-— tag the songs onto an album, live, with the join model generated for you if
-it doesn't exist yet:
+A scaffolded resource can attach a **searchable** dropdown multi-select over a join model — ideal for use cases like tagging songs onto an album. The join model will be generated for you if it doesn't exist yet:
 
 ```sh
 # Adds a songs dropdown to the album's inline edit form; creates Track
@@ -72,11 +65,8 @@ it doesn't exist yet:
 bin/rails g hibiki:rails:multiselect Album Song Track
 ```
 
-The channel gains one `include`; everything else lives in a generated concern
-and a view partial. [Multi-select associations]({{ "/multiselect/" |
-relative_url }}) covers the design — in particular why the selection lives in
-the graph, which is what lets the search filter narrow 100k options without
-ever dropping a checked one.
+The channel gains one `include`; everything else lives in a generated concern and a view partial. [Multi-select associations]({{ "/multiselect/" |
+relative_url }}) covers the design — in particular why the selection lives in the graph, which is what lets the search filter narrow 100k options without ever dropping a checked one.
 
 ### Scaffolding with style
 
@@ -85,11 +75,12 @@ The scaffold supports Tailwind CSS and DaisyUI pre-built styling. To pick a vari
 Example:
 
 ```sh
-# This creates reactive views with Tailwind CSS styling
-bin/rails g hibiki:rails:scaffold Book title:string ... --css=tailwind
+# By default, the generator detects your project configuration
+# This generates DaisyUI or Tailwind class names when available
+bin/rails g hibiki:rails:scaffold Book title:string
 
-# Or, if you have DaisyUI installed
-bin/rails g hibiki:rails:scaffold Book title:string ... --css=daisyui
+# If you wish to pick a specific styling option:
+bin/rails g hibiki:rails:scaffold Book title:string ... --css=tailwind
 ```
 
 ### Infinite scroll

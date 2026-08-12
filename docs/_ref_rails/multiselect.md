@@ -129,7 +129,7 @@ last-wins, which is what Rails' hidden-field checkbox convention depends on.
 
 ## Notes
 
-- **`touch: true` on the join is load-bearing.** A join-row write bumps the
+- **`touch: true` on the join is the pillar of this design.** A join-row write bumps the
   owner's `updated_at`, which fires the owner's `after_commit` ping — that is
   how a save in one session reaches every open index and show page.
 - When the join was generated, run `bin/rails db:migrate` before using the
