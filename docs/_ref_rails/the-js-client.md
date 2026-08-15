@@ -68,6 +68,8 @@ What a changed control contributes to its payload under its own `name`: a checkb
 
 `visible` is backed by an `IntersectionObserver`, always present in the client. It fires **once per observation** and re-attaches to the replacement element after each fragment swap, which is what lets a load-more control double as an infinite-scroll sentinel and keep paging when one page didn't fill the viewport. Because an observer can fire again before a swap lands, pair it with a generation token in `with:` and make the action a no-op when the token is stale.
 
+The shape of this helper interface is inspired by [phlex-reactive](https://phlex-reactive.zoolutions.llc)'s `on(...)` actions.
+
 ## Fallbacks: the native behavior as the degraded path
 
 `fallback: true` is for a control that already *has* a native behavior — a link with a real `href`, a form with a real `action`:

@@ -87,7 +87,9 @@ bin/rails g hibiki:rails:scaffold Book title:string ... --css=tailwind
 
 ### Inline create
 
-The generated New link opens a create form at the top of the list — same channel, same page, its own form object — while the standard `/books/new` page stays generated and reachable (it is the link's fallback, and where a reload mid-create lands). Pass `--skip-create` if you'd rather New always navigated:
+The generated New link opens a create form at the top of the list — same page, with its own form object. The standard `/books/new` page stays generated and reachable (it is the link's fallback when JS is unavailable).
+
+You can skip this feature by passing `--skip-create` if you'd rather New stays navigated:
 
 ```sh
 bin/rails g hibiki:rails:scaffold Book title:string ... --skip-create
@@ -123,15 +125,13 @@ Namespaced names work (`admin/book`), as they do for the [component-shape genera
 
 ## The URL mirrors the page, and everything degrades
 
-Two behaviors (0.8.0) are worth understanding together, because they are one machinery seen from two sides.
+Since v0.8.0, two behaviors worth knowing:
 
-**The address bar mirrors the graph.** Search, filter, sort and page live in channel state, and the channel keeps the canonical query params in the bar (`/books?query=ruby&page=2`) via [`transmit_url`]({{ "/reactive-values/" | relative_url }}#the-url-sibling-transmit_url) — `replaceState`, so no history entries pile up and Back behaves normally. An open inline form mirrors its own URL (`/books/7/edit`, `/books/new`). Reload, or hand the link to someone, and the page comes back in that exact state: the controller first-paints it from the params (`BookQuery.from_params`), and the island stamps the same params onto the channel subscription so the graph *starts* there — without that seeding, the graph's first broadcast would repaint the defaults over a param-loaded page.
+**The address bar mirrors the graph.** Search, filter, sort and page live in channel state, and the channel keeps the canonical query params in the bar (`/books?query=ruby&page=2`) via [`transmit_url`]({{ "/reactive-values/" | relative_url }}#the-url-sibling-transmit_url) — `replaceState`, so no history entries pile up and Back behaves normally. An open inline form mirrors its own URL (`/books/7/edit`, `/books/new`), so a reload, or handing the link to someone causes the page to come back in that exact state.
 
-**Every control's native behavior is its degraded path.** The New and Edit links carry real hrefs to the standard pages; Destroy is a real `button_to` DELETE form; the search/filter/sort controls are one GET form to the index; the page control's links carry real `?page=N` hrefs. While the island is live, `fallback: true` intercepts the gesture and the channel answers without a page load. While it is connecting, offline or stalled — or if JavaScript never ran — the browser does what the markup says, and the scaffold-shaped controller answers with a full page in the same state. One set of markup, three levels of service.
+**Every control has a degraded path.** The New and Edit links carry real hrefs to the standard pages. The Destroy button is a real `button_to` DELETE form. The search/filter/sort controls are one GET form to the index; the page control's links carry real `?page=N` hrefs. While the island is live, `fallback: true` intercepts the gesture and the channel answers without a page load. While it is connecting, offline or stalled — or if JavaScript never ran — the browser does what the markup says, and the Rails controller answers with a full page in the same state.
 
-The fallback contract itself — when the client stands aside, how a dead-but-undetected socket falls through, why native submits get their CSRF token freshened — is documented in [The JS client]({{ "/the-js-client/" | relative_url }}#fallbacks-the-native-behavior-as-the-degraded-path).
-
-One deliberate exception: under `--infinite-scroll` the load-more control has no deep-pagination fallback. It doubles as a scroll sentinel, and a control that navigates on a dead socket would mean *scrolling* navigates — so a degraded infinite index shows the first window only.
+The only deliberate exception is the `--infinite-scroll`, where the load-more control has no pagination fallback. To learn more about URL and degraded paths, see [CRUD notes]({{ "/crud-notes/#the-url-mirrors-the-page-and-everything-degrades" | relative_url }}).
 
 ## What the scaffold writes
 
