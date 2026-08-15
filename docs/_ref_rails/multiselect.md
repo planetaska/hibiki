@@ -40,12 +40,16 @@ can be dropped — the join is read off the reflection.
 | `_album_form.html.erb` / row form component | The render call for the dropdown |
 
 The include line is the channel's **only** edit. The concern wraps
-`build_graph`, `list_locals` and `edit` with `super` through a prepended
-module, and its public `toggle_song` / `search_songs` methods become
-client-invocable actions exactly like methods on the channel class. Everything
-it adds is namespaced by the target (`@songs_query`, `@songs_options`,
-`toggle_song`), so a second multiselect on the same channel coexists with the
-first.
+`build_graph`, `list_locals` and the form-opening actions with `super` through
+a prepended module, and its public `toggle_song` / `search_songs` methods
+become client-invocable actions exactly like methods on the channel class.
+Everything it adds is namespaced by the target (`@songs_query`,
+`@songs_options`, `toggle_song`), so a second multiselect on the same channel
+coexists with the first.
+
+The dropdown serves **both** of the scaffold's inline forms (0.8.0): a row's
+edit form gets it hydrated with the record's selection, and the inline create
+form gets it with the full option list and nothing checked.
 
 ## The selection lives in the graph
 
@@ -54,16 +58,18 @@ sends its own action, carrying its checked state:
 
 ```ruby
 # One checkbox toggled: a SET, not a toggle — the client sends the box's
-# checked state, so two tabs converge.
+# checked state, so two tabs converge. `dom` names the form the box
+# belongs to — a row edit and the inline create form can be open at once.
 def toggle_song(data)
-  return unless @editing_id.peek
+  form = multiselect_form(data["dom"].to_s)
+  return unless form
 
   # Untrusted id — resolve it against the table before it enters the form.
   id = Song.where(id: data["id"]).pick(:id)
   return unless id
 
-  ids = @form.song_ids
-  @form.song_ids = data["checked"] ? ids | [id] : ids - [id]
+  ids = form.song_ids
+  form.song_ids = data["checked"] ? ids | [id] : ids - [id]
 end
 ```
 
@@ -73,6 +79,12 @@ filter narrows the *option list*, and a save while forty of your fifty checked
 songs are filtered out of view still commits all fifty. A form-submit design
 (`song_ids[]` collected at save time) would silently drop everything the
 filter hid.
+
+The `dom` in the payload is how one action serves two forms: a row's edit form
+and the inline create form can be open side by side, each with its own
+dropdown, and every toggle names the form it belongs to — so the two
+selections never cross-write, and a toggle aimed at a form that is no longer
+open is dropped.
 
 It is also why two tabs editing the same row converge — each toggle is a set
 ("this song is checked"), not a flip.

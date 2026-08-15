@@ -18,6 +18,9 @@ For jsbundling/vite apps, `npm install hibiki-rails` — the [npm package](https
 
 | `hibiki_rails` gem | `hibiki-rails` npm | notes |
 | ------------------ | ------------------ | ----- |
+| 0.8.0              | 0.8.0              | `fallback:` — a control's native href/action as its degraded path (stand-aside off-`ready`, dead-socket fallthrough, CSRF freshening) — and `history.replaceState` for the channel's `transmit_url` |
+| 0.7.0              | 0.7.0              | a `[]`-suffixed field name collects **all** its FormData entries as an array — a multi-select's full selection reaches the channel |
+| 0.6.0              | 0.6.0              | no client change (the AR-equality release on the gem side) |
 | 0.5.0              | 0.5.0              | no client change: `@rails/actioncable` becomes a peer dependency (it was double-bundled), and the gem's Rails floor moves to 8.0 |
 | 0.4.0              | 0.4.0              | loading and connection state: `data-hibiki-busy`, `aria-busy`, `data-hibiki-state`, the reserved `hbk` payload key, and actions queued until the subscription confirms |
 | 0.3.0              | 0.3.0              | `input` + debounce, the `visible` sentinel, event lists, `confirm:`/`reset:`, correct checkbox and multi-select payloads, subscribe params |
@@ -41,7 +44,7 @@ The client is one generic Stimulus controller that drives any *island*: a DOM su
 ```
 
 - `hibiki_island(channel, cid:, params:)` — the island root: one subscription, identified by the page's `cid`. See [Subscribe params](#subscribe-params) for `params:`.
-- `on(action, event:, with:, debounce:, confirm:, reset:)` — forward an event as a channel action. See [Events and modifiers](#events-and-modifiers).
+- `on(action, event:, with:, debounce:, confirm:, reset:, fallback:)` — forward an event as a channel action. See [Events and modifiers](#events-and-modifiers).
 - `reactive(name, placeholder)` / `reactive_attrs(name)` — placeholder for a single reactive value, paired with the channel's `transmit_value` (see [Reactive values]({{ "/reactive-values/" | relative_url }})).
 
 ## Events and modifiers
@@ -59,10 +62,31 @@ The client is one generic Stimulus controller that drives any *island*: a DOM su
 | `debounce:` | milliseconds to let the gesture settle before performing. `:input` gets **250 ms by default** — pass `debounce: 0` to send every keystroke. The payload is built when the action fires, so the last value wins. |
 | `confirm:` | a `window.confirm` message. Declining performs nothing (and does not submit the form). Note that `data-turbo-confirm` does *not* work on a hibiki control — it isn't a Turbo-driven form. |
 | `reset:` | `false` keeps a submitted form's inputs. The default resets them, which is right for an "add" form and wrong for an edit one: the reset runs synchronously, before the server has replied, so a failed commit would discard what the user typed. |
+| `fallback:` | `true` makes the control's own native behavior its degraded path — see [Fallbacks](#fallbacks-the-native-behavior-as-the-degraded-path). |
 
 What a changed control contributes to its payload under its own `name`: a checkbox sends its **checked state** as a boolean, a multi-select sends an **array** of its selected values, everything else sends `value`. A submitted form sends its `FormData`.
 
 `visible` is backed by an `IntersectionObserver`, always present in the client. It fires **once per observation** and re-attaches to the replacement element after each fragment swap, which is what lets a load-more control double as an infinite-scroll sentinel and keep paging when one page didn't fill the viewport. Because an observer can fire again before a swap lands, pair it with a generation token in `with:` and make the action a no-op when the token is stale.
+
+## Fallbacks: the native behavior as the degraded path
+
+`fallback: true` is for a control that already *has* a native behavior — a link with a real `href`, a form with a real `action`:
+
+```erb
+<%= link_to "Edit", edit_song_path(song.id),
+            **on(:edit, with: { id: song.id }, fallback: true) %>
+```
+
+Only a **`ready`** island intercepts the gesture and performs the channel action. In every other state — connecting, offline, stalled — the client stands aside entirely: no `preventDefault`, no queueing, and the browser does exactly what the markup says. This is deliberately *not* the connect-window queue that plain actions get: the destination answers immediately, where a queued gesture would render nothing until the socket recovered.
+
+A socket can also be dead without the client knowing it yet. When a performed action's send reports failure, the client settles the trip and runs the native behavior by hand — `form.submit()` for a form, `location.assign` for a link. The gesture never left the page, so it cannot double-fire.
+
+Two guarantees ride along:
+
+- **`confirm:` gates the native path too.** A destructive submit must not slip past its dialog just because the island happens to be down.
+- **Native submits get a fresh CSRF token.** Before letting (or making) a form submit natively, the client copies the `csrf-token` meta value into the form's `authenticity_token` field. This is load-bearing, not an edge case: fragments repainted by a channel are rendered without a session, so every repainted `button_to` form is tokenless — and the first broadcast replaces the first-paint fragment seconds after load. A truly script-free page still holds its first-paint token and needs no help.
+
+The net effect is one set of markup working at three levels: live island, degraded (scripts ran, socket down), and no scripts at all. The generated scaffold leans on this for its New and Edit links, its destroy `button_to`, its controls form and its page control — [CRUD scaffolding]({{ "/crud-scaffolding/" | relative_url }}) shows the pattern in full.
 
 ## Subscribe params
 

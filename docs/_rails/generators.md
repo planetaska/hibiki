@@ -7,7 +7,7 @@ nav_order: 3
 
 `hibiki_rails` comes with batteries included. Each supported shape has a generator that scaffolds it as a *working* mini-example — one state, one derived, one action, one effect. Run a generator, render the output from any page, click `+1`, watch it live-update. The generated files are meant to be reshaped in place.
 
-This page covers the three **component-shape** generators, which give you one small reactive component to grow from. If what you want is a whole resource — a live index with search, filtering, sorting and pagination, plus edit in place — reach for [CRUD scaffolding]({{ "/crud-scaffolding/" | relative_url }}) instead.
+This page covers the three **component-shape** generators, which give you one small reactive component to grow from. If what you want is a whole resource — a live index with search, filtering, sorting and pagination, plus create and edit in place — reach for [CRUD scaffolding]({{ "/crud-scaffolding/" | relative_url }}) instead.
 
 ## Stimulus shape
 

@@ -51,6 +51,62 @@ renders, and `#go_to_page` short-circuits on its first guard. One constant
 instead of `<% if paginated? %>` branching across five files. If you later want
 pages back, set the constant.
 
+## The degraded paths, in detail
+
+The [scaffold guide]({{ "/crud-scaffolding/" | relative_url
+}}#the-url-mirrors-the-page-and-everything-degrades) covers what degrades; these
+notes are for when you reshape the pieces, because several of them look
+redundant until you know what they are holding up.
+
+**The island's subscribe params are load-bearing.** The index stamps the
+canonical URL params onto the subscription
+(`hibiki_island(..., params: @book_query.url_params.presence)`), and the
+channel builds its signals from them through the same normalizers the
+controller uses (`filters_from`, `sort_from`, …). Remove the seeding and a
+param-loaded page still paints correctly — then the graph's **first broadcast
+repaints the defaults over it**, because the graph started at page 1 with an
+empty query. And they are subscribe params, so they are untrusted like any
+request params: they only ever pass through the query object's allowlist
+normalizers, never raw into a signal.
+
+**The controls form intercepts its submit with `reset: false`.** The client's
+default resets a submitted form — right for an "add" form, wrong here, where
+the intercepted Enter would blank the query the user just searched for.
+(Under `--skip-search` there is no `search` action to aim the submit at, so
+the form isn't intercepted at all: Apply is a plain native GET even while
+live — the changed selects have already sent their own actions, and the
+reload lands on the same mirrored state.)
+
+**The direction button submits the opposite value.** It is a `submit` button
+named `direction` carrying the *opposite* of the painted direction: live, the
+click is intercepted and toggles; dead, it submits the controls form with the
+direction the user asked for. The value goes stale after live toggles — the
+button is never re-rendered; its visible label is a reactive value — but the
+dead path always begins from a fresh page, so a stale value is never actually
+submitted.
+
+**The destroy form is tokenless after any repaint, by construction.**
+Channel-rendered fragments come from `ApplicationController.render`, which has
+no session, so every repainted `button_to` carries an empty
+`authenticity_token` — and the first broadcast replaces the first-paint
+fragment seconds after load. The client freshens the token from the
+`csrf-token` meta before any native submit; a page where scripts never ran
+still holds its first-paint token. If you add your own destructive control
+inside the island, keep it a real form with `fallback: true` and the same
+machinery covers it.
+
+**The inline create form only ever comes from the channel.** The first paint
+never renders it — `creating` is graph state the New link's action flips — so
+reloading mid-create lands on the standard `/books/new` page (which is also
+what the New link's href says). The create form is the same row-form
+partial re-aimed at the `*_new` actions, with its own `ReactiveForm` instance
+so an open row edit and an open create never share state.
+
+**Generated forms gate live validation on `dirty?`.** A freshly opened form —
+especially a blank create form — must not flag every empty required field
+before the user has typed anything. `error_for` returns live errors only once
+the form is dirty; errors mirrored from a failed commit always win.
+
 ## Field order decides the generated field order
 
 With no field list, the columns follow whatever `columns_hash` reports — which,
