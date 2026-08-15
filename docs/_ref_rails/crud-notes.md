@@ -65,10 +65,9 @@ One deliberate exception: under `--infinite-scroll` the load-more control has no
 
 ## The degraded paths, in detail
 
-The [scaffold guide]({{ "/crud-scaffolding/" | relative_url
-}}#the-url-mirrors-the-page-and-everything-degrades) covers what degrades; these
-notes are for when you reshape the pieces, because several of them look
-redundant until you know what they are holding up.
+The section above covers what degrades; these notes are for when you reshape
+the pieces, because several of them look redundant until you know what they
+are holding up.
 
 **The island's subscribe params are load-bearing.** The index stamps the
 canonical URL params onto the subscription

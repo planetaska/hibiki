@@ -89,7 +89,7 @@ bin/rails g hibiki:rails:scaffold Book title:string ... --css=tailwind
 
 The generated New link opens a create form at the top of the list — same page, with its own form object. The standard `/books/new` page stays generated and reachable (it is the link's fallback when JS is unavailable).
 
-You can skip this feature by passing `--skip-create` if you'd rather New stays navigated:
+You can skip this feature by passing `--skip-create` if you'd rather New always navigates:
 
 ```sh
 bin/rails g hibiki:rails:scaffold Book title:string ... --skip-create
@@ -125,13 +125,13 @@ Namespaced names work (`admin/book`), as they do for the [component-shape genera
 
 ## URL handling, and no-JS degrades
 
-Since v0.8.0, two behaviors worth knowing:
+Since 0.8.0, two behaviors are worth knowing:
 
-**The address bar mirrors the graph.** Search, filter, sort and page live in channel state, and the channel keeps the canonical query params in the bar (`/books?query=ruby&page=2`) via [`transmit_url`]({{ "/reactive-values/" | relative_url }}#the-url-sibling-transmit_url) — `replaceState`, so no history entries pile up and Back behaves normally. An open inline form mirrors its own URL (`/books/7/edit`, `/books/new`), so a reload, or handing the link to someone causes the page to come back in that exact state.
+**The address bar mirrors the graph.** Search, filter, sort and page live in channel state, and the channel keeps the canonical query params in the bar (`/books?query=ruby&page=2`) via [`transmit_url`]({{ "/reactive-values/" | relative_url }}#the-url-sibling-transmit_url) — `replaceState`, so no history entries pile up and Back behaves normally. An open inline form mirrors its own URL (`/books/7/edit`, `/books/new`), so a reload — or handing the link to someone — brings the page back in that exact state.
 
 **Every control has a degraded path.** The New and Edit links carry real hrefs to the standard pages. The Destroy button is a real `button_to` DELETE form. The search/filter/sort controls are one GET form to the index; the page control's links carry real `?page=N` hrefs. When JavaScript is unavailable, the browser does what the markup says, and the Rails controller answers with a full page.
 
-The only deliberate exception is the `--infinite-scroll`, where the load-more control has no pagination fallback. To learn more about URL handling and degraded paths, see [CRUD notes]({{ "/crud-notes/#the-url-mirrors-the-page-and-everything-degrades" | relative_url }}).
+The only deliberate exception is `--infinite-scroll`, where the load-more control has no pagination fallback. To learn more about URL handling and degraded paths, see [CRUD notes]({{ "/crud-notes/" | relative_url }}#the-url-mirrors-the-page-and-everything-degrades).
 
 ## What the scaffold writes
 
