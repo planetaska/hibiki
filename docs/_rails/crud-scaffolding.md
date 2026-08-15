@@ -7,7 +7,7 @@ nav_order: 4
 
 `hibiki_rails` comes with its own scaffold generators. Just like `rails g scaffold` gives you a resource that works by reloading the page, Hibiki's scaffold generators give you the same resource, but **live**: search, filtering, sorting and pagination do not require page loads, rows create and edit in place, and a write from anywhere — another tab, another user, the plain controller, a console — re-renders every open index list.
 
-And it degrades. The live index is built from real links and real forms, the address bar mirrors the live state, and the plain controller still answers everything — so the same page works with the socket down, or with no JavaScript at all. See [The URL mirrors the page, and everything degrades](#the-url-mirrors-the-page-and-everything-degrades) below.
+And it degrades. The live index is built from real links and real forms, the address bar mirrors the live state, and the plain controller still answers everything — so the same page works with the socket down, or with no JavaScript at all. See [URL handling, and no-JS degrades](#url-handling-and-no-js-degrades) below.
 
 Everything the generator needs is derived from the model's schema (columns, types, `belongs_to` reflections, validators), or from the same `field:type` argument list that Rails' own scaffold takes. Once it has run, reshape the result to fit your needs.
 
@@ -123,15 +123,15 @@ bin/rails g hibiki:rails:scaffold Book title:string ... --phlex
 
 Namespaced names work (`admin/book`), as they do for the [component-shape generators]({{ "/generators/" | relative_url }}).
 
-## The URL mirrors the page, and everything degrades
+## URL handling, and no-JS degrades
 
 Since v0.8.0, two behaviors worth knowing:
 
 **The address bar mirrors the graph.** Search, filter, sort and page live in channel state, and the channel keeps the canonical query params in the bar (`/books?query=ruby&page=2`) via [`transmit_url`]({{ "/reactive-values/" | relative_url }}#the-url-sibling-transmit_url) — `replaceState`, so no history entries pile up and Back behaves normally. An open inline form mirrors its own URL (`/books/7/edit`, `/books/new`), so a reload, or handing the link to someone causes the page to come back in that exact state.
 
-**Every control has a degraded path.** The New and Edit links carry real hrefs to the standard pages. The Destroy button is a real `button_to` DELETE form. The search/filter/sort controls are one GET form to the index; the page control's links carry real `?page=N` hrefs. While the island is live, `fallback: true` intercepts the gesture and the channel answers without a page load. While it is connecting, offline or stalled — or if JavaScript never ran — the browser does what the markup says, and the Rails controller answers with a full page in the same state.
+**Every control has a degraded path.** The New and Edit links carry real hrefs to the standard pages. The Destroy button is a real `button_to` DELETE form. The search/filter/sort controls are one GET form to the index; the page control's links carry real `?page=N` hrefs. When JavaScript is unavailable, the browser does what the markup says, and the Rails controller answers with a full page.
 
-The only deliberate exception is the `--infinite-scroll`, where the load-more control has no pagination fallback. To learn more about URL and degraded paths, see [CRUD notes]({{ "/crud-notes/#the-url-mirrors-the-page-and-everything-degrades" | relative_url }}).
+The only deliberate exception is the `--infinite-scroll`, where the load-more control has no pagination fallback. To learn more about URL handling and degraded paths, see [CRUD notes]({{ "/crud-notes/#the-url-mirrors-the-page-and-everything-degrades" | relative_url }}).
 
 ## What the scaffold writes
 
