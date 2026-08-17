@@ -139,15 +139,17 @@ Some gestures can't be declared in markup — a drag library's drop callback, a 
 // inside one of your own Stimulus controllers
 const islandEl = this.element.closest('[data-controller~="hibiki"]')
 const island = this.application.getControllerForElementAndIdentifier(islandEl, "hibiki")
-island?.perform("nested_move", { dom, path, to })
+island?.perform("nested_move", { your_payload })
 ```
 
-(The optional chaining matters: the lookup returns `null` until the island's controller has connected.) Or skip the incantation with the `performOn` export, which finds the island containing any element — no Stimulus context required:
+(The optional chaining matters: the lookup returns `null` until the island's controller has connected.)
+
+**Or** skip the incantation with the `performOn` export, which finds the island containing any element — no Stimulus context required:
 
 ```js
 import { performOn } from "hibiki-rails"
 
-performOn(element, "nested_move", { dom, path, to })
+performOn(element, "nested_move", { your_payload })
 ```
 
 **The return value is the whole contract.** Truthy — the trip's sequence number — means the action was *accepted*: sent live, or queued during the island's initial connect window. A repaint is coming, so leave the DOM as the user arranged it; the morph will land as a visual no-op. `undefined` means it was *dropped*: the island is offline, the socket turned out to be dead at send, or (`performOn` only, with a console warning) no island contains the element. The caller owns recovery — revert the gesture, or stand back and let the next repaint self-heal. Nothing queues across an offline gap, on purpose: a reconnect builds a fresh server-side graph, and replaying intent formed against the old one is worse than dropping it.
@@ -156,7 +158,9 @@ This is the **one** supported seam. The `data-hibiki-*` attributes are a private
 
 ### Worked example: drag-to-reorder with SortableJS
 
-Third-party UI libraries slot in the same way whatever they do: the library owns the gesture, your controller owns the handoff, `perform`/`performOn` is the handoff. Here is drag-to-reorder on a [nested fieldset]({{ "/nested-forms/" | relative_url }}) with [SortableJS](https://sortablejs.github.io/Sortable/) (`npm i sortablejs`):
+Third-party UI libraries slot in the same way whatever they do: the library owns the gesture, your controller owns the handoff, `perform`/`performOn` is the handoff.
+
+Here is drag-to-reorder on a [nested fieldset]({{ "/nested-forms/" | relative_url }}) with [SortableJS](https://sortablejs.github.io/Sortable/):
 
 ```js
 // app/javascript/controllers/credits_sortable_controller.js

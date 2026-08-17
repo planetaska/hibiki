@@ -5,9 +5,9 @@ nav_order: 3
 
 # Nested forms
 
-A song has many credits; a credit has many contributions. On a classic Rails
-form that is `accepts_nested_attributes_for` + `fields_for`: one submit, one
-save, the whole tree. On a reactive resource the same tree lives **in the
+Consider this scenario: a song has many credits; a credit has many contributions. On a classic Rails
+form we'd use `accepts_nested_attributes_for` + `fields_for`: one submit and one
+save take care of the whole tree. On a reactive resource the same tree lives **in the
 graph** — rows are added, edited, reordered and removed over the channel with
 the form still open, and one save still persists everything.
 
@@ -15,12 +15,17 @@ the form still open, and one save still persists everything.
 [CRUD scaffold]({{ "/crud-scaffolding/" | relative_url }}) already generated:
 
 ```sh
+# Here, Song is a resource generated with Hibiki's scaffold:
+# bin/rails g hibiki:rails:scaffold Song title...
+#
+# Credit and Contributions are regular child models generated with:
+# bin/rails g model Credit song:references...
+
 bin/rails g hibiki:rails:nested Song Credit
 bin/rails g hibiki:rails:nested Credit Contribution
 ```
 
-Each run wires exactly one edge — **depth is composition**, nothing counts
-levels. The child model must already exist, be migrated, and `belongs_to` the
+Each run wires exactly one edge — **depth is composition**, and there's no level limit. The child model must already exist, be migrated, and `belongs_to` the
 parent (the generator refuses otherwise); attribute arguments only reorder or
 subset the columns the schema already knows.
 
