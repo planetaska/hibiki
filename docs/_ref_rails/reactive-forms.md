@@ -63,6 +63,14 @@ arrive as strings. [Multi-select associations]({{ "/multiselect/" |
 relative_url }}) covers the macro and the generator that builds a whole
 searchable dropdown on top of it.
 
+`reactive_nested :chapters, "ChapterForm"` declares a signal holding an
+**array of child forms** over `accepts_nested_attributes_for` — the child
+class may itself declare `reactive_nested`, so a whole tree edits in the
+graph and persists in the record's one save. [Nested forms]({{
+"/nested-forms/" | relative_url }}) covers the macro, the generic channel
+actions that drive it, and the generator that wires one parent→child edge
+per run.
+
 ## Two layers of validation, on purpose
 
 Hand-written error deriveds give **per-keystroke feedback**. They are

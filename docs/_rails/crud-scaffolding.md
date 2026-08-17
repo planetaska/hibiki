@@ -170,6 +170,7 @@ The most common next steps:
 - **Restart the server after the first run.** `app/forms/` is almost certainly a new directory, and Rails computes its autoload paths at boot — until you restart, the new constants raise `NameError`.
 - **Add validators to the model**, then run `bin/rails g hibiki:rails:form Book` to derive the live validation clauses from them — or write the clauses into the form by hand.
 - **Add a multi-select over a join** with `bin/rails g hibiki:rails:multiselect Book Tag BookTag` — see [Multi-select associations]({{ "/multiselect/" | relative_url }}).
+- **Nest a child collection into the form** with `bin/rails g hibiki:rails:nested Book Chapter` — a live `fields_for`: rows added, edited, reordered and removed in the open form, one save persisting the tree. See [Nested forms]({{ "/nested-forms/" | relative_url }}).
 - **Reorder or drop fields** in the views.
 
 And to understand what you were handed:
