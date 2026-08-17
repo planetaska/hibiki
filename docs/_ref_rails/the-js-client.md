@@ -18,7 +18,7 @@ For jsbundling/vite apps, `npm install hibiki-rails` — the [npm package](https
 
 | `hibiki_rails` gem | `hibiki-rails` npm | notes |
 | ------------------ | ------------------ | ----- |
-| 0.9.0              | 0.9.0              | `perform` on the island controller becomes public API, with a `performOn` export — [drive an island from your own JavaScript](#driving-an-island-from-your-own-javascript). Also fixes `perform` claiming success (a truthy seq) for an action dropped during an offline gap |
+| 0.9.0              | 0.9.0              | `perform` on the island controller becomes public API, with a `performOn` export — [drive an island from your own JavaScript]({{ "/driving-an-island/" | relative_url }}). Also fixes `perform` claiming success (a truthy seq) for an action dropped during an offline gap |
 | 0.8.0              | 0.8.0              | `fallback:` — a control's native href/action as its degraded path (stand-aside off-`ready`, dead-socket fallthrough, CSRF freshening) — and `history.replaceState` for the channel's `transmit_url` |
 | 0.7.0              | 0.7.0              | a `[]`-suffixed field name collects **all** its FormData entries as an array — a multi-select's full selection reaches the channel |
 | 0.6.0              | 0.6.0              | no client change (the AR-equality release on the gem side) |
@@ -131,85 +131,4 @@ end
 
 Because the client registers its `received` callback at subscribe time — before the server ever runs `build_graph` — the effects' first transmits always land: no Turbo stream, no connected-wait, and the server-rendered initial HTML is only a paint-avoidance placeholder. One rule carries over from any replace-fragment design: never transmit a fragment containing the input the user is currently typing in.
 
-## Driving an island from your own JavaScript
-
-Some gestures can't be declared in markup — a drag library's drop callback, a canvas widget, a keyboard shortcut. For those, **`perform(action, payload)` on the island's controller instance is public API** (0.9.0): it fires the action through the island's own subscription, exactly like a declared control, busy state and all. Reach the instance with Stimulus's standard lookup:
-
-```js
-// inside one of your own Stimulus controllers
-const islandEl = this.element.closest('[data-controller~="hibiki"]')
-const island = this.application.getControllerForElementAndIdentifier(islandEl, "hibiki")
-island?.perform("nested_move", { your_payload })
-```
-
-(The optional chaining matters: the lookup returns `null` until the island's controller has connected.)
-
-**Or** skip the incantation with the `performOn` export, which finds the island containing any element — no Stimulus context required:
-
-```js
-import { performOn } from "hibiki-rails"
-
-performOn(element, "nested_move", { your_payload })
-```
-
-**The return value is the whole contract.** Truthy — the trip's sequence number — means the action was *accepted*: sent live, or queued during the island's initial connect window. A repaint is coming, so leave the DOM as the user arranged it; the morph will land as a visual no-op. `undefined` means it was *dropped*: the island is offline, the socket turned out to be dead at send, or (`performOn` only, with a console warning) no island contains the element. The caller owns recovery — revert the gesture, or stand back and let the next repaint self-heal. Nothing queues across an offline gap, on purpose: a reconnect builds a fresh server-side graph, and replaying intent formed against the old one is worse than dropping it.
-
-This is the **one** supported seam. The `data-hibiki-*` attributes are a private contract between the Ruby helpers and the client — hand-writing them may break on any release. And subclassing `ChannelController` to reach an existing island opens a *second* subscription, which builds a second server-side graph that nothing paints from.
-
-### Worked example: drag-to-reorder with SortableJS
-
-Third-party UI libraries slot in the same way whatever they do: the library owns the gesture, your controller owns the handoff, `perform`/`performOn` is the handoff.
-
-Here is drag-to-reorder on a [nested fieldset]({{ "/nested-forms/" | relative_url }}) with [SortableJS](https://sortablejs.github.io/Sortable/):
-
-```js
-// app/javascript/controllers/credits_sortable_controller.js
-import { Controller } from "@hotwired/stimulus"
-import Sortable from "sortablejs"
-import { performOn } from "hibiki-rails"
-
-export default class extends Controller {
-  static values = { dom: String }
-
-  connect() {
-    this.sortable = Sortable.create(this.element, {
-      handle: "[data-drag-handle]",
-      animation: 150,
-      onEnd: (event) => this.dropped(event)
-    })
-  }
-
-  disconnect() {
-    this.sortable.destroy()
-  }
-
-  dropped({ item, oldIndex, newIndex }) {
-    if (newIndex === oldIndex) return
-    // The container holds only visible rows, so Sortable's newIndex IS
-    // nested_move's "index among visible siblings".
-    const accepted = performOn(this.element, "nested_move", {
-      dom: this.domValue, path: item.dataset.path, to: newIndex
-    })
-    if (accepted) return
-    // Dropped (offline): no repaint is coming — put the row back.
-    const siblings = [...this.element.children].filter((row) => row !== item)
-    this.element.insertBefore(item, siblings[oldIndex] ?? null)
-  }
-}
-```
-
-The markup side is all plain app attributes — wrap the generated fieldset's rows and give each row a handle and its path:
-
-```erb
-<div data-controller="credits-sortable" data-credits-sortable-dom-value="<%= dom %>">
-  <% visible_credits.each_with_index do |credit, index| %>
-    <%# inside _credit_fields: the row root gains data-path="<%= path %>"
-        and a <span data-drag-handle>⠿</span> %>
-    <%= render "songs/credit_fields", credit: credit, dom: dom,
-               path: "credits/#{credit.nested_key}", index: index,
-               count: visible_credits.size %>
-  <% end %>
-</div>
-```
-
-One drop, one `nested_move`, and every session converges on the server's order — the dragging tab's repaint is a visual no-op because the DOM already looks that way. The scaffold's ↑/↓ buttons keep working beside the drag, and the wiring survives repaints: Stimulus disconnects and reconnects the controller when a morph replaces the container. One caveat to know about: a repaint from *another* session landing mid-drag can pull the row out from under the gesture — rare, and the next drop simply starts from the repainted order.
+For gestures that can't be declared in markup — a drag library's drop callback, a canvas widget, a keyboard shortcut — `perform`/`performOn` fire an action through the island's own subscription from your own code: see [Driving an island from JS]({{ "/driving-an-island/" | relative_url }}).

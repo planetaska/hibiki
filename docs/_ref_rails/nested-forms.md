@@ -110,7 +110,7 @@ rows marked for destruction sit out of the visible order and refuse to
 move). The repaint after a move arrives in the order the user asked for.
 
 The same action is what a drag-and-drop layer fires once per drop —
-[the JS client]({{ "/the-js-client/" | relative_url }}#driving-an-island-from-your-own-javascript)
+[Driving an island from JS]({{ "/driving-an-island/" | relative_url }})
 shows the full SortableJS example over this exact fieldset.
 
 ## The degraded path

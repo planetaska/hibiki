@@ -1,6 +1,6 @@
 ---
 title: Loading state
-nav_order: 6
+nav_order: 7
 ---
 
 # Loading and connection state
