@@ -76,7 +76,7 @@ A scaffolded resource can nest a child collection into its forms — a live `fie
 
 ```sh
 # Adds a credits fieldset to the song's forms; creates Credit
-# (and its migration) when missing — song:references comes free
+# (and its migration) when missing — song:references is added for you
 bin/rails g hibiki:rails:nested Song Credit role:string position:integer
 ```
 

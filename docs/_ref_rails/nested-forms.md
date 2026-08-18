@@ -54,7 +54,7 @@ For the root edge (`Song Credit`, ERB shown; `--phlex` emits components):
 | `app/models/credit.rb` + its migration | **Created** when the model doesn't exist — from the field list, the parent reference prepended |
 | a migration | Only when `--position=COLUMN` names a column an existing table doesn't have — a created child's columns all ride its own migration |
 
-## The array lives in the graph
+## The child forms array lives in the graph
 
 `reactive_nested :credits, "CreditForm"` declares a signal holding an array
 of child forms. The fieldset's controls don't submit anything — each fires a
@@ -84,7 +84,7 @@ On channels that aren't the scaffold's, override the private
 `nested_form_for(dom)` — the default resolves the scaffold's
 `@form`/`@editing_id` and `@new_form`/`@creating` ivars.
 
-## One save, whole tree
+## One save persists the whole tree
 
 The parent form's `to_h` serializes the tree as recursive
 `credits_attributes` (each child carrying `id:` when persisted and
