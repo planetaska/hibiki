@@ -18,16 +18,20 @@ the form still open, and one save still persists everything.
 # Here, Song is a resource generated with Hibiki's scaffold:
 # bin/rails g hibiki:rails:scaffold Song title...
 #
-# Credit and Contributions are regular child models generated with:
-# bin/rails g model Credit song:references...
+# Credit and Contribution are regular child models — pass a field list
+# and each is created for you (model + migration) when missing:
 
-bin/rails g hibiki:rails:nested Song Credit
-bin/rails g hibiki:rails:nested Credit Contribution
+bin/rails g hibiki:rails:nested Song Credit role:string position:integer
+bin/rails g hibiki:rails:nested Credit Contribution part:string
+bin/rails db:migrate
 ```
 
-Each run wires exactly one edge — **depth is composition**, and there's no level limit. The child model must already exist, be migrated, and `belongs_to` the
-parent (the generator refuses otherwise); attribute arguments only reorder or
-subset the columns the schema already knows.
+Each run wires exactly one edge — **depth is composition**, and there's no level limit. With an existing child model (migrated, with a `belongs_to` to the
+parent), attribute arguments only reorder or subset the columns the schema
+already knows — the facts stay the schema's. When the child model doesn't
+exist, the field list creates it (since 0.9.1): model and migration via
+Rails' own model generator, with `song:references` prepended for you. Run
+the migration before using the fieldset.
 
 The second run finds `Credit` is itself a nested child (its
 `_credit_fields` partial exists under `app/views`) and nests the
@@ -47,7 +51,8 @@ For the root edge (`Song Credit`, ERB shown; `--phlex` emits components):
 | `app/channels/songs_channel.rb` | `include Hibiki::Rails::NestedActions` (once — every later edge shares it) and `includes(...)` preloads on the form-opening actions |
 | `_form.html.erb` (the full page form) | A classic `fields_for` fieldset — the degraded path |
 | the controller | The `credits_attributes` group in `params.expect`, `_destroy` included |
-| a migration | Only when `--position=COLUMN` names a column the table doesn't have |
+| `app/models/credit.rb` + its migration | **Created** when the model doesn't exist — from the field list, the parent reference prepended |
+| a migration | Only when `--position=COLUMN` names a column an existing table doesn't have — a created child's columns all ride its own migration |
 
 ## The array lives in the graph
 
@@ -100,7 +105,9 @@ copy, marks included.
 
 A `position` column on the child table is detected and wired by default;
 `--position=COLUMN` names a different one (generating the `add_column`
-migration when it's absent), `--skip-position` opts out.
+migration when it's absent), `--skip-position` opts out. A **created** child
+is never ordered silently — put `position` in the field list, or pass
+`--position=COLUMN` and the column joins the child's own migration.
 
 Ordered edges don't edit positions — **the visual order is the ordering**.
 The parent form's `to_h` stamps the column from array order at save time,
@@ -134,8 +141,8 @@ the scaffold takes everywhere else.
 
 ## Notes
 
-- **Run the migration** before using an edge whose `--position` column was
-  generated.
+- **Run the migration** before using an edge whose child model or
+  `--position` column was generated.
 - The `NestedActions` include is idempotent — the channel gains it on the
   first edge and later edges reuse it. Like any concern of public methods,
   everything public on it is a client-invocable action; that is its job.

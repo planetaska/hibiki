@@ -70,6 +70,18 @@ bin/rails g hibiki:rails:multiselect Album Song Track
 The channel gains one `include`; everything else lives in a generated concern and a view partial. [Multi-select associations]({{ "/multiselect/" |
 relative_url }}) covers the design — in particular why the selection lives in the graph, which is what lets the search filter narrow 100k options without ever dropping a checked one.
 
+### Nest a child collection into the form
+
+A scaffolded resource can nest a child collection into its forms — a live `fields_for`: rows are added, edited, reordered and removed with the form still open, and one save persists the whole tree. The child model will be created from the field list if it doesn't exist yet:
+
+```sh
+# Adds a credits fieldset to the song's forms; creates Credit
+# (and its migration) when missing — song:references comes free
+bin/rails g hibiki:rails:nested Song Credit role:string position:integer
+```
+
+Each run wires one parent→child edge; run it again with the child as the parent and depth composes. [Nested forms]({{ "/nested-forms/" | relative_url }}) covers the design — the array of child forms lives in the graph, addressed by path, while the classic `fields_for` page form stays as the degraded path.
+
 ### Scaffolding with style
 
 The scaffold supports Tailwind CSS and DaisyUI pre-built styling. To pick a variant, pass a `--css` argument.
