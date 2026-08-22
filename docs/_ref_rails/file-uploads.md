@@ -146,7 +146,7 @@ bin/rails g hibiki:rails:upload_field Report document --accept=pdf,doc
 
 narrows both file inputs' `accept` attribute. Each token stands for what the
 browser's file picker understands — a MIME pattern, or an extension list
-where the MIME names would be unreadable (the Office formats):
+where the MIME names would be unreadable (like the Office formats):
 
 | Token | What the `accept` attribute gets |
 | --- | --- |
@@ -173,9 +173,6 @@ An unknown token refuses before anything is written. The list is
 **advisory** — browsers honor it, nothing enforces it — so every display site
 decides per blob at render time: an image (`blob.variable?`) gets a variant
 thumbnail, anything else its filename and size, linked to the blob on the row.
-One template serves every accept list, mixed lists included, and a
-wrong-typed file never breaks the index. With `--many`, `--accept=pdf` is a
-document list.
 
 ## Options
 

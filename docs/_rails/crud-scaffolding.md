@@ -84,17 +84,17 @@ Each run wires one parent→child edge; run it again with the child as the paren
 
 ### Add file uploads
 
-A scaffolded resource can take an Active Storage attachment on **both** edit surfaces — the classic page form uploads on submit the way Rails always has, and the inline channel form direct-uploads on pick and hands only the signed id to the graph:
+You can add an upload field to a scaffolded resource. The resource can take an Active Storage attachment on both the classic page form (which uploads on submit), and the inline edit form (which direct-uploads on pick):
 
 ```sh
 # Adds a cover upload to the album's forms, a thumbnail to its rows
 bin/rails g hibiki:rails:upload_field Album cover
 
-# A gallery instead, and non-image files
+# Adds a gallery, and allowing non-image files
 bin/rails g hibiki:rails:upload_field Album photos --many --accept=image,pdf
 ```
 
-[File uploads]({{ "/file-uploads/" | relative_url }}) covers the design — why the pending upload lives in the graph (it survives repaints, and the edit row and inline create form hold independent files), and why a gallery appends rather than assigns.
+[File uploads]({{ "/file-uploads/" | relative_url }}) covers the design and more detail on how to use this generator.
 
 ### Scaffolding with style
 
