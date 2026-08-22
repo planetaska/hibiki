@@ -1,6 +1,6 @@
 ---
 title: The JS client
-nav_order: 5
+nav_order: 6
 ---
 
 # The JS client
@@ -18,6 +18,7 @@ For jsbundling/vite apps, `npm install hibiki-rails` — the [npm package](https
 
 | `hibiki_rails` gem | `hibiki-rails` npm | notes |
 | ------------------ | ------------------ | ----- |
+| 0.10.0             | 0.10.0             | no client change (on the gem side, [`hibiki:rails:upload_field`]({{ "/file-uploads/" | relative_url }}) — attachments on both edit surfaces, `--accept`, `--many` galleries) |
 | 0.9.1              | 0.9.1              | no client change (on the gem side, [`hibiki:rails:nested`]({{ "/nested-forms/" | relative_url }}) creates a missing child model from its field list) |
 | 0.9.0              | 0.9.0              | `perform` on the island controller becomes public API, with a `performOn` export — [drive an island from your own JavaScript]({{ "/driving-an-island/" | relative_url }}). Also fixes `perform` claiming success (a truthy seq) for an action dropped during an offline gap |
 | 0.8.0              | 0.8.0              | `fallback:` — a control's native href/action as its degraded path (stand-aside off-`ready`, dead-socket fallthrough, CSRF freshening) — and `history.replaceState` for the channel's `transmit_url` |

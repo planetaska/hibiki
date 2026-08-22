@@ -1,6 +1,6 @@
 ---
 title: Driving an island from JS
-nav_order: 6
+nav_order: 7
 ---
 
 # Driving an island from your own JavaScript

@@ -82,6 +82,20 @@ bin/rails g hibiki:rails:nested Song Credit role:string position:integer
 
 Each run wires one parent→child edge; run it again with the child as the parent and depth composes. [Nested forms]({{ "/nested-forms/" | relative_url }}) covers the design — the array of child forms lives in the graph, addressed by path, while the classic `fields_for` page form stays as the degraded path.
 
+### Add file uploads
+
+A scaffolded resource can take an Active Storage attachment on **both** edit surfaces — the classic page form uploads on submit the way Rails always has, and the inline channel form direct-uploads on pick and hands only the signed id to the graph:
+
+```sh
+# Adds a cover upload to the album's forms, a thumbnail to its rows
+bin/rails g hibiki:rails:upload_field Album cover
+
+# A gallery instead, and non-image files
+bin/rails g hibiki:rails:upload_field Album photos --many --accept=image,pdf
+```
+
+[File uploads]({{ "/file-uploads/" | relative_url }}) covers the design — why the pending upload lives in the graph (it survives repaints, and the edit row and inline create form hold independent files), and why a gallery appends rather than assigns.
+
 ### Scaffolding with style
 
 The scaffold supports Tailwind CSS and DaisyUI pre-built styling. To pick a variant, pass a `--css` argument.
@@ -183,6 +197,7 @@ The most common next steps:
 - **Add validators to the model**, then run `bin/rails g hibiki:rails:form Book` to derive the live validation clauses from them — or write the clauses into the form by hand.
 - **Add a multi-select over a join** with `bin/rails g hibiki:rails:multiselect Book Tag BookTag` — see [Multi-select associations]({{ "/multiselect/" | relative_url }}).
 - **Nest a child collection into the form** with `bin/rails g hibiki:rails:nested Book Chapter` — a live `fields_for`: rows added, edited, reordered and removed in the open form, one save persisting the tree. See [Nested forms]({{ "/nested-forms/" | relative_url }}).
+- **Attach files** with `bin/rails g hibiki:rails:upload_field Book cover` (`--many` for a gallery, `--accept=pdf` for documents) — on both the page form and the inline form. See [File uploads]({{ "/file-uploads/" | relative_url }}).
 - **Reorder or drop fields** in the views.
 
 And to understand what you were handed:
