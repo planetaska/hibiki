@@ -11,6 +11,8 @@ Storage's direct upload swaps a signed id into the field before the form goes.
 The inline channel form cannot: its save serializes the form with `FormData`
 and ships it over the cable, and a `File` does not ride a channel message.
 
+## Single file upload
+
 `hibiki:rails:upload_field` adds one attachment onto a resource the
 [CRUD scaffold]({{ "/crud-scaffolding/" | relative_url }}) already generated,
 on both surfaces:
@@ -38,7 +40,7 @@ per run; a second run adds a second attachment beside the first.
 | `_form.html.erb` / page form component | A `direct_upload: true` file field and a "Remove cover" checkbox |
 | `app/controllers/albums_controller.rb` | `:cover, :remove_cover` appended to `params.expect` |
 
-The include line is the channel's **only** edit. The concern wraps
+The include line is the channel's only edit. The concern wraps
 `build_graph`, `edit`/`cancel`/`save` and the inline-create actions with
 `super` through a prepended module; its public `set_cover` / `remove_cover`
 methods become client-invocable actions exactly like methods on the channel
@@ -103,7 +105,7 @@ after_save(if: -> { remove_cover && attachment_changes["cover"].nil? }) { cover.
 The `attachment_changes` guard is what decides a same-submit conflict: a new
 file **and** a checked box means the upload wins.
 
-## Galleries: `--many`
+## Multiple files upload: `--many`
 
 ```sh
 bin/rails g hibiki:rails:upload_field Album photos --many
@@ -136,21 +138,44 @@ after_save(if: -> { remove_photo_ids.present? }) { photos_attachments.where(id: 
 checkbox per attached file feeding `remove_photo_ids`. `params.expect` takes
 them as `{ add_photos: [], remove_photo_ids: [] }`.
 
-## Non-image files: `--accept`
+## Allowing other file types: `--accept`
 
 ```sh
 bin/rails g hibiki:rails:upload_field Report document --accept=pdf,doc
 ```
 
-narrows both file inputs' `accept` attribute. Tokens: `image` (the default),
-`audio`, `video`, `pdf`, `csv`, `text`, `doc`, `xls`, `ppt`, plus any raw
-`type/subtype` or `.ext` passed through; an unknown token refuses before
-anything is written. The list is **advisory** — browsers honor it, nothing
-enforces it — so every display site decides per blob at render time: an image
-(`blob.variable?`) gets a variant thumbnail, anything else its filename and
-size, linked to the blob on the row. One template serves every accept list,
-mixed lists included, and a wrong-typed file never breaks the index. With
-`--many`, `--accept=pdf` is a document list.
+narrows both file inputs' `accept` attribute. Each token stands for what the
+browser's file picker understands — a MIME pattern, or an extension list
+where the MIME names would be unreadable (the Office formats):
+
+| Token | What the `accept` attribute gets |
+| --- | --- |
+| `image` (the default) | `image/*` |
+| `audio` | `audio/*` |
+| `video` | `video/*` |
+| `pdf` | `application/pdf` |
+| `csv` | `text/csv` |
+| `text` | `text/plain` |
+| `doc` | `.doc,.docx` |
+| `xls` | `.xls,.xlsx` |
+| `ppt` | `.ppt,.pptx` |
+| any `type/subtype` | passed through as written — `application/zip` |
+| any `.ext` | passed through as written — `.svg` |
+
+Tokens join in the order given, so `--accept=pdf,doc` emits the same string
+on both inputs:
+
+```erb
+<%= form.file_field :document, accept: "application/pdf,.doc,.docx", direct_upload: true %>
+```
+
+An unknown token refuses before anything is written. The list is
+**advisory** — browsers honor it, nothing enforces it — so every display site
+decides per blob at render time: an image (`blob.variable?`) gets a variant
+thumbnail, anything else its filename and size, linked to the blob on the row.
+One template serves every accept list, mixed lists included, and a
+wrong-typed file never breaks the index. With `--many`, `--accept=pdf` is a
+document list.
 
 ## Options
 
