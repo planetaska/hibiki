@@ -131,6 +131,6 @@ def build_graph
 end
 ```
 
-Because the client registers its `received` callback at subscribe time — before the server ever runs `build_graph` — the effects' first transmits always land: no Turbo stream, no connected-wait, and the server-rendered initial HTML is only a paint-avoidance placeholder. One rule carries over from any replace-fragment design: never transmit a fragment containing the input the user is currently typing in.
+Because the client registers its `received` callback at subscribe time — before the server ever runs `build_graph` — the effects' first transmits always land: no Turbo stream, no connected-wait, and the server-rendered initial HTML only fills the space until the first transmit arrives. One rule carries over from any replace-fragment design: never transmit a fragment containing the input the user is currently typing in.
 
 For gestures that can't be declared in markup — a drag library's drop callback, a canvas widget, a keyboard shortcut — `perform`/`performOn` fire an action through the island's own subscription from your own code: see [Driving an island from JS]({{ "/driving-an-island/" | relative_url }}).

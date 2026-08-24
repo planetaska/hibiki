@@ -11,7 +11,7 @@
     always lands. The counter page deliberately stays on the
     Turbo-broadcast transport as its live proof. %>
 <%= tag.div(**hibiki_island(TodosChannel, cid: @cid)) do %>
-  <%# A throwaway instance as a paint-avoidance placeholder; the channel's
+  <%# A throwaway instance to fill the space on first paint; the channel's
       long-lived instance takes over from its first transmit. %>
   <%= render TodoList.new %>
 

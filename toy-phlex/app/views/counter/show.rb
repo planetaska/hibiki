@@ -3,7 +3,7 @@
 # The page content — rendered inside the standard Rails layout
 # (layouts/application.html.erb), like any phlex-rails app; the views
 # themselves are 100% Phlex. The two display fragments are rendered here
-# with throwaway zero-value signals purely as paint-avoidance placeholders:
+# with throwaway zero-value signals purely to fill the space on first paint:
 # the channel's live instances take over from their first transmit (see
 # CounterChannel#transmit_fragment).
 class Counter::Show < Phlex::HTML

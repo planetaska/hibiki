@@ -9,9 +9,9 @@ nav_order: 4
 
 And it degrades. The live index is built from real links and real forms, the address bar mirrors the live state, and the plain controller still answers everything — so the same page works with the socket down, or with no JavaScript at all. See [URL handling, and no-JS degrades](#url-handling-and-no-js-degrades) below.
 
-Everything the generator needs is derived from the model's schema (columns, types, `belongs_to` reflections, validators), or from the same `field:type` argument list that Rails' own scaffold takes. Once it has run, reshape the result to fit your needs.
+The generator derives everything it needs from the model's schema (columns, types, `belongs_to` reflections, validators), or from the same `field:type` argument list that Rails' own scaffold takes. Once it has run, reshape the result to fit your needs.
 
-The output doubles as a worked example: several approaches were measured before settling on the pattern it emits. The guiding principle is that you should be able to build **on top of** the scaffold rather than tear it down and start over.
+The output doubles as a worked example: we measured several approaches before settling on the pattern it emits. The guiding principle is that you should be able to build **on top of** the scaffold rather than tear it down and start over.
 
 ## Basic scaffold commands
 
@@ -37,7 +37,7 @@ bin/rails db:migrate
 
 #### 2. Scaffold from an existing model
 
-For a model you already have, use `scaffold_controller` like you would in regular Rails. The resource schema is derived from that model for you.
+For a model you already have, use `scaffold_controller` like you would in regular Rails. The generator derives the resource schema from that model for you.
 
 Example:
 
@@ -48,18 +48,18 @@ bin/rails g hibiki:rails:scaffold_controller Book
 
 ### Re-derive the form after adding validators
 
-The live validation in the generated form is derived from the model's validators — and a full scaffold runs before its own migration, so it starts empty. Once you have migrated and added validators, we provide a convenient command to re-generate the reactive form with inferred live error messages:
+The live validation in the generated form is derived from the model's validators — and a full scaffold runs before its own migration, so it starts empty. Once you have migrated and added validators, one command re-derives the reactive form, inferred live error messages included:
 
 ```sh
 # Rewrites the ReactiveForm and the two form views. Nothing else is touched.
 bin/rails g hibiki:rails:form Book
 ```
 
-It re-derives everything validator-shaped — the live validation clauses, a number field's `min:`/`max:`, requiredness — and leaves the rest of the scaffold's output alone. You are asked per file before anything you edited is replaced. Pass `--skip-views` to rewrite only `app/forms/book_form.rb`; the view layer and `--css` variant are detected from the files the scaffold left.
+It re-derives everything validator-shaped — the live validation clauses, a number field's `min:`/`max:`, requiredness — and leaves the rest of the scaffold's output alone. The command asks per file before replacing anything you edited. Pass `--skip-views` to rewrite only `app/forms/book_form.rb`; the view layer and `--css` variant are detected from the files the scaffold left.
 
 ### Add a multi-select for a `has_many :through`
 
-A scaffolded resource can attach a **searchable** dropdown multi-select over a join model — ideal for use cases like tagging songs onto an album. The join model will be generated for you if it doesn't exist yet:
+A scaffolded resource can attach a **searchable** dropdown multi-select over a join model — ideal for use cases like tagging songs onto an album. The generator creates the join model if it doesn't exist yet:
 
 ```sh
 # Adds a songs dropdown to the album's inline edit form; creates Track
@@ -67,12 +67,11 @@ A scaffolded resource can attach a **searchable** dropdown multi-select over a j
 bin/rails g hibiki:rails:multiselect Album Song Track
 ```
 
-The channel gains one `include`; everything else lives in a generated concern and a view partial. [Multi-select associations]({{ "/multiselect/" |
-relative_url }}) covers the design — in particular why the selection lives in the graph, which is what lets the search filter narrow 100k options without ever dropping a checked one.
+The channel gains one `include`; everything else lives in a generated concern and a view partial. [Multi-select associations]({{ "/multiselect/" | relative_url }}) covers the design — in particular why the selection lives in the graph, which is what lets the search filter narrow 100k options without ever dropping a checked one.
 
 ### Nest a child collection into the form
 
-A scaffolded resource can nest a child collection into its forms — a live `fields_for`: rows are added, edited, reordered and removed with the form still open, and one save persists the whole tree. The child model will be created from the field list if it doesn't exist yet:
+A scaffolded resource can nest a child collection into its forms — a live `fields_for`: rows are added, edited, reordered and removed with the form still open, and one save persists the whole tree. The generator creates the child model from the field list if it doesn't exist yet:
 
 ```sh
 # Adds a credits fieldset to the song's forms; creates Credit
@@ -94,7 +93,7 @@ bin/rails g hibiki:rails:upload_field Album cover
 bin/rails g hibiki:rails:upload_field Album photos --many --accept=image,pdf
 ```
 
-[File uploads]({{ "/file-uploads/" | relative_url }}) covers the design and more detail on how to use this generator.
+[File uploads]({{ "/file-uploads/" | relative_url }}) covers the design and the generator in more detail.
 
 ### Scaffolding with style
 
@@ -134,7 +133,7 @@ bin/rails g hibiki:rails:scaffold Book title:string ... --infinite-scroll
 
 ### Phlex support
 
-Generating Phlex views is supported if you wish to use it. Pass `--phlex` and the generator writes Phlex component views instead of ERB templates.
+Pass `--phlex` and the generator writes Phlex component views instead of ERB templates.
 
 Example:
 

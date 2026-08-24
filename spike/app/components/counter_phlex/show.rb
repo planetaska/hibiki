@@ -7,7 +7,7 @@
 # helpers, so between them both documented usage shapes are live.
 #
 # The two display fragments are rendered here with throwaway zero-value
-# signals purely as paint-avoidance placeholders: the channel's live
+# signals purely to fill the space on first paint: the channel's live
 # instances take over from their first transmit.
 class CounterPhlex::Show < Phlex::HTML
   include Hibiki::Rails::Helpers

@@ -23,10 +23,10 @@ Or `gem install hibiki hibiki_rails`.
 bin/rails g hibiki:rails:install
 ```
 
-The install generator detects whether your app uses an import map:
+The generator detects whether your app uses an import map:
 
 - For importmap apps, installation is fully automatic — you are done.
-- For apps with a JS bundler (esbuild, vite, bun, ...), also install the companion JS client (published as an npm package) with **one of**:
+- Bundler apps (esbuild, vite, bun, ...) need to install the companion JS client, published as the npm package `hibiki-rails`. Install it with your package manager:
   - `npm install hibiki-rails`
   - `yarn add hibiki-rails`
   - `bun add hibiki-rails`
@@ -34,7 +34,7 @@ The install generator detects whether your app uses an import map:
 
 ## Generate your first reactive component
 
-The provided generators scaffold a working reactive component for you:
+The generators scaffold a working reactive component:
 
 ```sh
 # Replace [your_view_path] with your desired view path,
@@ -50,7 +50,7 @@ This creates a minimal working reactive component in the given view path.
 
 ## Render the reactive component
 
-The generated components are just Rails partials (or Phlex components, if you used the Phlex generator), so you can render one anywhere like any other partial:
+The generated components are ordinary Rails partials (or Phlex components, if you used the Phlex generator), so render one like any other partial:
 
 ```erb
 <%= render "static_pages/counter" %>

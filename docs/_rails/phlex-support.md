@@ -5,16 +5,16 @@ nav_order: 7
 
 # Phlex support
 
-Phlex support comes from the gem `hibiki_phlex`: reactive components. A Phlex component is a plain Ruby object, so `Hibiki::Reactive` gives it per-instance signals read as ordinary method calls — no `.value` anywhere in `view_template` — and a **render effect** re-renders it whenever one of those signals changes.
+The sister gem `hibiki_phlex` makes Phlex components reactive. A Phlex component is a plain Ruby object, so `Hibiki::Reactive` gives it per-instance signals read as ordinary method calls — no `.value` anywhere in `view_template` — and a **render effect** re-renders it whenever one of those signals changes.
 
 ```
 signal write → render effect re-runs → component re-renders
 (same instance) → fresh HTML handed to your block
 ```
 
-Transport-agnostic on purpose: the gem depends only on `hibiki` and `phlex`. The block receiving the HTML decides where it goes — broadcast it over Turbo Streams, transmit it down a channel subscription, write it to a file, diff it in a test.
+The gem is transport-agnostic on purpose: it depends only on `hibiki` and `phlex`. The block receiving the HTML decides where it goes — broadcast it over Turbo Streams, transmit it down a channel subscription, write it to a file, diff it in a test.
 
-Requires Phlex >= 2.4, < 2.5 (see the version-pin rationale below) and Ruby >= 3.4:
+The gem requires Phlex >= 2.4, < 2.5 (see the version-pin rationale below) and Ruby >= 3.4:
 
 ```ruby
 # Gemfile
@@ -58,7 +58,7 @@ effect.dispose           # or let an enclosing Hibiki.root own teardown
 - The effect's **first run is the dependency-collecting initial render**: signals read inside `view_template` subscribe it through plain method calls, and that first HTML is yielded too.
 - Re-renders happen **on the same instance** — signal identity lives in the instance, so a fresh instance per render would reset every signal. That's what `Rerenderable` exists for.
 - `render_effect(component, scheduler:)` passes the scheduler through to `Hibiki::Effect`, so reruns can be deferred or debounced (e.g. `Hibiki::Rails::Debounce`).
-- Returns the `Hibiki::Effect`. Created inside `Hibiki.root` (or another effect), the owner tree disposes it automatically; a bare caller calls `#dispose`.
+- `render_effect` returns the `Hibiki::Effect`. When it is created inside `Hibiki.root` (or another effect), the owner tree disposes it automatically; a bare caller calls `#dispose`.
 
 ## With hibiki_rails
 
@@ -79,7 +79,7 @@ class TodosChannel < ApplicationCable::Channel
 end
 ```
 
-Granularity is inherent and worth knowing: the ERB style in `hibiki_rails` is one effect **per partial** (fine-grained), a Phlex render effect is one effect **per component** (component-grained). Both are correct; pick per page. The initial-state pattern (server-rendered placeholder + subscribe after the Turbo stream confirms) is transport-side — see [Rails usage]({{ "/rails-usage/" | relative_url }}). On the transmit transport there is no such ordering problem (see [The JS client]({{ "/the-js-client/" | relative_url }})).
+Granularity is inherent and worth knowing: the ERB style in `hibiki_rails` runs one effect **per partial** (fine-grained); a Phlex render effect runs one **per component** (component-grained). Both are correct; pick per page. The initial-state pattern (server-rendered placeholder + subscribe after the Turbo stream confirms) is transport-side — see [Rails usage]({{ "/rails-usage/" | relative_url }}). On the transmit transport there is no such ordering problem (see [The JS client]({{ "/the-js-client/" | relative_url }})).
 
 ## Why the strict Phlex pin
 

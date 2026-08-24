@@ -5,7 +5,7 @@ nav_order: 6
 
 # Reactive values
 
-When all you want on the wire is one derived (or state) value — not a whole partial or component — you can skip the fragment entirely. The view paints named placeholders, and the channel keeps them fresh:
+When all you want on the wire is one derived (or state) value — you can skip the fragment entirely. The view renders named placeholders, and the channel keeps them fresh:
 
 ```erb
 <!-- Display a single reactive value anywhere in the view -->
@@ -23,13 +23,27 @@ def build_graph
 end
 ```
 
-`reactive(name, placeholder = "", tag_name: :span)` emits `<span data-hibiki-value="remaining">0</span>`. `transmit_value` wraps the block in an effect that transmits the fresh value whenever a signal the block reads changes, and the client writes it into **every** placeholder carrying that name — much like styling by class name, one value may appear any number of times, anywhere on the page, including outside the island (a header badge, say).
+### Usage
 
-The name is what joins the two halves, so it must be page-unique across channels. Each placeholder keeps its own tag, classes and attributes across updates — only its text changes — so different sites can style the same value differently. In Phlex components, stamp the placeholder yourself by splatting the attributes: `span(**reactive_attrs(:remaining)) { "0" }`.
+A reactive value has two halves. The view half is the `reactive` helper:
 
-This is transport- and shape-agnostic: `transmit_value` always uses the channel's own `transmit`, which every `ChannelController` handles — so it works the same whether the page runs the generic packaged controller or a `ChannelController` subclass, and it composes with a page whose other fragments ride Turbo broadcasts: one channel can serve a fragment over broadcast and a value over transmit at the same time. A subclass that overrides `received` should call `super` (or handle the `value` message itself) to keep reactive values live.
+```ruby
+reactive(name, placeholder = "", tag_name: :span)
+```
 
-Cost and caveats: this is cheap — it rides the island's existing subscription and controller (no new Stimulus instance, no new channel), adding just one server-side effect and a tiny payload per value. Values are text, never markup — the client assigns `textContent`, so nothing is interpreted as HTML; for markup, use a fragment. And when several values always change together, one partial/component fragment beats N spans.
+It emits a named placeholder in plain HTML:
+
+```html
+<span data-hibiki-value="remaining">0</span>
+```
+
+The channel half is `transmit_value(name) { ... }`. It wraps the block in an effect: whenever a signal the block reads changes, the channel transmits the fresh value, and the client writes it into **every** placeholder carrying that name. Like styling by class name, one value may appear any number of times, anywhere on the page — including outside the island (for example, a badge in navigation).
+
+The name joins the two halves, so it must be page-unique across channels. Each placeholder keeps its own tag, classes and attributes across updates — only its text changes — so different sites can style the same value differently. In Phlex components, stamp the placeholder yourself by splatting the attributes: `span(**reactive_attrs(:remaining)) { "0" }`.
+
+Reactive values are transport- and shape-agnostic. `transmit_value` always uses the channel's own `transmit`, which every `ChannelController` handles, so it works the same whether the page runs the generic packaged controller or a `ChannelController` subclass. It also composes with a page whose other fragments ride Turbo broadcasts: one channel can serve a fragment over broadcast and a value over transmit at the same time. A subclass that overrides `received` should call `super` (or handle the `value` message itself) to keep reactive values live.
+
+Reactive values are cheap: they ride the island's existing subscription and controller — no new Stimulus instance, no new channel — adding just one server-side effect and a tiny payload per value. Two caveats. Values are text, never markup: the client assigns `textContent`, so nothing is interpreted as HTML — for markup, use a fragment. And when several values always change together, one partial/component fragment beats N spans.
 
 ## The URL sibling: `transmit_url`
 
