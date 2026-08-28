@@ -5,54 +5,74 @@ nav_order: 5
 
 # File uploads
 
-An attachment on a reactive resource has two edit surfaces to serve. The
-classic page form can upload on submit the way Rails always has — Active
-Storage's direct upload swaps a signed id into the field before the form goes.
-The inline channel form cannot: its save serializes the form with `FormData`
-and ships it over the cable, and a `File` does not ride a channel message.
+A resource the [CRUD scaffold]({{ "/crud-scaffolding/" | relative_url }})
+generated can be edited in two places. The classic `new` and `edit` pages
+submit a form over HTTP, the way every Rails app does. The index page is an
+*island* — a region of the page kept live by a channel, the WebSocket
+connection the scaffold set up — and its inline forms save by serializing
+their fields and sending them over that channel. An attachment has to work on
+both surfaces, and they cannot share one mechanism: an HTTP form carries a
+file in its request body, but a channel message is JSON, and a `File` cannot
+ride in it.
+
+Active Storage's *direct upload* serves both. The browser uploads the file
+straight to storage and gets back a **signed id** — a short token that stands
+for the stored blob; attaching the file to a record later takes only that
+token. The two forms differ in *when* they upload. The classic form uploads
+on submit, swapping the signed id into the field before the form goes. The
+inline form uploads the moment a file is picked, and only the signed id ever
+crosses the cable.
 
 ## Single file upload
 
-`hibiki:rails:upload_field` adds one attachment onto a resource the
-[CRUD scaffold]({{ "/crud-scaffolding/" | relative_url }}) already generated,
-on both surfaces:
+`hibiki:rails:upload_field` adds one attachment to a resource the CRUD
+scaffold already generated, on both surfaces:
 
 ```sh
 bin/rails g hibiki:rails:upload_field Album cover
 ```
 
-`Album` must exist, be migrated and be a hibiki:rails scaffold (the inline
-form and the collection channel are what the upload extends). One attachment
-per run; a second run adds a second attachment beside the first.
+`Album` must exist, be migrated, and be a hibiki:rails scaffold — the inline
+form and the collection channel are what the upload extends. Each run adds
+one attachment; a second run adds a second attachment beside the first.
 
 ## What lands where
 
+The generated code has two halves: a channel concern — the server side, mixed
+into the resource's channel — and a view partial for the upload row in the
+inline form. A Stimulus controller, shared by every upload field in the app,
+does the browser-side uploading. The rest of the run is small edits to files
+the scaffold already generated:
+
 | File | What happens |
 | --- | --- |
-| `app/channels/concerns/albums_channel/cover_upload.rb` | **Created.** The channel half, as a concern |
+| `app/channels/concerns/albums_channel/cover_upload.rb` | **Created.** The whole channel half, as a concern |
 | `app/views/albums/_cover_upload.html.erb` | **Created.** The inline form's upload row (a Phlex component under `--phlex`) |
 | `app/javascript/controllers/upload_field_controller.js` | **Created once per app.** The direct-upload Stimulus controller every upload field shares |
 | `app/channels/albums_channel.rb` | One line: `include CoverUpload` |
 | `app/models/album.rb` | `has_one_attached :cover`, plus the classic form's `remove_cover` virtual attribute and its guarded purge |
-| `app/models/album_query.rb`, `app/channels/album_channel.rb` | `.with_attached_cover` — the rows are `strict_loading`, so the blob must be preloaded |
+| `app/models/album_query.rb`, `app/channels/album_channel.rb` | `.with_attached_cover` — the channel's rows are `strict_loading`, so the blob must be preloaded |
 | `_album.html.erb` / row component | A "Cover: …" display line — a thumbnail, or the filename linked to the blob |
 | `_album_form.html.erb` / row form component | The render call for the upload row |
 | `_form.html.erb` / page form component | A `direct_upload: true` file field and a "Remove cover" checkbox |
 | `app/controllers/albums_controller.rb` | `:cover, :remove_cover` appended to `params.expect` |
 
-The include line is the channel's only edit. The concern wraps
-`build_graph`, `edit`/`cancel`/`save` and the inline-create actions with
-`super` through a prepended module; its public `set_cover` / `remove_cover`
-methods become client-invocable actions exactly like methods on the channel
-class. Everything it adds is suffixed by the attachment (`@pending_cover`,
-`update_pending_cover`), so a second attachment's concern coexists with the
-first in the same channel.
+The include line is the channel's only edit; everything else the concern
+does, it does from inside. It wraps the channel's `build_graph`,
+`edit`/`cancel`/`save`, and inline-create actions through a prepended module
+that calls `super`, and its public `set_cover` / `remove_cover` methods
+become client-invocable actions, exactly as if they were defined on the
+channel class. Everything it adds carries the attachment's name
+(`@pending_cover`, `update_pending_cover`), so a second attachment's concern
+coexists with the first in the same channel.
 
-## The inline form: only the signed id crosses the wire
+## The inline form: upload on pick, attach on save
 
-The inline form's file input carries **no name** on purpose. Picking a file
-fires the shared Stimulus controller, which direct-uploads it to storage right
-there and hands the island's graph the result:
+The inline form's file input carries **no `name`**, on purpose: the file must
+never enter the form's submit payload. Picking a file instead fires the
+shared Stimulus controller, which direct-uploads it to storage right there
+and hands the island the result — the signed id and the filename, nothing
+more:
 
 ```js
 // upload_field_controller.js — one controller, parameterized by the
@@ -63,8 +83,12 @@ const accepted = performOn(this.element, this.actionValue, {
 if (!accepted) this.element.value = ""   // island offline: nothing was queued
 ```
 
-The concern keeps that pending upload **in the graph**, keyed by the form's
-dom:
+On the server, the concern holds that pending upload in the island's *signal
+graph* — the server-side state the page re-renders from ([reactive
+forms]({{ "/reactive-forms/" | relative_url }}) introduces it; here it is
+enough that writing a signal repaints the island). The entry is keyed by the
+form's `dom`, the identifier naming which open form the pick belongs to, so a
+row's edit form and the inline create form can be open at the same time:
 
 ```ruby
 # { "album_5" => { signed_id:, filename: } or { remove: true } } — written
@@ -80,52 +104,57 @@ def set_cover(data)
 end
 ```
 
-Graph-owned is what makes the "attaches on save" badge honest: every repaint
-re-renders it from the signal, so it survives a morph, and a row edit and the
-inline create form — each with its own dom — hold independent pending files
-without either losing the other's. The record is only touched after a
-**successful** commit (the concern captures the editing id before `super` and
-acts when `super` cleared it), via a fresh find, never the frozen row.
+Keeping the pending upload in the graph is what makes the "attaches on save"
+badge honest. Every repaint re-renders the badge from the signal, so it
+survives a morph; and each open form keys its own entry, so a row edit and
+the inline create form hold independent pending files without either losing
+the other's. The record itself is touched only after a **successful** save:
+the concern captures the editing id before handing off to the scaffold's
+save, acts only when that save cleared it, and attaches through a fresh
+find — never through the frozen row.
 
-Remove is the same shape in reverse: the form's Remove button writes
-`{ remove: true }`, the badge reads "cover removed on save", and the purge
-happens at commit. A later pick overrides the mark.
+Remove is the same shape in reverse. The form's Remove button writes
+`{ remove: true }` into the same signal, the badge reads "cover removed on
+save", and the purge happens at commit. Picking a new file overrides the
+mark.
 
-## The classic form: Rails' own path
+## The classic form: upload on submit
 
-The page form gets a named field with `direct_upload: true` — `ActiveStorage.start()`'s
-form machinery uploads on submit and swaps the signed id in — and a
-"Remove cover" checkbox backed by a virtual attribute on the model:
+The page form uses Rails' own machinery: a named file field with
+`direct_upload: true`, which `ActiveStorage.start()` uploads on submit,
+swapping the signed id in before the form goes. Remove is a checkbox backed
+by a virtual attribute on the model:
 
 ```ruby
 attribute :remove_cover, :boolean, default: false
 after_save(if: -> { remove_cover && attachment_changes["cover"].nil? }) { cover.purge }
 ```
 
-The `attachment_changes` guard is what decides a same-submit conflict: a new
-file **and** a checked box means the upload wins.
+The `attachment_changes` guard decides a same-submit conflict: when one
+submit carries a new file **and** a checked box, the upload wins.
 
-## Multiple files upload: `--many`
+## Multiple files: `--many`
 
 ```sh
 bin/rails g hibiki:rails:upload_field Album photos --many
 ```
 
-generates the `has_many_attached` shape instead — and a model that already
-declares `has_many_attached :photos` selects it by itself (`--many` against an
-existing `has_one_attached` refuses). The inline input takes several files,
-uploaded one after another so the pending list keeps the pick order; each
-pending file gets its own badge with a ✕ to drop it, and each file already
-attached gets a ✕ that marks it for removal ("removed on save", with Undo).
-The marks live in the graph with the pending adds — `{ adds: [...], removes:
-[...] }` per form dom — and commit applies both: the adds are **appended**
-through `attach`, the marked ids purged.
+generates the `has_many_attached` shape instead. A model that already
+declares `has_many_attached :photos` selects it by itself, and `--many`
+against an existing `has_one_attached` refuses. The inline input takes
+several files and uploads them one after another, so the pending list keeps
+the pick order. Each pending file gets its own badge with a ✕ to drop it,
+and each file already attached gets a ✕ that marks it for removal —
+"removed on save", with Undo. The marks live in the graph beside the pending
+adds, `{ adds: [...], removes: [...] }` per form dom, and a successful save
+applies both: the adds are **appended** through `attach`, the marked files
+purged.
 
-That word, appended, is the design's one Rails-specific decision. Since Rails
-7.1, *assigning* to a `has_many_attached` replaces the whole collection — so
-`album.update(photos: [...])` from a page form that uploads one more photo would
-silently purge the rest. The classic form therefore never assigns the
-collection. It rides two virtual attributes:
+Appended is the design's one Rails-specific decision. Since Rails 7.1,
+*assigning* to a `has_many_attached` replaces the whole collection — so
+`album.update(photos: [...])` from a page form that uploads one more photo
+would silently purge the rest. The classic form therefore never assigns the
+collection. It rides two virtual attributes instead:
 
 ```ruby
 attribute :add_photos
@@ -138,15 +167,16 @@ after_save(if: -> { remove_photo_ids.present? }) { photos_attachments.where(id: 
 checkbox per attached file feeding `remove_photo_ids`. `params.expect` takes
 them as `{ add_photos: [], remove_photo_ids: [] }`.
 
-## Allowing other file types: `--accept`
+## Choosing file types: `--accept`
 
 ```sh
 bin/rails g hibiki:rails:upload_field Report document --accept=pdf,doc
 ```
 
-narrows both file inputs' `accept` attribute. Each token stands for what the
-browser's file picker understands — a MIME pattern, or an extension list
-where the MIME names would be unreadable (like the Office formats):
+sets the `accept` attribute on both file inputs — the hint the browser's
+file picker uses to filter what it offers. Each token stands for what the
+picker understands: a MIME pattern, or an extension list where the MIME
+names would be unreadable (like the Office formats):
 
 | Token | What the `accept` attribute gets |
 | --- | --- |
@@ -170,9 +200,10 @@ on both inputs:
 ```
 
 An unknown token refuses before anything is written. The list is
-**advisory** — browsers honor it, nothing enforces it — so every display site
-decides per blob at render time: an image (`blob.variable?`) gets a variant
-thumbnail, anything else its filename and size, linked to the blob on the row.
+**advisory** — browsers honor it, but nothing enforces it — so every display
+site decides per blob at render time: an image (`blob.variable?`) gets a
+variant thumbnail; anything else shows its filename and size, linked to the
+blob.
 
 ## Options
 
@@ -180,7 +211,7 @@ thumbnail, anything else its filename and size, linked to the blob on the row.
 | --- | --- |
 | `--many` | A `has_many_attached` gallery (implied by an existing `has_many_attached`) |
 | `--accept=LIST` | Comma-separated file types for both inputs (default `image`) |
-| `--css=NAME` | `daisyui`, `tailwind` or `none` — detected like the scaffold's |
+| `--css=NAME` | `daisyui`, `tailwind` or `none` — detected the same way the scaffold detects it |
 | `--phlex` | A Phlex component instead of the ERB partial. Absent means detect from what the scaffold left |
 
 ## Notes
