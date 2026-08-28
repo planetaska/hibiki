@@ -6,13 +6,21 @@ nav_order: 3
 # Nested forms
 
 Consider this scenario: a song has many credits; a credit has many contributions. On a classic Rails
-form we'd use `accepts_nested_attributes_for` + `fields_for`: one submit and one
-save take care of the whole tree. On a reactive resource the same tree lives **in the
-graph** — rows are added, edited, reordered and removed over the channel with
-the form still open, and one save still persists everything.
+form you edit a tree like this with `accepts_nested_attributes_for` and
+`fields_for`: the parent's form embeds a fieldset for the children, one submit
+posts everything, and one save persists it all.
 
-`hibiki:rails:nested` wires one parent→child edge onto a resource the
-[CRUD scaffold]({{ "/crud-scaffolding/" | relative_url }}) already generated:
+Hibiki keeps the one save but moves the editing into the open form. In a
+[reactive form]({{ "/reactive-forms/" | relative_url }}), each field of an
+edit form is a *signal* — a server-side value the page reacts to, so an edit
+travels up the resource's channel (the WebSocket connection the [CRUD
+scaffold]({{ "/crud-scaffolding/" | relative_url }}) set up) and the page updates from the new value. A nested form extends this to the children: each
+child row becomes a small form object of its own, and the parent form holds
+them in an array. Rows are added, edited, reordered and removed while the form
+stays open, and the save at the end still persists the whole tree at once.
+
+`hibiki:rails:nested` wires one parent→child edge onto a resource the CRUD
+scaffold already generated:
 
 ```sh
 # Here, Song is a resource generated with Hibiki's scaffold:
@@ -26,40 +34,47 @@ bin/rails g hibiki:rails:nested Credit Contribution part:string
 bin/rails db:migrate
 ```
 
-Each run wires exactly one edge — **depth is composition**, and there's no level limit. With an existing child model (migrated, with a `belongs_to` to the
-parent), attribute arguments only reorder or subset the columns the schema
-already knows — the facts stay the schema's. When the child model doesn't
-exist, the field list creates it (since 0.9.1): model and migration via
-Rails' own model generator, with `song:references` prepended for you. Run
-the migration before using the fieldset.
+Each run wires exactly one edge, parent to child. Depth comes from
+composition: run the generator once per edge, with no limit on how deep the
+tree goes.
 
-The second run finds `Credit` is itself a nested child (its
-`_credit_fields` partial exists under `app/views`) and nests the
-contributions fieldset inside it, wiring the owning resource's channel and
-page form — no extra arguments needed.
+When the child model already exists (migrated, with a `belongs_to` to the
+parent), the attribute arguments only choose which of its columns appear on
+the row, and in what order — the schema stays the source of truth. When the
+child model doesn't exist, the field list creates it (since 0.9.1): the model
+and its migration come from Rails' own model generator, with
+`song:references` prepended for you. Run the migration before using the
+fieldset.
+
+The second run above finds that `Credit` is itself a nested child (its
+`_credit_fields` partial exists under `app/views`), so it nests the
+contributions fieldset inside the credit row, wired to the owning resource's —
+the song's — channel and page form. No extra arguments are needed.
 
 ## What lands where
 
-For the root edge (`Song Credit`, ERB shown; `--phlex` emits components):
+For the root edge (`Song Credit`; ERB shown — `--phlex` emits components
+instead):
 
 | File | What happens |
 | --- | --- |
-| `app/forms/credit_form.rb` | **Created.** A [ReactiveForm]({{ "/reactive-forms/" | relative_url }}) over the child's own columns — the parent's foreign key and the position column deliberately absent |
-| `app/views/songs/_credit_fields.html.erb` | **Created.** One child row: path-addressed inputs, remove control, ↑/↓ when ordered |
-| `app/models/song.rb` | `has_many :credits` (with an `order(:position)` scope when ordered) + `accepts_nested_attributes_for` |
-| `app/forms/song_form.rb` | `reactive_nested :credits, "CreditForm"` — and, when ordered, a `to_h` override stamping positions from array order |
-| `app/channels/songs_channel.rb` | `include Hibiki::Rails::NestedActions` (once — every later edge shares it) and `includes(...)` preloads on the form-opening actions |
-| `_form.html.erb` (the full page form) | A classic `fields_for` fieldset — the degraded path |
-| the controller | The `credits_attributes` group in `params.expect`, `_destroy` included |
-| `app/models/credit.rb` + its migration | **Created** when the model doesn't exist — from the field list, the parent reference prepended |
-| a migration | Only when `--position=COLUMN` names a column an existing table doesn't have — a created child's columns all ride its own migration |
+| `app/forms/credit_form.rb` | **Created.** A [ReactiveForm]({{ "/reactive-forms/" | relative_url }}) over the child's own columns. The parent's foreign key and the position column are deliberately left out — the tree supplies one and the row order supplies the other. |
+| `app/views/songs/_credit_fields.html.erb` | **Created.** One child row: its inputs, a remove control, and ↑/↓ controls when the edge is ordered. |
+| `app/models/song.rb` | Gains `has_many :credits` (scoped by `order(:position)` when ordered) and `accepts_nested_attributes_for`. |
+| `app/forms/song_form.rb` | Gains `reactive_nested :credits, "CreditForm"` — and, when ordered, a `to_h` override that stamps positions from array order. |
+| `app/channels/songs_channel.rb` | Gains `include Hibiki::Rails::NestedActions` (once — every later edge shares it) and `includes(...)` preloads on the actions that open forms. |
+| `_form.html.erb` (the full-page form) | Gains a classic `fields_for` fieldset — the no-JavaScript path, described [below](#the-degraded-path). |
+| The controller | The `credits_attributes` group joins `params.expect`, `_destroy` included. |
+| `app/models/credit.rb` + its migration | **Created** when the model doesn't exist — from the field list, with the parent reference prepended. |
+| A migration | Only when `--position=COLUMN` names a column an existing table lacks. A created child's columns all ride its own migration. |
 
-## The child forms array lives in the graph
+## The child forms live in the signal graph
 
 `reactive_nested :credits, "CreditForm"` declares a signal holding an array
-of child forms. The fieldset's controls don't submit anything — each fires a
-generic action from `Hibiki::Rails::NestedActions`, addressing its node by
-`path`, association names alternating with child keys to any depth:
+of child forms — one `CreditForm` per row. The fieldset's controls don't
+submit anything. Each fires a generic channel action from
+`Hibiki::Rails::NestedActions` and names the node it means with a `path`:
+association names alternating with child keys, to any depth:
 
 ```
 "credits"                       # the collection      (nested_add)
@@ -67,85 +82,97 @@ generic action from `Hibiki::Rails::NestedActions`, addressing its node by
 "credits/c3/contributions/n1"   # a grandchild        (nested_set_field)
 ```
 
-`c3` is a persisted child (its id), `n1` a new one — the key is stable across
-repaints, so it doubles as the row's DOM identity. A `dom` value beside the
-path names which open form the write aims at, exactly like the
-[multi-select]({{ "/multiselect/" | relative_url }})'s toggles — a row edit
-and the inline create form can be open side by side without cross-writing.
+`c3` is a persisted child, keyed by its id; `n1` is a new one. The key is
+stable across repaints, so it doubles as the row's DOM identity.
 
-Every hop is gated server-side: the association against the form class's
-`reactive_nested` declarations, the key against live children, a field
-against the child's `reactive_attributes`. A stale or forged path drops the
-action. Inputs name themselves `"#{path}/#{field}"` — per-child unique for
-change events, and inert in a submit payload, where only declared scalars are
+The scaffold can have two forms open at once — a row's edit form and the
+inline create form. A `dom` value beside the path names which one the action
+aims at, so the two never cross-write. This is the same convention the
+[multi-select]({{ "/multiselect/" | relative_url }})'s toggles use.
+
+Every hop in the path is checked on the server: the association name against
+the form class's `reactive_nested` declarations, the child key against the
+live children, and the field name against the child form's
+`reactive_attributes`. A stale or forged path drops the action. Inputs name
+themselves `"#{path}/#{field}"`, which keeps each child's change events
+unique — and inert in a full-page submit, where only the declared scalars are
 assigned.
 
-On channels that aren't the scaffold's, override the private
+On a channel that isn't the scaffold's, override the private
 `nested_form_for(dom)` — the default resolves the scaffold's
-`@form`/`@editing_id` and `@new_form`/`@creating` ivars.
+`@form`/`@editing_id` and `@new_form`/`@creating` instance variables.
 
 ## One save persists the whole tree
 
-The parent form's `to_h` serializes the tree as recursive
-`credits_attributes` (each child carrying `id:` when persisted and
-`_destroy:` when marked), so `commit` hands ActiveRecord exactly what
-`accepts_nested_attributes_for` expects and the record's **one save**
-persists everything — parent scalars, edits, inserts, removals, order.
+The parent form's `to_h` serializes the tree as nested `credits_attributes`
+hashes, each child carrying `id:` when persisted and `_destroy:` when marked
+for removal. That is exactly the shape `accepts_nested_attributes_for`
+expects, so `commit` hands the whole tree to ActiveRecord and the record's
+one save persists everything — the parent's own fields, child edits, inserts,
+removals, and order.
 
 A failed commit distributes each child record's errors onto the matching
-child form, so "can't be blank" lands on the row that earned it; the
-generated child form's live errors additionally wait for `dirty?`, so a
-freshly added row starts clean. Removing a persisted child marks it
-`_destroy` (it disappears from the fieldset but rides to the save); removing
-a new one just leaves the array. `dirty?` is true for any of it, and
-cancel is the undo — closing the form without saving discards the graph's
-copy, marks included.
+child form, so "can't be blank" lands on the row that earned it. The
+generated child form also waits for `dirty?` before showing its live errors,
+so a freshly added row starts clean rather than covered in blank-field
+messages.
+
+Removing a persisted child marks it `_destroy`: the row disappears from the
+fieldset but still rides along to the save, which deletes it. Removing a new
+child just takes it out of the array. Any of these changes makes the parent's
+`dirty?` true, and cancel is the undo — closing the form without saving
+discards the form's copy of the tree, destroy marks included.
 
 ## Ordering
 
-A `position` column on the child table is detected and wired by default;
-`--position=COLUMN` names a different one (generating the `add_column`
-migration when it's absent), `--skip-position` opts out. A **created** child
-is never ordered silently — put `position` in the field list, or pass
-`--position=COLUMN` and the column joins the child's own migration.
+When the child table has a `position` column, the generator detects it and
+wires ordering by default. `--position=COLUMN` names a different column,
+generating the `add_column` migration when the column is absent;
+`--skip-position` opts out. A **created** child is never ordered silently:
+put `position` in the field list, or pass `--position=COLUMN`, and the column
+joins the child's own migration.
 
-Ordered edges don't edit positions — **the visual order is the ordering**.
-The parent form's `to_h` stamps the column from array order at save time,
-and the fieldset gets ↑/↓ controls firing `nested_move`, whose `to:` is the
-target index among the child's *visible* siblings (clamped server-side —
-rows marked for destruction sit out of the visible order and refuse to
-move). The repaint after a move arrives in the order the user asked for.
+An ordered edge never edits position values directly — **the visual order is
+the ordering**. The parent form's `to_h` stamps the column from array order
+at save time, and each row gains ↑/↓ controls that fire `nested_move`. The
+action's `to:` is the target index among the child's *visible* siblings; the
+server clamps it, and rows marked for destruction sit outside the visible
+order and refuse to move. The repaint after a move shows the rows in the
+order the user asked for.
 
-The same action is what a drag-and-drop layer fires once per drop —
-[Driving an island from JS]({{ "/driving-an-island/" | relative_url }})
-shows the full SortableJS example over this exact fieldset.
+A drag-and-drop layer fires the same action, once per drop. [Driving an
+island from JS]({{ "/driving-an-island/" | relative_url }}) walks through the
+full SortableJS example over this exact fieldset.
 
 ## The degraded path
 
-The full-page `_form` gains a classic `fields_for` fieldset: index-keyed
+The full-page `_form` gains a classic `fields_for` fieldset — index-keyed
 names, the `id` pair, a `_destroy` checkbox per persisted row — and the
 controller's `params.expect` gains the matching `credits_attributes` group.
-No scripts, no socket: the standard new/edit pages still edit the whole tree
-the way Rails always has. This is the same [fallback]({{ "/the-js-client/" |
-relative_url }}#fallbacks-the-native-behavior-as-the-degraded-path) posture
-the scaffold takes everywhere else.
+With no scripts and no socket, the standard new and edit pages still edit the
+whole tree the way Rails always has. This is the same [fallback posture]({{
+"/the-js-client/" | relative_url
+}}#fallbacks-the-native-behavior-as-the-degraded-path) the scaffold takes
+everywhere else: the reactive form is an enhancement over a page that works
+without it.
 
 ## Options
 
 | Option | Effect |
 | --- | --- |
-| `--position=COLUMN` | Order by COLUMN, generating its migration when absent. Default: detect a `position` column |
-| `--skip-position` | Unordered — no scope, no stamp, no ↑/↓ |
-| `--phlex` | A Phlex fields component. Absent means detect from what the scaffold left |
-| `--css=NAME` | `daisyui`, `tailwind` or `none` — detected like the scaffold's |
+| `--position=COLUMN` | Order by COLUMN, generating its migration when the column is absent. Default: detect a `position` column. |
+| `--skip-position` | Unordered — no scope, no position stamping, no ↑/↓ controls. |
+| `--phlex` | Emit a Phlex fields component. Absent means detect from what the scaffold left. |
+| `--css=NAME` | `daisyui`, `tailwind` or `none` — detected the same way the scaffold detects it. |
 
 ## Notes
 
 - **Run the migration** before using an edge whose child model or
   `--position` column was generated.
-- The `NestedActions` include is idempotent — the channel gains it on the
-  first edge and later edges reuse it. Like any concern of public methods,
-  everything public on it is a client-invocable action; that is its job.
+- The `NestedActions` include is idempotent: the channel gains it on the
+  first edge, and later edges reuse it. Like any concern of public methods,
+  everything public on it becomes a client-invocable action — that is its
+  job.
 - `reactive_nested` and `NestedActions` are ordinary gem API, usable without
-  the generator — the generator's output is the reference for the wiring
-  they expect.
+  the generator. The generator's output is the reference for the wiring they
+  expect.
