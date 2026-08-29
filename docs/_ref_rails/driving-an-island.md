@@ -5,32 +5,95 @@ nav_order: 7
 
 # Driving an island from your own JavaScript
 
-Some gestures can't be declared in markup — a drag library's drop callback, a canvas widget, a keyboard shortcut. For those, **`perform(action, payload)` on the island's controller instance is public API** (0.9.0): it fires the action through the island's own subscription, exactly like a declared control, busy state and all. Reach the instance with Stimulus's standard lookup:
+An island normally needs no JavaScript from you. The `on` helper declares
+which DOM events become channel actions, and the packaged controller does
+the rest: it listens for those events, sends each one up the island's
+channel subscription, and swaps the re-rendered HTML back in when the
+server answers ([The JS client]({{ "/the-js-client/" | relative_url }})
+covers that cycle). But some gestures never surface as a DOM event you
+could declare: a drag library reports a drop through its own callback, a
+canvas widget tracks the pointer itself, a keyboard shortcut lives on
+`window`. For those, the client lets your own code fire an action
+directly.
+
+## Firing an action from code
+
+The simplest entry point is the `performOn` export. Give it any element
+inside the island, an action name, and a payload:
 
 ```js
-// inside one of your own Stimulus controllers
-const islandEl = this.element.closest('[data-controller~="hibiki"]')
-const island = this.application.getControllerForElementAndIdentifier(islandEl, "hibiki")
-island?.perform("your_action", { your_payload })
-```
-
-(The optional chaining matters: the lookup returns `null` until the island's controller has connected.)
-
-**Or** skip the incantation above with the `performOn` export, which finds the island containing any element — no Stimulus context required:
-
-```js
+// inside any JavaScript file where you need to call a channel action
 import { performOn } from "hibiki-rails"
 
 performOn(element, "your_action", { your_payload })
 ```
 
-**The return value is the whole contract.** Truthy — the trip's sequence number — means the action was *accepted*: sent live, or queued during the island's initial connect window. A repaint is coming, so leave the DOM as the user arranged it; the morph will land as a visual no-op. `undefined` means it was *dropped*: the island is offline, the socket turned out to be dead at send, or (`performOn` only, with a console warning) no island contains the element. The caller owns recovery — revert the gesture, or stand back and let the next repaint self-heal. Nothing queues across an offline gap, on purpose: a reconnect builds a fresh server-side graph, and replaying intent formed against the old one is worse than dropping it.
+`performOn` finds the island containing the element — no Stimulus context
+required — and fires the action through that island's subscription,
+exactly as if a declared control had fired it: the payload reaches the
+server in the same shape, and the island shows the same
+[busy indicator]({{ "/loading-state/" | relative_url }}) while the round
+trip is in flight.
+
+If your code already runs inside a Stimulus controller, you can instead
+reach the island's controller instance and call **`perform`** on it —
+public API since 0.9.0, and the method `performOn` calls for you. Use
+Stimulus's standard lookup:
+
+```js
+// inside one of your own Stimulus controllers
+// the performOn() introduced above does all of these for you,
+// so you can skip this incantation
+const islandEl = this.element.closest('[data-controller~="hibiki"]')
+const island = this.application.getControllerForElementAndIdentifier(islandEl, "hibiki")
+island?.perform("your_action", { your_payload })
+```
+
+(The optional chaining matters: the lookup returns `null` until the
+island's controller has connected.)
+
+## Accepted or dropped: the return value
+
+In this stack every user gesture is a round trip: the action travels up the
+socket, the server updates its signals, and the changed HTML travels back
+down to be swapped in. `perform` and `performOn` return synchronously,
+before any of that happens, and the return value answers one question —
+did the action get on its way?
+
+- **Truthy** — the trip's sequence number — means the action was
+  *accepted*: sent live, or queued during the island's initial connect
+  window. A repaint is coming, so leave the DOM as the user arranged it;
+  when the server's HTML lands, the swap is a visual no-op because the
+  page already looks that way.
+- **`undefined`** means the action was *dropped*: the island is offline,
+  the socket turned out to be dead at send, or (`performOn` only, with a
+  console warning) no island contains the element. No repaint is coming,
+  and you own the recovery — revert the gesture, or stand back and let
+  the next repaint self-heal.
+
+We deliberately made sure nothing queues across an offline gap. When the
+connection comes back, the server builds a brand-new signal graph, so an
+action held from before the gap would land on state that no longer
+matches what the user was looking at — a "move this row to position 3"
+could reorder a list that has since changed under it. Firing stale
+actions at a fresh graph does the wrong thing more often than firing
+nothing, so the client drops them instead. The first connect window is
+the one exception: the page and the graph are being built together, so
+actions queued there are safe to flush.
+[Loading and connection state]({{ "/loading-state/" | relative_url }})
+covers both windows.
 
 ## Worked example: drag-to-reorder with SortableJS
 
-Third-party UI libraries slot in the same way whatever they do: the library owns the gesture, your controller owns the handoff, `perform`/`performOn` is the handoff.
+Third-party UI libraries slot in the same way whatever they do: the
+library owns the gesture, your Stimulus controller owns the handoff, and
+`performOn` is the handoff.
 
-Here is drag-to-reorder on a [nested fieldset]({{ "/nested-forms/" | relative_url }}) with [SortableJS](https://sortablejs.github.io/Sortable/):
+Here is drag-to-reorder on a
+[nested fieldset]({{ "/nested-forms/" | relative_url }}) with
+[SortableJS](https://sortablejs.github.io/Sortable/). SortableJS moves
+the row in the DOM and reports the drop through its `onEnd` callback —
+exactly the kind of gesture no markup attribute can declare:
 
 ```js
 // app/javascript/controllers/credits_sortable_controller.js
@@ -68,7 +131,13 @@ export default class extends Controller {
 }
 ```
 
-The markup side is all plain app attributes — wrap the generated fieldset's rows and give each row a handle and its path:
+Both branches of the contract are visible in `dropped`. Accepted: return
+and leave the row where the user dropped it — the server will reorder its
+side to match, and the repaint changes nothing visibly. Failed: no
+repaint will undo the drag, so the controller puts the row back itself.
+
+The markup side is all plain app attributes — wrap the generated
+fieldset's rows and give each row a handle and its path:
 
 ```erb
 <div data-controller="credits-sortable" data-credits-sortable-dom-value="<%= dom %>">
@@ -80,11 +149,17 @@ The markup side is all plain app attributes — wrap the generated fieldset's ro
 </div>
 ```
 
-One drop, one `nested_move`, and every session converges on the server's order — the dragging tab's repaint is a visual no-op because the DOM already looks that way. The scaffold's ↑/↓ buttons keep working beside the drag, and the wiring survives repaints: Stimulus disconnects and reconnects the controller when a morph replaces the container.
+One drop sends one `nested_move`, the server reorders, and every session
+looking at the form converges on the server's order. The scaffold's ↑/↓
+buttons keep working beside the drag, and the wiring survives repaints:
+when a morph replaces the container, Stimulus disconnects and reconnects
+the controller, which rebuilds the Sortable instance.
 
-### Where the payload lands
+## What the server receives
 
-On the channel there is nothing to write for this example — `nested_move` is one of the generic actions [`hibiki:rails:nested`]({{ "/nested-forms/" | relative_url }}) already included:
+For this example the channel needs nothing new — `nested_move` is one of
+the generic actions [`hibiki:rails:nested`]({{ "/nested-forms/" |
+relative_url }}) already included:
 
 ```ruby
 # app/channels/songs_channel.rb (as generated)
@@ -96,14 +171,21 @@ class SongsChannel < ApplicationCable::Channel
 end
 ```
 
-A performed action reaches the channel like any ActionCable action: the public method named by the action runs with one hash — the payload you passed, **string keys**, plus two reserved entries stamped on the way out (`action`, ActionCable's dispatch key, and `hbk`, the sequence number behind [busy tracking]({{ "/loading-state/" | relative_url }})). For the drop above, `nested_move` receives:
+A performed action reaches the channel like any ActionCable action: the
+public method named by the action runs with one hash. That hash is the
+payload you passed, with **string keys**, plus two reserved entries
+stamped on the way out — `action`, ActionCable's dispatch key, and `hbk`,
+the sequence number behind
+[busy tracking]({{ "/loading-state/" | relative_url }}). For the drop
+above, `nested_move` receives:
 
 ```ruby
 { "action" => "nested_move", "hbk" => 7,
   "dom" => "song_42", "path" => "credits/c3", "to" => 2 }
 ```
 
-and consumes it like this (the gem's own implementation, shown for what it does with those keys):
+and consumes it like this (the gem's own implementation, shown for what
+it does with those keys):
 
 ```ruby
 # Hibiki::Rails::NestedActions
@@ -119,4 +201,46 @@ def nested_move(data)
 end
 ```
 
-A custom action for your own gesture is the same shape: a public method on the channel (which makes it client-invocable — keep everything else private), one `data` hash, keys read as strings and treated as untrusted, writes going to the graph's signals so the repaint follows. If nothing it writes actually changes, no bytes go out — that is the equality gate working, not a fault — and the busy indicator still clears on the post-batch ack.
+A custom action for your own gesture takes the same shape: a public
+method on the channel, one `data` hash, keys read as strings and treated
+as untrusted — a performed payload is client-supplied, exactly like
+request params. (Being public is what makes the method invocable from the
+client, so keep everything else on the channel private.) The method's job
+is to write to the graph's signals; the repaint follows on its own,
+because the rendering effects re-run when the values they read change.
+
+Suppose the canvas widget from the introduction is a color picker, and
+picking a color fires:
+
+```js
+performOn(canvas, "set_color", { hex: picked })
+```
+
+Then the channel side is one public method and one guarded write:
+
+```ruby
+class ThemeChannel < ApplicationCable::Channel
+  include Hibiki::Rails::Channel
+
+  def build_graph
+    @color = Hibiki::State.new("#000000")
+    # ... effects that read @color.value and transmit HTML ...
+  end
+
+  # runs with { "action" => "set_color", "hbk" => n, "hex" => "#a3e2b8" }
+  def set_color(data)
+    hex = data["hex"].to_s
+    return unless hex.match?(/\A#\h{6}\z/)  # client-supplied — validate before writing
+
+    @color.value = hex
+  end
+end
+```
+
+Nothing else is needed. The method never renders and never transmits:
+writing the signal is its whole job, and the effects built in
+`build_graph` notice the change and send the new HTML down on their own.
+
+One corollary worth knowing before it surprises you: if `set_color`
+receives the color the signal already holds, the write changes nothing,
+so no effect re-runs and no bytes go out. That is Hibiki's equality gate working — and the busy indicator still clears, because clearing rides on the server's acknowledgment of the action, not on a render arriving.
