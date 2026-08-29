@@ -152,7 +152,7 @@ controller's `params.expect` gains the matching `credits_attributes` group.
 With no scripts and no socket, the standard new and edit pages still edit the
 whole tree the way Rails always has. This is the same [fallback posture]({{
 "/the-js-client/" | relative_url
-}}#fallbacks-the-native-behavior-as-the-degraded-path) the scaffold takes
+}}#falling-back-to-native-behavior) the scaffold takes
 everywhere else: the reactive form is an enhancement over a page that works
 without it.
 
