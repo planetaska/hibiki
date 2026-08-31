@@ -86,7 +86,7 @@ if (!accepted) this.element.value = ""   // island offline: nothing was queued
 On the server, the concern holds that pending upload in the island's *signal
 graph* — the server-side state the page re-renders from ([reactive
 forms]({{ "/reactive-forms/" | relative_url }}) introduces it; here it is
-enough that writing a signal repaints the island). The entry is keyed by the
+enough that writing a signal re-renders the island). The entry is keyed by the
 form's `dom`, the identifier naming which open form the pick belongs to, so a
 row's edit form and the inline create form can be open at the same time:
 
@@ -105,7 +105,7 @@ end
 ```
 
 Keeping the pending upload in the graph is what makes the "attaches on save"
-badge honest. Every repaint re-renders the badge from the signal, so it
+badge honest. Every update re-renders the badge from the signal, so it
 survives a morph; and each open form keys its own entry, so a row edit and
 the inline create form hold independent pending files without either losing
 the other's. The record itself is touched only after a **successful** save:

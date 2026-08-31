@@ -119,7 +119,7 @@ mirror copies the messages into a fresh hash, which compares honestly — and
 the hash is what a view wants anyway.
 
 Because each error derived reads only its own field, a keystroke in one field
-never recomputes the other fields' checks, and each error area repaints
+never recomputes the other fields' checks, and each error area re-renders
 independently.
 
 ## `commit` and `commit!`
@@ -131,8 +131,8 @@ already in `#errors` by the time you catch the exception.
 **Inside a channel action, `#commit` is the one you want.** The signal graph
 runs on its own thread, and an unrescued raise there takes the job down — the
 action is over, nothing updates, and the user sees a round trip that did
-nothing. Returning false instead lets the render effect repaint with the error
-messages and the user's values intact:
+nothing. Returning false instead lets the render effect re-render with the
+error messages and the user's values intact:
 
 ```ruby
 def save(data)

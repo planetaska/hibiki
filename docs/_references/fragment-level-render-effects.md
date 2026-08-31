@@ -36,7 +36,7 @@ This is forced, not incidental. Three constraints intersect:
    fragment replacement keyed on the transmitted HTML's root DOM id. If
    the server should be able to send *just* the step markup, something on
    the server must be able to render *just* the step markup.
-2. **The same markup renders in two contexts** — the initial page paint
+2. **The same markup renders in two contexts** — the initial page load
    and every subsequent broadcast — so it must live in one shared,
    addressable place.
 3. **The template system's unit of composition** is a file (ERB) or a
@@ -120,7 +120,7 @@ fragment granularity instead of text-node granularity.
    with a growing window, measured end to end: paging through the list costs
    ~1.28 MB to deliver a 236 KB list (5.4x amplification, because each page
    re-sends the whole window), and a write to a row the list's own filter
-   *excludes* still pushes a 159 KB repaint with no visible change. Both
+   *excludes* still pushes a 159 KB re-render with no visible change. Both
    numbers come straight from "one renderable unit per fragment" — the
    fragment here is the whole list.
 

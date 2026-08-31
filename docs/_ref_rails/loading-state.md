@@ -217,4 +217,4 @@ look like, and the server stays the one place where state changes.
 
 For a worked example of all of this — five sites, three CSS variants, in a
 file you own — see the loading section of
-[CRUD notes]({{ "/crud-notes/" | relative_url }}).
+[CRUD notes]({{ "/crud-notes/" | relative_url }}#loading-and-connection-state).

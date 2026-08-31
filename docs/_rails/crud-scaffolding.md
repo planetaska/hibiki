@@ -156,7 +156,7 @@ Since 0.8.0, two behaviors are worth knowing:
 
 **Every control has a degraded path.** The New and Edit links carry real hrefs to the standard pages. The Destroy button is a real `button_to` DELETE form. The search/filter/sort controls are one GET form to the index; the page control's links carry real `?page=N` hrefs. When JavaScript is unavailable, the browser does what the markup says, and the Rails controller answers with a full page.
 
-The only deliberate exception is `--infinite-scroll`, where the load-more control has no pagination fallback. To learn more about URL handling and degraded paths, see [CRUD notes]({{ "/crud-notes/" | relative_url }}#the-url-mirrors-the-page-and-everything-degrades).
+The only deliberate exception is `--infinite-scroll`, where the load-more control has no pagination fallback. To learn more about URL handling and degraded paths, see [CRUD notes]({{ "/crud-notes/" | relative_url }}#the-address-bar-and-life-without-javascript).
 
 ## What the scaffold writes
 

@@ -62,14 +62,14 @@ did the action get on its way?
 
 - **Truthy** — the trip's sequence number — means the action was
   *accepted*: sent live, or queued during the island's initial connect
-  window. A repaint is coming, so leave the DOM as the user arranged it;
+  window. An update is coming, so leave the DOM as the user arranged it;
   when the server's HTML lands, the swap is a visual no-op because the
   page already looks that way.
 - **`undefined`** means the action was *dropped*: the island is offline,
   the socket turned out to be dead at send, or (`performOn` only, with a
-  console warning) no island contains the element. No repaint is coming,
+  console warning) no island contains the element. No update is coming,
   and you own the recovery — revert the gesture, or stand back and let
-  the next repaint self-heal.
+  the next update self-heal.
 
 We deliberately made sure nothing queues across an offline gap. When the
 connection comes back, the server builds a brand-new signal graph, so an
@@ -124,7 +124,7 @@ export default class extends Controller {
       dom: this.domValue, path: item.dataset.path, to: newIndex
     })
     if (accepted) return
-    // Failed (or offline): no repaint is coming — put the row back.
+    // Failed (or offline): no update is coming — put the row back.
     const siblings = [...this.element.children].filter((row) => row !== item)
     this.element.insertBefore(item, siblings[oldIndex] ?? null)
   }
@@ -133,8 +133,8 @@ export default class extends Controller {
 
 Both branches of the contract are visible in `dropped`. Accepted: return
 and leave the row where the user dropped it — the server will reorder its
-side to match, and the repaint changes nothing visibly. Failed: no
-repaint will undo the drag, so the controller puts the row back itself.
+side to match, and the update changes nothing visibly. Failed: no
+update will undo the drag, so the controller puts the row back itself.
 
 The markup side is all plain app attributes — wrap the generated
 fieldset's rows and give each row a handle and its path:
@@ -151,7 +151,7 @@ fieldset's rows and give each row a handle and its path:
 
 One drop sends one `nested_move`, the server reorders, and every session
 looking at the form converges on the server's order. The scaffold's ↑/↓
-buttons keep working beside the drag, and the wiring survives repaints:
+buttons keep working beside the drag, and the wiring survives re-renders:
 when a morph replaces the container, Stimulus disconnects and reconnects
 the controller, which rebuilds the Sortable instance.
 
@@ -206,7 +206,7 @@ method on the channel, one `data` hash, keys read as strings and treated
 as untrusted — a performed payload is client-supplied, exactly like
 request params. (Being public is what makes the method invocable from the
 client, so keep everything else on the channel private.) The method's job
-is to write to the graph's signals; the repaint follows on its own,
+is to write to the graph's signals; the re-render follows on its own,
 because the rendering effects re-run when the values they read change.
 
 Suppose the canvas widget from the introduction is a color picker, and

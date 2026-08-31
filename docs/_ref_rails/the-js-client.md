@@ -87,7 +87,7 @@ attributes that attach the controller and name the channel to subscribe
 to. Inside it, `on` marks the form as a control: submitting it sends an
 `add` action — carrying the form's fields — up the subscription instead of
 making an HTTP request. The rendered `TodoList` is the part the server
-will keep repainting, matched by its DOM id.
+will keep re-rendering, matched by its DOM id.
 
 Three helpers cover the surface:
 

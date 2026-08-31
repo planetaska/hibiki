@@ -83,7 +83,7 @@ association names alternating with child keys, to any depth:
 ```
 
 `c3` is a persisted child, keyed by its id; `n1` is a new one. The key is
-stable across repaints, so it doubles as the row's DOM identity.
+stable across re-renders, so it doubles as the row's DOM identity.
 
 The scaffold can have two forms open at once — a row's edit form and the
 inline create form. A `dom` value beside the path names which one the action
@@ -137,7 +137,7 @@ the ordering**. The parent form's `to_h` stamps the column from array order
 at save time, and each row gains ↑/↓ controls that fire `nested_move`. The
 action's `to:` is the target index among the child's *visible* siblings; the
 server clamps it, and rows marked for destruction sit outside the visible
-order and refuse to move. The repaint after a move shows the rows in the
+order and refuse to move. The re-render after a move shows the rows in the
 order the user asked for.
 
 A drag-and-drop layer fires the same action, once per drop. [Driving an
