@@ -146,7 +146,7 @@ it.
 live in the channel's signals, and the channel keeps the matching query
 params in the bar (`/books?query=ruby&page=2`) through
 [`transmit_url`]({{ "/reactive-values/" | relative_url
-}}#the-url-sibling-transmit_url). It uses `replaceState`, so no history
+}}#mirroring-the-address-bar-with-transmit_url). It uses `replaceState`, so no history
 entries pile up and the Back button behaves normally. An open inline form
 mirrors its own URL (`/books/7/edit`, `/books/new`). A reload, or a link
 handed to someone else, brings the page back in that exact state.

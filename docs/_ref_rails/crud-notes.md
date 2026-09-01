@@ -179,7 +179,7 @@ machinery seen from two sides.
 changes, the channel rewrites the query params
 (`/books?query=ruby&page=2`) through
 [`transmit_url`]({{ "/reactive-values/" | relative_url
-}}#the-url-sibling-transmit_url) — using `replaceState`, so Back behaves
+}}#mirroring-the-address-bar-with-transmit_url) — using `replaceState`, so Back behaves
 normally. An open inline form shows its own URL (`/books/7/edit`,
 `/books/new`). Every such URL rebuilds its exact state on load: the
 controller renders the initial page from the params (`BookQuery.from_params`),
