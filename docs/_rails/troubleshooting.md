@@ -50,7 +50,7 @@ The same rule catches `config/initializers/`: initializers run once at boot and 
 
 ## The first update is lost
 
-On the Turbo-broadcast transport, effects do their first run before the page's `turbo_stream_from` subscription confirms — subscribe the channel only after `streamConnected` resolves. See [the initial-state pattern]({{ "/rails-usage/" | relative_url }}). The generated shapes already handle this; hand-rolled controllers often miss it. The transmit transport doesn't have this problem.
+On the Turbo-broadcast transport, effects do their first run before the page's `turbo_stream_from` subscription confirms — subscribe the channel only after `streamConnected` resolves. See [Placeholders and the first update]({{ "/rails-usage/" | relative_url }}#placeholders-and-the-first-update). The generated shapes already handle this; hand-rolled controllers often miss it. The transmit transport doesn't have this problem.
 
 ## Signals change but effects don't re-run
 

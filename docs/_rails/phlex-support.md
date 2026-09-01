@@ -79,7 +79,7 @@ class TodosChannel < ApplicationCable::Channel
 end
 ```
 
-Granularity is inherent and worth knowing: the ERB style in `hibiki_rails` runs one effect **per partial** (fine-grained); a Phlex render effect runs one **per component** (component-grained). Both are correct; pick per page. The initial-state pattern (server-rendered placeholder + subscribe after the Turbo stream confirms) is transport-side — see [Rails usage]({{ "/rails-usage/" | relative_url }}). On the transmit transport there is no such ordering problem (see [The JS client]({{ "/the-js-client/" | relative_url }})).
+Granularity is inherent and worth knowing: the ERB style in `hibiki_rails` runs one effect **per partial** (fine-grained); a Phlex render effect runs one **per component** (component-grained). Both are correct; pick per page. The placeholder-then-first-update ordering (subscribe only after the Turbo stream confirms) belongs to the transport, not to Phlex; see [Placeholders and the first update]({{ "/rails-usage/" | relative_url }}#placeholders-and-the-first-update). On the transmit transport there is no such ordering problem (see [The JS client]({{ "/the-js-client/" | relative_url }})).
 
 ## Why the strict Phlex pin
 
