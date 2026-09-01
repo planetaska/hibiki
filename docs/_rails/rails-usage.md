@@ -50,7 +50,7 @@ The controller action sets `@cid = SecureRandom.uuid`. The channel broadcasts to
 
 ## The initial-state pattern (Turbo transport)
 
-Pages on the Turbo-broadcast transport, like the example above, have an ordering problem the transmit transport doesn't: the graph's effects do their first run inside `subscribed` — usually before the page's `turbo_stream_from` subscription has confirmed — so the first broadcast would be lost. Fix the ordering on the client with the packaged `streamConnected` helper: wait for Turbo to stamp the `connected` attribute on the stream source, then subscribe the graph channel.
+Pages on the Turbo-broadcast transport, like the example above, have an ordering problem the transmit transport doesn't: the graph's effects do their first run inside `subscribed` — usually before the page's `turbo_stream_from` subscription has confirmed — so the first broadcast would be lost. Fix the ordering on the client with the packaged `streamConnected` helper: wait for Turbo to set the `connected` attribute on the stream source, then subscribe the graph channel.
 
 The supplied JS client already does all of this for you.
 {: .note }

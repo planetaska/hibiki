@@ -174,7 +174,7 @@ end
 A performed action reaches the channel like any ActionCable action: the
 public method named by the action runs with one hash. That hash is the
 payload you passed, with **string keys**, plus two reserved entries
-stamped on the way out — `action`, ActionCable's dispatch key, and `hbk`,
+added on the way out — `action`, ActionCable's dispatch key, and `hbk`,
 the sequence number behind
 [busy tracking]({{ "/loading-state/" | relative_url }}). For the drop
 above, `nested_move` receives:

@@ -39,7 +39,7 @@ It emits a named placeholder in plain HTML:
 
 The channel half is `transmit_value(name) { ... }`. It wraps the block in an effect: whenever a signal the block reads changes, the channel transmits the fresh value, and the client writes it into **every** placeholder carrying that name. Like styling by class name, one value may appear any number of times, anywhere on the page — including outside the island (for example, a badge in navigation).
 
-The name joins the two halves, so it must be page-unique across channels. Each placeholder keeps its own tag, classes and attributes across updates — only its text changes — so different sites can style the same value differently. In Phlex components, stamp the placeholder yourself by splatting the attributes: `span(**reactive_attrs(:remaining)) { "0" }`.
+The name joins the two halves, so it must be page-unique across channels. Each placeholder keeps its own tag, classes and attributes across updates — only its text changes — so different sites can style the same value differently. In Phlex components, add the attributes yourself by splatting them: `span(**reactive_attrs(:remaining)) { "0" }`.
 
 Reactive values are transport- and shape-agnostic. `transmit_value` always uses the channel's own `transmit`, which every `ChannelController` handles, so it works the same whether the page runs the generic packaged controller or a `ChannelController` subclass. It also composes with a page whose other fragments ride Turbo broadcasts: one channel can serve a fragment over broadcast and a value over transmit at the same time. A subclass that overrides `received` should call `super` (or handle the `value` message itself) to keep reactive values live.
 

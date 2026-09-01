@@ -12,8 +12,8 @@ there's no indicator on the page to say so — and if the socket drops, the page
 keeps looking live while quietly answering nothing. Both issues are
 covered by the same part of the stack: the gem's JS client, the packaged
 JavaScript that runs in the browser and drives each island (see
-[The JS client]({{ "/the-js-client/" | relative_url }})). It stamps what
-it knows onto the island fragment — the region of the page bound to one
+[The JS client]({{ "/the-js-client/" | relative_url }})). It records what
+it knows on the island fragment — the region of the page bound to one
 channel subscription — as HTML attributes. Turning those attributes into something the user can see, like a
 spinner or a dimmed panel or an offline notice, is just a few lines of CSS the
 app manages.
@@ -22,7 +22,7 @@ Mid-trip, an island root looks like this:
 
 ```html
 <!-- rendered by tag.div(**hibiki_island(TodosChannel, cid: @cid))
-     second line: stamped by the JS client at runtime -->
+     second line: set by the JS client at runtime -->
 <div data-controller="hibiki" data-hibiki-channel-value="TodosChannel"
      data-hibiki-state="ready" data-hibiki-busy aria-busy="true">
   ...
@@ -38,7 +38,7 @@ And one CSS rule is enough to make the server round trip visible to the user:
 The rest of this page walks through each attribute, the states it can
 hold, and the timings behind them.
 
-## What the JS client stamps
+## What the JS client sets
 
 | Where          | Attribute           | What it says                                          |
 | -------------- | ------------------- | ----------------------------------------------------- |
@@ -107,7 +107,7 @@ Two common tips to get the selectors right:
 | `offline`    | The socket dropped; ActionCable is retrying     | Content that is **frozen** — and nothing else on the page would say so |
 | `stalled`    | An action outlived `busyCeiling` with no answer | A trip we lost — said plainly rather than cleared silently |
 
-`connecting` is stamped **synchronously**, as the controller connects and
+`connecting` is set **synchronously**, as the controller connects and
 before the subscription is even opened, so CSS can dim the island for the
 whole window rather than from the middle of it.
 
@@ -141,7 +141,7 @@ replaying it. The user is not left guessing, either: the island reads
 
 To clear the busy flag, the JS client has to know when a trip is over.
 Every action it performs carries a sequence number under the reserved
-payload key **`hbk`**, stamped last so a form field named `hbk` can never
+payload key **`hbk`**, added last so a form field named `hbk` can never
 overwrite it. (It is the second reserved key — ActionCable's own
 `Subscription#perform` already writes `action`.) When the action has run
 on the server, the server sends that sequence number back as an

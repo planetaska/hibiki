@@ -76,7 +76,7 @@ more:
 
 ```js
 // upload_field_controller.js — one controller, parameterized by the
-// action and dom the view stamped on the input
+// action and dom the view set on the input
 const accepted = performOn(this.element, this.actionValue, {
   dom: this.domValue, signed_id: blob.signed_id, filename: file.name
 })

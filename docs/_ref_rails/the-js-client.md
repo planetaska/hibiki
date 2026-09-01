@@ -82,9 +82,8 @@ With the include in place, a view declares an island like this:
 <% end %>
 ```
 
-The outer `div` is the island root: `hibiki_island` stamps it with the
-attributes that attach the controller and name the channel to subscribe
-to. Inside it, `on` marks the form as a control: submitting it sends an
+The outer `div` is the island root: `hibiki_island` sets the attributes
+that attach the controller and name the channel to subscribe to. Inside it, `on` marks the form as a control: submitting it sends an
 `add` action — carrying the form's fields — up the subscription instead of
 making an HTTP request. The rendered `TodoList` is the part the server
 will keep re-rendering, matched by its DOM id.
@@ -105,7 +104,7 @@ Three helpers cover the surface:
 
 ## Events and modifiers
 
-`on` stamps the control with one `event->action` token per event. The left
+`on` sets one `event->action` token per event on the control. The left
 side of that arrow always names an event — a DOM event like `:click` (the
 default), `:change`, `:input`, or `:submit`, or the `:visible`
 pseudo-event described below. Everything else about the gesture — how long

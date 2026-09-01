@@ -17,6 +17,8 @@ The `stimulus` shape speaks stock Stimulus vocabulary (`data-controller` / `data
 bin/rails g hibiki:rails:stimulus NAME [VIEW_PATH]
 ```
 
+`VIEW_PATH` is the directory under `app/views` that receives the partials. If no path is provided, the partials will land in a directory named after `NAME`.
+
 Generates:
 
 1. A minimal channel in `app/channels`
@@ -38,7 +40,7 @@ Partial example:
 
 ## Island shape
 
-The `island` shape uses the same Turbo-broadcast transport, but the gem's packaged generic controller drives the island — you write no per-component JS at all. The `hibiki_island` / `on` helpers stamp the view (see [The JS client]({{ "/the-js-client/" | relative_url }})).
+The `island` shape uses the same Turbo-broadcast transport, but the gem's packaged generic controller drives the island — you write **no per-component JS** at all. The `hibiki_island` / `on` helpers add the `data-*` attributes to the view (see [The JS client]({{ "/the-js-client/" | relative_url }})).
 
 ```sh
 bin/rails g hibiki:rails:island NAME [VIEW_PATH]
@@ -85,7 +87,7 @@ Phlex component example:
 class Components::Counter < Phlex::HTML
   include Hibiki::Reactive              # per-instance signals
   include Hibiki::Phlex::Rerenderable   # lets the render effect re-render this instance
-  include Hibiki::Rails::Helpers        # stamps the client's wire protocol
+  include Hibiki::Rails::Helpers        # emits the client's data attributes
 
   state :count, 0
   derived(:doubled) { count * 2 }
@@ -106,7 +108,7 @@ end
 
 ## Rendering the generated component
 
-`VIEW_PATH` is the views directory under `app/views` (it defaults to `NAME`). The emitted partial is self-contained, so rendering it is straightforward:
+The generated partial is self-contained, so any page can render it with one line:
 
 ```erb
 <%= render "counter/counter" %>
@@ -115,6 +117,8 @@ end
 <%= render Components::CounterIsland.new %>
 ```
 
+The partial path is the view path followed by the name, so `counter` generated with the default view path renders as `counter/counter`. Phlex components take no view path: they live in `app/components` and render by class.
+
 The `stimulus` shape works with zero extra wiring; `island` and `phlex` need the one-time `hibiki:rails:install` (they print a hint when it's missing).
 
-Two notes on the `stimulus` shape. Namespaced names work: `admin/counter` pins the channel class via `static channel` in the generated controller, since the Stimulus identifier can't infer it. And in apps without an importmap (jsbundling/vite), where `controllers/index.js` has no eager loader, the generator appends the controller's import/register pair to that file — in the exact format `stimulus:manifest:update` emits, so a later manifest update keeps it.
+Namespaced names work in every shape: `admin/counter` nests the channel, the view path and the component the way Rails would. In the `stimulus` shape the generated controller also pins the channel class via `static channel`, since the Stimulus identifier cannot infer a namespaced one.

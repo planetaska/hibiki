@@ -31,7 +31,7 @@ Watch the Rails server log while you click (most cable lines are debug-level, wh
 If frames flow but a specific control does nothing, check the wiring between the DOM and the channel:
 
 - The action name in the view must match a **public** method on the channel — `on(:increment)` / `data-action="counter#increment"` performs `increment`. Private methods are not client-invocable (by design).
-- For the island/Phlex shapes, the control must sit **inside** the island element (the one stamped by `hibiki_island`), and the packaged controller must be registered — re-run `bin/rails g hibiki:rails:install`, or check that `app/javascript/controllers/hibiki_controller.js` exists and is loaded. A browser-console error like *"Failed to resolve module specifier"* or an unregistered-controller warning points here.
+- For the island/Phlex shapes, the control must sit **inside** the island element (the one that carries the `hibiki_island` attributes), and the packaged controller must be registered — re-run `bin/rails g hibiki:rails:install`, or check that `app/javascript/controllers/hibiki_controller.js` exists and is loaded. A browser-console error like *"Failed to resolve module specifier"* or an unregistered-controller warning points here.
 - For the Stimulus shape in a jsbundling/vite app, the controller must be registered in `controllers/index.js` (the generator appends it; `stimulus:manifest:update` also regenerates it).
 - Check the browser **Console** tab for JS errors — a controller that throws in `connect()` never subscribes, and everything downstream stays dead.
 

@@ -61,7 +61,7 @@ instead):
 | `app/forms/credit_form.rb` | **Created.** A [ReactiveForm]({{ "/reactive-forms/" | relative_url }}) over the child's own columns. The parent's foreign key and the position column are deliberately left out — the tree supplies one and the row order supplies the other. |
 | `app/views/songs/_credit_fields.html.erb` | **Created.** One child row: its inputs, a remove control, and ↑/↓ controls when the edge is ordered. |
 | `app/models/song.rb` | Gains `has_many :credits` (scoped by `order(:position)` when ordered) and `accepts_nested_attributes_for`. |
-| `app/forms/song_form.rb` | Gains `reactive_nested :credits, "CreditForm"` — and, when ordered, a `to_h` override that stamps positions from array order. |
+| `app/forms/song_form.rb` | Gains `reactive_nested :credits, "CreditForm"` — and, when ordered, a `to_h` override that assigns positions from array order. |
 | `app/channels/songs_channel.rb` | Gains `include Hibiki::Rails::NestedActions` (once — every later edge shares it) and `includes(...)` preloads on the actions that open forms. |
 | `_form.html.erb` (the full-page form) | Gains a classic `fields_for` fieldset — the no-JavaScript path, described [below](#the-degraded-path). |
 | The controller | The `credits_attributes` group joins `params.expect`, `_destroy` included. |
@@ -133,7 +133,7 @@ put `position` in the field list, or pass `--position=COLUMN`, and the column
 joins the child's own migration.
 
 An ordered edge never edits position values directly — **the visual order is
-the ordering**. The parent form's `to_h` stamps the column from array order
+the ordering**. The parent form's `to_h` fills the column from array order
 at save time, and each row gains ↑/↓ controls that fire `nested_move`. The
 action's `to:` is the target index among the child's *visible* siblings; the
 server clamps it, and rows marked for destruction sit outside the visible
@@ -161,7 +161,7 @@ without it.
 | Option | Effect |
 | --- | --- |
 | `--position=COLUMN` | Order by COLUMN, generating its migration when the column is absent. Default: detect a `position` column. |
-| `--skip-position` | Unordered — no scope, no position stamping, no ↑/↓ controls. |
+| `--skip-position` | Unordered — no scope, no position assignment, no ↑/↓ controls. |
 | `--phlex` | Emit a Phlex fields component. Absent means detect from what the scaffold left. |
 | `--css=NAME` | `daisyui`, `tailwind` or `none` — detected the same way the scaffold detects it. |
 

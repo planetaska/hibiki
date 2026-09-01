@@ -402,8 +402,8 @@ generated page will be live until the install is complete.
 ## Loading and connection state
 
 All reactivity in this stack is server-side, so every interaction is a round
-trip. The JS client stamps what it knows about that trip onto the island root
-and onto the control that fired it, as HTML attributes; the generated app
+trip. The JS client records what it knows about that trip as HTML attributes
+on the island root and on the control that fired it; the generated app
 turns those attributes into something a user can see.
 
 **The mechanism is documented on [the Loading state page]({{ "/loading-state/"
