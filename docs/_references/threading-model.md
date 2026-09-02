@@ -22,4 +22,4 @@ objects, so a graph can't cross a Ractor boundary anyway).
 What Hibiki does **not** do is synchronize the graph itself: a signal graph
 is confined to the execution context that uses it, and sharing one graph
 between concurrently running threads is not supported — same single-threaded
-worldview as Solid and Svelte.
+worldview as Svelte.

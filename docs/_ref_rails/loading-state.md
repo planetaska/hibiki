@@ -195,7 +195,7 @@ whole app.
 Two habits from client-side frameworks are worth leaving at the door
 here.
 
-The first is optimistic UI. Svelte or React can update the page the
+The first is optimistic UI. Svelte can update the page the
 moment the user clicks, because the state lives in the browser and the
 framework can compute the result itself. In hibiki the state lives on
 the server, so the page cannot change until the server has spoken. The

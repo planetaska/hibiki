@@ -38,7 +38,7 @@ end # prints "Grace Hopper" — once, not twice
 
 ## Custom equality (`equals:`)
 
-A signal's equality decides two things: whether a write is a no-op, and whether an effect that read the signal actually re-runs at the batch flush. By default both questions are answered by `==`. Every signal can override this with `equals:` — Solid's `createSignal(value, { equals })` option, which `createMemo` takes too, so `derived` accepts it as well:
+A signal's equality decides two things: whether a write is a no-op, and whether an effect that read the signal actually re-runs at the batch flush. By default both questions are answered by `==`. Every signal can override this with `equals:`, and `derived` accepts it as well:
 
 - omitted or `nil` — `==`, the default behavior
 - a callable — a custom comparator, called with `(prev, next)`; truthy means "unchanged"
@@ -63,9 +63,9 @@ One caveat carries over from `==`: equality only ever sees assignments. Mutate a
 
 ## Lifecycle: `root` and `on_cleanup`
 
-Effects created while another effect runs are *owned* by it and disposed automatically when the owner re-runs or is disposed. For everything else there is `Hibiki.root` (Solid's `createRoot`): an ownership scope you tear down yourself — the anchor for long-lived graphs (a session, a connection) whose teardown is an external event.
+Effects created while another effect runs are *owned* by it and disposed automatically when the owner re-runs or is disposed. For everything else there is `Hibiki.root`: an ownership scope you tear down yourself — the anchor for long-lived graphs (a session, a connection) whose teardown is an external event.
 
-`Hibiki.on_cleanup` (Solid's `onCleanup`) registers teardown on the owning effect or root; it runs before each re-run and on dispose. In other words, this is the place to release timers, sockets, subscriptions an effect sets up:
+`Hibiki.on_cleanup` registers teardown on the owning effect or root; it runs before each re-run and on dispose. In other words, this is the place to release timers, sockets, subscriptions an effect sets up:
 
 ```ruby
 interval = state(1)

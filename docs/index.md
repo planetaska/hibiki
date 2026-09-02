@@ -3,7 +3,7 @@ layout: home
 hero:
   name: Hibiki (響き)
   text: Svelte-style signals for Ruby
-  tagline: Hibiki is a fine-grained reactivity library modeled on the signal systems in Svelte 5 and SolidJS.
+  tagline: Hibiki is a fine-grained reactivity library modeled on the signal system in Svelte 5.
   image:
     src: /assets/img/logo.svg
     alt: Logo

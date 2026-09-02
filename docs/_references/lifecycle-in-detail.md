@@ -5,7 +5,7 @@ nav_order: 2
 
 # Lifecycle in detail
 
-Hibiki's lifecycle model is Solid's owner tree: every effect and every root
+Hibiki's lifecycle model is an owner tree: every effect and every root
 is an **owner**, and whatever gets created while its block runs — child
 effects, cleanup blocks — belongs to it and is torn down with it. This page
 spells out the exact rules; the short version lives in the
@@ -105,12 +105,11 @@ end
 
 Two details worth knowing:
 
-- The owner is a separate slot from the tracking listener (Solid's Owner vs
-  Listener). A lazy derived that happens to recompute in the middle of an
+- The owner is a separate slot from the tracking listener. A lazy derived that happens to recompute in the middle of an
   effect registers its `on_cleanup` calls on the *effect* — deriveds are
   values, not owners, and never own anything.
 - Called outside any effect or root, the cleanup could never run. Hibiki
-  warns and drops the block rather than raising, mirroring Solid.
+  warns and drops the block rather than raising.
 
 ## Roots escape the tree
 
@@ -135,7 +134,7 @@ watcher.value = 1  # outer re-runs; the root and its effect are untouched
 session.dispose    # the only way this graph comes down
 ```
 
-This is Solid's escape hatch from the owner tree: whoever holds the root
+This is the escape hatch from the owner tree: whoever holds the root
 object owns its teardown, which is what you want for graphs whose lifetime
 is an external event — a session, a connection — rather than a re-run.
 

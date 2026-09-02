@@ -78,13 +78,13 @@ that method's markup on the same instance and handing just that fragment's
 HTML to the transport block. Per-fragment display classes (or partials, in
 ERB terms) collapse into methods of one class.
 
-The precedent is Solid's compiled JSX: the template renders once, and each
-dynamic "hole" becomes its own nested effect. This is that idea at
+The precedent is Svelte's compiled template: the markup renders once, and
+each dynamic expression becomes its own nested effect. This is that idea at
 fragment granularity instead of text-node granularity.
 
 ## Why the machinery is already shaped for it
 
-- **The owner tree.** Hibiki's ownership model (Solid's Owner) already
+- **The owner tree.** Hibiki's ownership model already
   supports effects nested under a parent scope: a channel's root would own
   the component's fragment effects, and disposing the graph disposes all
   of them with zero new lifecycle code.

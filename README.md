@@ -2,7 +2,7 @@
 
 Svelte-5-style signals for Ruby: `state`, `derived`, `effect`.
 
-Hibiki is a fine-grained reactivity library modeled on the signal systems in [Svelte 5](https://svelte.dev/docs/svelte/what-are-runes) and [SolidJS](https://www.solidjs.com/guides/reactivity). Dependency tracking is done at **runtime** (not by static AST analysis): while a derived value or effect is computing, it sits on an observer stack, and any signal read during that window subscribes it.
+Hibiki is a fine-grained reactivity library modeled on the signal system in [Svelte 5](https://svelte.dev/docs/svelte/what-are-runes). Dependency tracking is done at **runtime** (not by static AST analysis): while a derived value or effect is computing, it sits on an observer stack, and any signal read during that window subscribes it.
 
 No runtime dependencies. Requires Ruby >= 3.4.
 

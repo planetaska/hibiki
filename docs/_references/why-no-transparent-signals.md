@@ -54,9 +54,8 @@ name.equal?(nil)   # false — identity can't be forwarded
 case name when String then ... end   # String#=== on the wrapper → false even if value is a String
 ```
 
-This is why Solid uses getter *functions* (`count()`) and Svelte 5 gets
-transparency only via a **compiler** that rewrites `count` into
-`$.get(count)` at build time. Ruby has no compile step, so runtime magic is
+This is why Svelte 5 gets transparency only via a **compiler** that
+rewrites `count` into `$.get(count)` at build time. Ruby has no compile step, so runtime magic is
 the only route — and truthiness slams that door.
 
 ## 2. The `reactive do ... end` block DSL
