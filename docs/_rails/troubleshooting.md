@@ -174,7 +174,7 @@ learns of it. Assign a new object instead:
 self.items = items + [item]
 ```
 
-[Mutable state defaults]({{ "/mutable-defaults/#in-place-mutation-also-bypasses-reactivity" | relative_url }})
+[Mutable state defaults]({{ "/mutable-defaults/#changing-a-value-in-place-is-not-a-write" | relative_url }})
 has the full account.
 
 **An Active Record object equals any other with the same id.** Reloading
