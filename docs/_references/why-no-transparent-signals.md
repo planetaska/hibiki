@@ -5,92 +5,104 @@ nav_order: 3
 
 # Why no transparent signals?
 
-Two designs were evaluated and rejected during Hibiki's development. Both are
-attempts to make signals look like plain Ruby values — no `.value` anywhere.
-Each one hits a hard wall in the Ruby language itself, not a design-taste
-issue, which is why they are documented here rather than left open for
-relitigating.
+Every read of a signal in these docs goes through `.value`. After you have typed `count.value + 1` a few dozen times, a question suggests itself: could Hibiki hide that? Could `count` simply *be* 5, and still remember who read it? Two designs were tried during Hibiki's development, and both were rejected. Not because of taste: each ran into a rule of the Ruby language that no library can bend, and each fails in the worst possible way, silently, by taking the wrong branch. This page walks through both, so that the question has a settled answer, and so that you can see why `Hibiki::Reactive` takes the shape it does.
 
-## 1. Transparent value wrappers
+## A signal that pretends to be its value
 
-**The idea:** make a signal object *pretend to be* its value by forwarding
-every method call to `.value` via `method_missing`:
+The first idea is a wrapper that forwards every method call to the value inside. Ruby makes such a thing easy to sketch. Inherit from `BasicObject`, which has almost no methods of its own, and let `method_missing` pass everything through:
 
 ```ruby
-count = Hibiki::State.new(5)
-count + 1        # method_missing forwards :+ to count.value → 6, and
-                 # the read registers a dependency. Looks great!
-count.to_s       # "5" — also great
-```
+class Transparent < BasicObject
+  def initialize(signal) = @signal = signal
 
-**Why it breaks:** Ruby's truthiness is not a method. There is no `to_bool`
-hook — `if x` is falsy *only* when `x` is the actual objects `nil` or
-`false`. A wrapper is neither, so it is **always truthy**, and
-`method_missing` never even fires:
-
-```ruby
-flag = Hibiki::State.new(false)   # transparent wrapper holding false
-
-if flag                            # wrapper object itself → ALWAYS truthy
-  do_the_thing                     # runs even though the value is false!
+  def method_missing(name, *args, &) = @signal.value.__send__(name, *args, &)
+  def respond_to_missing?(name, include_private = false) = @signal.value.respond_to?(name, include_private)
 end
 ```
 
-No error, no warning — it just silently takes the wrong branch. And the
-cruelest part is *which* feature this poisons: conditionals are exactly where
-fine-grained reactivity earns its keep. Dynamic dependency tracking (the
-`flag ? a : b` pattern, one of Hibiki's core invariants) exists so an effect
-subscribes to `a` only while `flag` is true. If `if flag` is broken, the
-flagship use case is broken.
-
-The lie spreads beyond `if`:
+Every forwarded call reads `@signal.value`, so every use of the wrapper registers a dependency, and the first tests look wonderful:
 
 ```ruby
-name = Hibiki::State.new(nil)
-name.nil?          # you can forward this one... but:
-name == nil        # depends on forwarding, while
-nil == name        # calls NilClass#==, which you can't touch → false. Inconsistent.
-name.equal?(nil)   # false — identity can't be forwarded
-case name when String then ... end   # String#=== on the wrapper → false even if value is a String
+count  = state(5)
+number = Transparent.new(count)
+
+number + 1                            # => 6
+number.to_s                           # => "5"
+effect { puts "count is #{number}" }  # prints "count is 5"
+count.value = 6                       # prints "count is 6"
 ```
 
-This is why Svelte 5 gets transparency only via a **compiler** that
-rewrites `count` into `$.get(count)` at build time. Ruby has no compile step, so runtime magic is
-the only route — and truthiness slams that door.
+Every read went through the wrapper without a `.value`, and the effect still re-ran when the signal changed underneath it. Then you write the first `if`:
 
-## 2. The `reactive do ... end` block DSL
+```ruby
+flag = Transparent.new(state(false))
 
-**The idea:** a Svelte-file-like block where bare local variables are
-reactive:
+if flag
+  puts "on"   # prints "on", though the value is false
+end
+```
+
+Truthiness in Ruby is not a method. There is no `to_bool` hook to forward. An `if` asks one question only: is this object `nil` or `false`? A wrapper is neither. It is always truthy, `method_missing` never runs, and the wrong branch executes with no error and no warning.
+
+The cruel part is which feature this poisons. Conditionals are where fine-grained reactivity earns its keep. An effect that reads `flag ? a : b` subscribes to `a` only while the flag is true and switches to `b` once it flips, as [Lifecycle in detail]({% link _references/lifecycle-in-detail.md %}#what-a-re-run-tears-down) shows. A wrapper breaks exactly that example.
+
+The cracks spread beyond `if`. Ruby answers `equal?` and `==` on `BasicObject` itself, before `method_missing` gets a look in, and `case` asks the class rather than the object:
+
+```ruby
+name = Transparent.new(state(nil))
+
+name.nil?         # => true, forwarded
+name == nil       # => false, unless the wrapper forwards == by hand
+nil == name       # => false either way: NilClass#== answers, and you cannot change it
+name.equal?(nil)  # => false: identity cannot be forwarded
+
+title = Transparent.new(state("Hibiki"))
+
+case title
+when String then "a string"   # String === title asks the wrapper's class
+else "not a string"           # => "not a string"
+end
+```
+
+Svelte 5 does have transparent signals, and it is worth seeing how. A Svelte component reads `count` as a bare name, and the *compiler* rewrites that read into `$.get(count)` before the code ever runs. The transparency lives in a build step. Ruby has no build step, so runtime tricks are the only route to it, and truthiness closes that route.
+
+## Bare variables in a reactive block
+
+The second idea skips the wrapper and reaches for a block, in the spirit of a Svelte file. Inside the block, an ordinary local variable would be a signal:
 
 ```ruby
 reactive do
-  count = 0             # wish: creates a signal
+  count = 0             # wish: creates a state
   doubled = count * 2   # wish: creates a derived
-  count = 1             # wish: reactive write, notifies doubled
+  count = 1             # wish: a reactive write, and doubled updates
 end
 ```
 
-**Why it breaks:** in Ruby, `count = 1` is decided by the **parser**, not at
-runtime. The moment an assignment to a bare name appears, that name is a
-local variable for the rest of the scope — no method call happens, so there
-is no `method_missing`, no hook, nothing for a library to intercept. The
-write is invisible to Hibiki. (Bare *reads* of an undefined name would
-dispatch as method calls and could be caught, but reads alone are useless if
-writes can't be.)
+This time the wall is the parser. The moment Ruby sees `count = 0`, it marks `count` as a local variable for the rest of the block. From that line on, a bare `count` is a variable lookup, not a method call. No method call means no `method_missing`, no hook, and nothing for a library to intercept. A small probe shows the switch happening:
 
-The only escape is to force writes through a receiver:
+```ruby
+class Probe
+  def method_missing(name, *) = puts "intercepted #{name}"
+  def respond_to_missing?(*) = true
+
+  def run
+    count           # prints "intercepted count": no local yet, so a method call
+    count = 1       # prints nothing: the parser made count a local
+    count           # prints nothing: a local read
+    self.count = 2  # prints "intercepted count=": a receiver makes it a call
+  end
+end
+```
+
+The read on the first line can be caught, but reads alone are useless while the writes stay invisible. The only escape is the last line: give every write an explicit receiver.
 
 ```ruby
 reactive do
-  self.count = 1   # now it's a method call — interceptable
+  self.count = 1   # a method call, so it can be intercepted
 end
 ```
 
-…but once every write is `self.count =`, the "bare locals" illusion is dead
-and you are really just writing methods on an object. And Ruby already has a
-first-class, inheritable, testable construct for "an object with reactive
-attribute methods" — a class. That's `Hibiki::Reactive`:
+Once every write is `self.count =`, the illusion of bare locals is gone, and what remains is an object with reactive attribute methods. Ruby already has a first-class, inheritable, testable construct for exactly that: a class. So that is what Hibiki ships.
 
 ```ruby
 class Counter
@@ -104,15 +116,11 @@ class Counter
 end
 ```
 
-Same ergonomic payoff the block DSL was chasing — no `.value` at usage
-sites, dependency tracking flows through plain method calls — but built on
-ordinary `define_method` readers/writers, so `if flag` works (the reader
-returns the real value, not a wrapper), inheritance works, and nothing lies.
+This has the payoff the block was chasing. No `.value` at the point of use, and dependency tracking flows through plain method calls. It has none of the traps, because the readers and writers are ordinary methods defined with `define_method`. `count` returns the real Integer rather than a wrapper, so `if` works, `==` works, `case` works, and inheritance comes for free. [Class-based reactivity]({% link _guides/class-based-reactivity.md %}) shows this in full.
 
-## The one-line summary
+## TL;DR
 
-Transparency at *usage sites* is achievable and Hibiki has it (the
-`Hibiki::Reactive` macros). Transparency of *the value object itself* and of
-*bare local assignment* are both impossible in Ruby without a compiler, and
-faking them produces silent wrong-branch bugs — hence: rejected, don't
-relitigate.
+- Transparency at the **point of use** is achievable, and Hibiki has it in `Hibiki::Reactive`.
+- Transparency of the **value object** fails on truthiness: `if wrapper` is always true.
+- Transparency of **bare assignment** fails on the parser: `count = 1` is never a method call.
+- Both failures are silent wrong-branch bugs, so both designs are rejected.
