@@ -20,9 +20,11 @@ The gem vendors its own JavaScript, the way turbo-rails does: the engine
 puts `hibiki.js` on the app's asset path and merges the `"hibiki-rails"`
 pin into the import map, so an importmap-rails app has nothing to download
 — only a controller to register. `bin/rails g hibiki:rails:install` does
-that, plus the `Helpers` include described below, the `ApplicationCable`
-boilerplate, and the `@rails/actioncable` pin — we added these for you because a stock Rails app has
-neither of the last two until a first `rails g channel` was run. 
+that, plus the `Helpers` include described below and the `ApplicationCable`
+boilerplate — added for you because a stock Rails app has none until a
+first `rails g channel` is run. The client rides turbo-rails' Action Cable
+consumer, so there is no `@rails/actioncable` pin to add (since 0.11.0; an
+older install's pin is harmless).
 
 If you do not wish to use the install generator, you can create the one-line shim yourself:
 
@@ -41,7 +43,7 @@ file, `bin/rails stimulus:manifest:update` (for example, everytime you run `bin/
 An app that bundles its JavaScript (jsbundling, vite) installs the client
 from npm instead: `npm install hibiki-rails`. The
 [npm package](https://www.npmjs.com/package/hibiki-rails) is the same
-module the engine vendors, pulls in `@rails/actioncable`, and is released
+module the engine vendors, takes `@hotwired/turbo-rails` as a peer, and is released
 in lockstep with the gem — one npm version per gem version, pinned to the
 same number. [Version lockstep]({{ "/version-lockstep/" | relative_url }})
 has the full release table and the upgrade notes.

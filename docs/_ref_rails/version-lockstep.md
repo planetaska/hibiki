@@ -16,6 +16,7 @@ vendored inside the gem.
 
 | `hibiki_rails` gem | `hibiki-rails` npm | notes |
 | ------------------ | ------------------ | ----- |
+| 0.11.0             | 0.11.0             | the client takes its Action Cable consumer from `@hotwired/turbo-rails` (`cable.getConsumer()`) instead of importing `@rails/actioncable`: islands and `turbo_stream_from` share one websocket, bundler apps shed a second copy of the library, importmap apps need no `@rails/actioncable` pin. npm peer: `@hotwired/turbo-rails >= 8.0` replaces `@rails/actioncable` |
 | 0.10.0             | 0.10.0             | no client change (on the gem side, [`hibiki:rails:upload_field`]({{ "/file-uploads/" | relative_url }}) — attachments on both edit surfaces, `--accept`, `--many` galleries) |
 | 0.9.1              | 0.9.1              | no client change (on the gem side, [`hibiki:rails:nested`]({{ "/nested-forms/" | relative_url }}) creates a missing child model from its field list) |
 | 0.9.0              | 0.9.0              | `perform` on the island controller becomes public API, with a `performOn` export — [drive an island from your own JavaScript]({{ "/driving-an-island/" | relative_url }}). Also fixes `perform` claiming success (a truthy seq) for an action dropped during an offline gap |
