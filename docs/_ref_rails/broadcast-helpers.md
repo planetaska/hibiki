@@ -168,5 +168,6 @@ subscription was opened with — matching a page that subscribed with
 `<%= turbo_stream_from channel_name, cid %>`. Override `stream_name` on
 the channel if the page listens on different streamables. The transmit
 transport involves none of this: there, render effects call
-`transmit({ html: })` on the subscription itself (see
-[The JS client]({{ "/the-js-client/" | relative_url }})).
+`transmit({ html: })` on the subscription itself, and the island needs no
+`turbo_stream_from` line at all (see
+[Does an island need a Turbo stream?]({{ "/the-js-client/#does-an-island-need-a-turbo-stream" | relative_url }})).

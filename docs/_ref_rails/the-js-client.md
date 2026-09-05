@@ -237,28 +237,65 @@ otherwise a client naming its own streamable is reading other people's
 broadcasts. The client cannot override `channel` or `cid` through
 `params:`.
 
+## Does an island need a Turbo stream?
+
+No. The island root gives the client one Action Cable subscription, and
+re-rendered HTML can come back down that same subscription: the channel
+renders in an effect and calls `transmit({ html: })`, and the client swaps
+each fragment in by its root DOM id. `transmit_value` travels the same
+way. No Turbo stream is involved, so the island below is complete as it
+stands:
+
+```erb
+<% cid = SecureRandom.uuid %>
+<%= tag.div(**hibiki_island(TodosChannel, cid:)) do %>
+  <%= render "todos/list", todos: [] %>
+<% end %>
+```
+
+Add `turbo_stream_from` inside the island only when the channel renders
+with the broadcast helpers. Those publish Turbo Streams to a named
+stream — `stream_name`, by default `[channel_name, cid]` — that Turbo's
+own JS applies, so the page must listen on it:
+
+```erb
+<% cid = SecureRandom.uuid %>
+<%= tag.div(**hibiki_island(CounterChannel, cid:)) do %>
+  <%= turbo_stream_from channel_name, cid %>
+  <%= render "counter/count", count: 0 %>
+<% end %>
+```
+
+| Channel renders with | `turbo_stream_from` inside the island |
+| -------------------- | ------------------------------------- |
+| `broadcast_replace`, `broadcast_morph`, `broadcast_refresh` | yes |
+| `transmit({ html: })` / `transmit_value` | no |
+
+The client handles both shapes. If the island root contains its own
+`<turbo-cable-stream-source>`, the client waits for that source to report
+`connected` before it subscribes, so the graph's first broadcast is not
+lost. If there is none, it subscribes right away, and its `received`
+handler is registered at subscribe time, so the first transmit always
+lands. The two transports differ only on the channel side; in the view
+the difference is that one line. [Broadcast helpers]({{
+"/broadcast-helpers/" | relative_url }}) covers the channel side of
+broadcasting; the next section covers the channel side of transmit.
+
 ## The transmit transport
 
-Everything so far has covered the upward direction: user gestures becoming
-channel actions. The downward direction — re-rendered HTML reaching the
-island — travels the same subscription, just the other way, by
-[*transmit*](https://api.rubyonrails.org/v8.0/classes/ActionCable/Channel/Base.html#method-i-transmit):
-the ActionCable method for sending a message down one subscription,
-private to that subscriber.
+The view side of this transport is the bare island above. On the channel
+side, the HTML travels by
+[*transmit*](https://api.rubyonrails.org/v8.0/classes/ActionCable/Channel/Base.html#method-i-transmit),
+the Action Cable method for sending a message down one subscription,
+private to that subscriber — the same subscription the gestures came up.
 
-hibiki_rails can also deliver HTML a second way — the Turbo way,
-broadcasting Turbo Streams to a named stream for Turbo's own JS to apply
-(see [Broadcast helpers]({{ "/broadcast-helpers/" | relative_url }})). The
-packaged client needs none of it: no broadcast stream, no Turbo JS, just
-the subscription channel the island already holds.
-
-The recipe is simple: in `build_graph`, wrap the
-rendering in an effect and hand the result to `transmit({ html: })`; the contract is the `{ html: }` shape, which the packaged
-client knows to swap in. The effect's first run reads your signals, which
-subscribes it; every later change re-renders and re-sends. When a `{ html: }` message arrives, the
-client replaces each element on the page whose DOM id matches a top-level
-element of the fragment — so the fragment's root must carry a stable id.
-With ERB, render the partial yourself inside a plain effect:
+In `build_graph`, wrap the rendering in an effect and hand the result to
+`transmit({ html: })`. The effect's first run reads your signals, which
+subscribes it; every later change re-renders and re-sends. When the
+`{ html: }` message arrives, the client replaces each element on the page
+whose DOM id matches a top-level element of the fragment, so the
+fragment's root must carry a stable id. With ERB, render the partial
+yourself inside a plain effect:
 
 ```ruby
 def build_graph
@@ -296,11 +333,10 @@ single piece of text for the client to write into every matching
 `transmit_url` mirrors graph state into the address bar via
 `history.replaceState`.
 
-You might expect a race here — an effect transmitting before the page is
-ready to receive — but there is none: the client starts listening at
-subscribe time, before the server ever runs `build_graph`, so the effects'
-first transmits always land, and the server-rendered initial HTML only
-fills the space until the first one arrives.
+Because the client is listening before the server runs `build_graph`,
+the effects' first transmits always land. The server-rendered HTML only
+fills the space until the first one arrives, so it need not match the
+graph's initial state.
 
 One rule carries over from any reactive UI design: never transmit a fragment containing the input the user is currently typing in.
 {: .tip }

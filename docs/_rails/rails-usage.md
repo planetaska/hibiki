@@ -223,8 +223,24 @@ stream, and Turbo's own JavaScript applies it. The other route is
 *transmit*: the effect hands the HTML down the channel's own subscription,
 and the packaged client replaces each element whose DOM id matches the
 fragment's root. No Turbo stream is involved, so the view drops its
-`turbo_stream_from` line, and the effect calls `transmit` instead of a
-broadcast helper:
+`turbo_stream_from` line and is otherwise the same island:
+
+```erb
+<%= tag.div(**hibiki_island(CounterChannel, cid:)) do %>
+  <%= render "counter/count", count: 0, doubled: 0 %>
+  <%= render "counter/step", step: 1 %>
+
+  <p>
+    <%= tag.button("+1", **on(:increment)) %>
+    <%= tag.button("+10", **on(:burst)) %>
+    <%= tag.input(type: "number", name: "step", value: 1,
+                  **on(:set_step, event: :change)) %>
+  </p>
+<% end %>
+```
+
+On the channel side, the effect calls `transmit` instead of a broadcast
+helper:
 
 ```ruby
 Hibiki::Effect.new do
@@ -235,13 +251,21 @@ Hibiki::Effect.new do
 end
 ```
 
+So the route the channel takes decides whether the view needs the stream
+line:
+
+| Channel renders with | `turbo_stream_from` inside the island |
+| -------------------- | ------------------------------------- |
+| `broadcast_replace`, `broadcast_morph`, `broadcast_refresh` | yes |
+| `transmit({ html: })` / `transmit_value` | no |
+
 Both controllers above handle both routes, and one channel may use both
 at once. Broadcasts give you Turbo's own stream actions, which is where
 morph and whole-page refresh live. Transmit has fewer moving parts and is
 the route the Phlex render effect uses, as
-[Phlex support]({{ "/phlex-support/" | relative_url }}) shows. The
-transmit half of [The JS client]({{ "/the-js-client/" | relative_url }})
-has the details.
+[Phlex support]({{ "/phlex-support/" | relative_url }}) shows.
+[Does an island need a Turbo stream?]({{ "/the-js-client/#does-an-island-need-a-turbo-stream" | relative_url }})
+in The JS client has the details of both island shapes.
 
 ## Placeholders and the first update
 
