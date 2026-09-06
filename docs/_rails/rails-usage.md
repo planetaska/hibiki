@@ -116,6 +116,9 @@ The view has three parts: a container whose JavaScript opens the
 subscription, a stream the browser listens on for HTML, and the fragments
 the effects replace.
 
+This example is the Stimulus shape. We also provide helpers that make the markup less verbose. Keep reading to see the other styles.
+{: .tip }
+
 ```erb
 <%# app/views/counter/_counter.html.erb %>
 <% cid = local_assigns.fetch(:cid) { SecureRandom.uuid } %>
@@ -141,9 +144,7 @@ the effects replace.
 <p id="count">count: <%= count %> · doubled: <%= doubled %></p>
 ```
 
-The fragment's root element carries `id="count"`, and the effect names the
-same id in `target:`. That id is the only link between the two. A typo
-fails silently, because the browser has nothing to replace.
+The [stimulus generator]({{ "/generators/#stimulus-shape" | relative_url }}) produces this shape. The fragment's root element carries `id="count"`, and the effect names the same id in `target:`. That id is the only link between the two. A typo fails silently, because the browser has nothing to replace.
 
 ### The page-load id
 
@@ -186,7 +187,7 @@ Declare one only when the action needs a payload, and send it with
 ### The same view without a controller of your own
 
 The gem also ships one generic controller that drives any container, so
-you can skip the per-component JavaScript entirely. Two view helpers add
+**you can skip the per-component JavaScript entirely**. Two view helpers add
 the attributes it reads: `hibiki_island` on the container, and `on` on each
 control that sends an action.
 
@@ -209,8 +210,30 @@ control that sends an action.
 
 A changed control sends its value under its own `name`, so `set_step`
 receives `data["step"]` here too, and the channel is unchanged. The
-`island` generator produces this shape; the `stimulus` generator produces
-the one above. [The JS client]({{ "/the-js-client/" | relative_url }})
+[island generator]({{ "/generators/#island-shape" | relative_url }}) produces this shape.
+
+Since 0.12.0, the `island` helper writes those first three lines for you:
+it generates the cid, stamps the container, and derives the
+`turbo_stream_from` line from the channel class.
+{: .tip }
+
+With the `island` helper, the same view becomes:
+
+```erb
+<%= island CounterChannel do %>
+  <%= render "counter/count", count: 0, doubled: 0 %>
+  <%= render "counter/step", step: 1 %>
+
+  <p>
+    <%= tag.button("+1", **on(:increment)) %>
+    <%= tag.button("+10", **on(:burst)) %>
+    <%= tag.input(type: "number", name: "step", value: 1,
+                  **on(:set_step, event: :change)) %>
+  </p>
+<% end %>
+```
+
+Both forms emit the same markup. `hibiki_island` remains the primitive. [The JS client]({{ "/the-js-client/" | relative_url }})
 covers the helpers in full, including debouncing, confirmation dialogs,
 and falling back to a link's or form's native behavior when the connection
 is down.
@@ -223,7 +246,8 @@ stream, and Turbo's own JavaScript applies it. The other route is
 *transmit*: the effect hands the HTML down the channel's own subscription,
 and the packaged client replaces each element whose DOM id matches the
 fragment's root. No Turbo stream is involved, so the view drops its
-`turbo_stream_from` line and is otherwise the same island:
+`turbo_stream_from` line and is otherwise the same island. With the
+`island` helper, `transport: :transmit` does the same.
 
 ```erb
 <%= tag.div(**hibiki_island(CounterChannel, cid:)) do %>
@@ -315,8 +339,8 @@ covers this in more depth.
 - [Reactive values]({{ "/reactive-values/" | relative_url }}) sends a
   single value to the page instead of a whole fragment.
 - [The JS client]({{ "/the-js-client/" | relative_url }}) covers the
-  `hibiki_island` and `on` helpers, subscribe params, and the transmit
-  route.
+  `island`, `hibiki_island`, and `on` helpers, subscribe params, and the
+  transmit route.
 - [Broadcast helpers]({{ "/broadcast-helpers/" | relative_url }}) covers
   replace, morph, and page refresh.
 - [Channel lifecycle]({{ "/channel-lifecycle/" | relative_url }}) explains

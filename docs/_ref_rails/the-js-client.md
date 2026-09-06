@@ -90,13 +90,46 @@ that attach the controller and name the channel to subscribe to. Inside it, `on`
 making an HTTP request. The rendered `TodoList` is the part the server
 will keep re-rendering, matched by its DOM id.
 
-Three helpers cover the surface:
+Since 0.12.0, the `island` helper writes the island root for you: it
+generates the cid, stamps the `div`, and derives the channel's
+`turbo_stream_from` line when the channel broadcasts.
+{: .tip }
+
+With the `island` helper, the same view becomes:
+
+```erb
+<%= island TodosChannel, transport: :transmit do %>
+  <%= render TodoList.new %>
+  <%= tag.form(**on(:add, event: :submit)) do %>
+    <input type="text" name="title">
+    <button>add</button>
+  <% end %>
+<% end %>
+```
+
+`transport: :transmit` says this channel sends its HTML by transmit rather
+than by Turbo broadcast, so the root needs no stream source. [Does an
+island need a Turbo stream?](#does-an-island-need-a-turbo-stream) explains
+the choice.
+
+Four helpers cover the surface:
 
 - `hibiki_island(channel, cid:, params:)` — the island root: one
   subscription to `channel`, identified by the page's `cid` — a
   per-page-load id (typically a UUID the controller action generated), so
   two tabs on the same page each get their own graph. See
-  [Subscribe params](#subscribe-params) for `params:`.
+  [Subscribe params](#subscribe-params) for `params:`. This is the
+  primitive, and the form that Phlex components use.
+- `island(channel, cid:, params:, transport:, tag_name:, **attributes) { |cid| }`
+  — the same root as an ERB block (it needs ActionView's `capture`, so it
+  works only in ERB). Omit `cid:` and the helper generates a UUID; the
+  block receives the cid either way. `transport:` names how the channel
+  sends its HTML back: `:broadcast`, the default, puts the channel's
+  `turbo_stream_from` inside the root; `:transmit` leaves it out. Every other
+  keyword lands on the root element (`class:`, `id:`, `tag_name: :section`),
+  and a `data:` hash is merged beneath the island's own keys. Pass the
+  channel class itself, never a string. For a dynamic name, `constantize`
+  it at the call site, and never take it from a request param.
 - `on(action, event:, with:, debounce:, confirm:, reset:, fallback:)` —
   forward a DOM event as a channel action. See
   [Events and modifiers](#events-and-modifiers).
@@ -210,6 +243,12 @@ id rides along as a subscribe param:
 <%= tag.div(**hibiki_island(BookChannel, cid:, params: { record_id: @book.id })) do %>
 ```
 
+The `island` helper takes the same option:
+
+```erb
+<%= island BookChannel, params: { record_id: @book.id } do %>
+```
+
 **Subscribe params are client-supplied and untrusted, exactly like query
 params on a request.** Anyone can open a socket and send whatever they like, so a
 channel may use one only to **look up a record inside a scope it chooses
@@ -270,6 +309,34 @@ own JS applies, so the page must listen on it:
 | -------------------- | ------------------------------------- |
 | `broadcast_replace`, `broadcast_morph`, `broadcast_refresh` | yes |
 | `transmit({ html: })` / `transmit_value` | no |
+
+With the `island` helper, the line is written for you. By default, the root
+contains `turbo_stream_from channel.channel_name, cid`, derived from the
+channel class, so renaming the channel cannot leave a stale streamable
+behind. `transport: :transmit` leaves it out.
+{: .tip }
+
+With the `island` helper, the two islands above become:
+
+```erb
+<%= island TodosChannel, transport: :transmit do %>
+  <%= render "todos/list", todos: [] %>
+<% end %>
+
+<%= island CounterChannel do %>
+  <%= render "counter/count", count: 0 %>
+<% end %>
+```
+
+A channel that overrides `stream_name` passes `transport: :transmit` and writes its
+own `turbo_stream_from` inside the block, using the cid the block yields:
+
+```erb
+<%= island BookChannel, params: { record_id: @book.id }, transport: :transmit do |cid| %>
+  <%= turbo_stream_from "book", @book.id, cid %>
+  ...
+<% end %>
+```
 
 The client handles both shapes. If the island root contains its own
 `<turbo-cable-stream-source>`, the client waits for that source to report

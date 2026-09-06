@@ -9,8 +9,12 @@
     no Turbo stream and no stream_connected wait — `received` is
     registered at subscribe time, so the render effect's first transmit
     always lands. The counter page deliberately stays on the
-    Turbo-broadcast transport as its live proof. %>
-<%= tag.div(**hibiki_island(TodosChannel, cid: @cid)) do %>
+    Turbo-broadcast transport as its live proof.
+
+    `island` is the ERB block spelling of the root (0.12.0): it folds the
+    hibiki_island splat and, by default, the channel's turbo_stream_from;
+    `transport: :transmit` is this transport — no stream source inside. %>
+<%= island TodosChannel, cid: @cid, transport: :transmit do %>
   <%# A throwaway instance to fill the space on first paint; the channel's
       long-lived instance takes over from its first transmit. %>
   <%= render TodoList.new %>
