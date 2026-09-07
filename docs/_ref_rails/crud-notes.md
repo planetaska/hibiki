@@ -129,7 +129,7 @@ derived, so the mistakes a comparison cannot catch raise instead of going
 stale:
 
 ```ruby
-# app/models/book_query.rb
+# app/queries/book_query.rb
 
 # freeze locks the attributes — a write raises FrozenError.
 # readonly! makes save raise ActiveRecord::ReadOnlyRecord.
@@ -153,9 +153,14 @@ after it. Both
 must apply the same window — the same search, filters, sort and page size —
 and a scope hand-copied into the controller is exactly where the two drift
 apart. `book_query.rb` exists so there is nothing to copy: both sides call the
-same object. It lives in `app/models` rather than a tidier `app/queries`
-because Rails computes autoload paths from the `app/*` glob at boot — see
-[the post-install notices](#read-the-post-install-output) below.
+same object.
+
+Scaffolded before 0.13.0? The query object was written to `app/models`. It
+keeps working there, and `hibiki:rails:multiselect` and `upload_field` find it
+in either place. Move it with `git mv` when convenient. A `--force` re-run
+writes `app/queries` and the post-install output asks you to delete the old
+copy, which Rails would otherwise load first.
+{: .note }
 
 ## Pagination can be toggled by switching one constant
 
@@ -327,11 +332,10 @@ Each notice opens with a short tag; the sections below take them in turn.
 
 ### `restart` — the new directories need a restart
 
-`app/forms/` is almost certainly new to your app, and **Rails computes
-autoload paths from the `app/*` glob at boot** — a directory created after
-boot is not on the list. Until you restart the server, the new constants
-raise `NameError`. This is also why the query object lives in `app/models`
-rather than a tidier `app/queries`.
+`app/forms/` and `app/queries/` are almost certainly new to your app, and
+**Rails computes autoload paths from the `app/*` glob at boot** — a directory
+created after boot is not on the list. Until you restart the server, the new
+constants raise `NameError`.
 
 ### `css` — rebuild your stylesheet
 

@@ -45,7 +45,7 @@ one-line edits to files the scaffold already generated:
 | `app/channels/albums_channel.rb` | One line: `include SongsMultiselect` |
 | `app/forms/album_form.rb` | One declaration: `reactive_association :songs` |
 | `app/models/album.rb` | The `has_many` pair, if not already declared |
-| `app/models/album_query.rb`, `app/channels/album_channel.rb` | `includes(:songs)` — the scaffold's rows are `strict_loading`, so the song labels must be preloaded |
+| `app/queries/album_query.rb`, `app/channels/album_channel.rb` | `includes(:songs)` — the scaffold's rows are `strict_loading`, so the song labels must be preloaded |
 | `_album.html.erb` / row component | A "Songs: …" display line |
 | `_album_form.html.erb` / row form component | The render call for the dropdown |
 

@@ -49,17 +49,16 @@ validators from the model, so there is no field list to type:
 bin/rails g hibiki:rails:scaffold_controller Book
 ```
 
-Two things to know about the first run:
+After your first run with the generator:
 
-- **Restart the server.** The scaffold writes `app/forms/`, which is almost
-  certainly a new directory, and Rails computes its autoload paths at boot.
-  Until you restart, the new constants raise `NameError`.
+- **Restart the server.** The scaffold writes `app/forms/` and `app/queries/`.
+  These are almost certainly new directories, and Rails computes autoload paths at boot.
+  Restart the server if it's running, or the new constants will raise `NameError`.
 - **Read the output.** The generator edits three files you already own: the
   model, every model a `belongs_to` points at, and `config/routes.rb`. Each
   edit is announced, and each leaves what you already declared alone.
   [CRUD notes]({{ "/crud-notes/" | relative_url
-  }}#what-the-generator-changes-in-files-you-already-own) lists the edits and
-  the reasons for them.
+  }}#what-the-generator-changes-in-files-you-already-own) lists the edits and the reasons for them.
 
 Namespaced names work (`admin/book`), as they do for the
 [component-shape generators]({{ "/generators/" | relative_url }}).
@@ -126,7 +125,7 @@ Per resource, with `Book` as the example:
 | --- | --- |
 | `app/channels/books_channel.rb` | The index page's signals and effects: `db_version`, the search, filter, sort, and page signals, seeded from the URL at subscribe time, the `rows` and `counts` derived values, one render effect plus the address-bar mirror, and the actions the client can invoke, including row edit and inline create |
 | `app/channels/book_channel.rb` | The show page's channel: one record, held as a frozen read-only snapshot |
-| `app/models/book_query.rb` | The query, in one place, with `PAGE_SIZE`, the `SEARCHABLE`, `FILTERABLE`, and `SORTABLE` allowlists, and the URL half: `from_params` in, canonical `url_params` out. Its `rows` are frozen, read-only, `strict_loading` records, for reasons [CRUD notes]({{ "/crud-notes/" | relative_url }}#why-the-rows-come-back-frozen) gives |
+| `app/queries/book_query.rb` | The query, in one place, with `PAGE_SIZE`, the `SEARCHABLE`, `FILTERABLE`, and `SORTABLE` allowlists, and the URL half: `from_params` in, canonical `url_params` out. Its `rows` are frozen, read-only, `strict_loading` records, for reasons [CRUD notes]({{ "/crud-notes/" | relative_url }}#why-the-rows-come-back-frozen) gives |
 | `app/forms/book_form.rb` | A [reactive form]({{ "/reactive-forms/" | relative_url }}) over the model's attributes: one signal per field, plus the live validation clauses |
 | `app/controllers/books_controller.rb` | A regular Rails scaffold controller. It serves the initial server-rendered page and every request made without JavaScript |
 | `app/views/books/*` | `index`, `show`, `new`, and `edit`, plus the `_list`, `_row`, `_row_form`, `_form`, and `_controls` partials, or their Phlex equivalents |

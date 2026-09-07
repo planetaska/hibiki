@@ -51,7 +51,7 @@ the scaffold already generated:
 | `app/javascript/controllers/upload_field_controller.js` | **Created once per app.** The direct-upload Stimulus controller every upload field shares |
 | `app/channels/albums_channel.rb` | One line: `include CoverUpload` |
 | `app/models/album.rb` | `has_one_attached :cover`, plus the classic form's `remove_cover` virtual attribute and its guarded purge |
-| `app/models/album_query.rb`, `app/channels/album_channel.rb` | `.with_attached_cover` — the channel's rows are `strict_loading`, so the blob must be preloaded |
+| `app/queries/album_query.rb`, `app/channels/album_channel.rb` | `.with_attached_cover` — the channel's rows are `strict_loading`, so the blob must be preloaded |
 | `_album.html.erb` / row component | A "Cover: …" display line — a thumbnail, or the filename linked to the blob |
 | `_album_form.html.erb` / row form component | The render call for the upload row |
 | `_form.html.erb` / page form component | A `direct_upload: true` file field and a "Remove cover" checkbox |
