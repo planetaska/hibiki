@@ -174,6 +174,13 @@ viewport. Because an observer can fire again before a swap lands, pair it
 with a generation token in `with:` and make the action a no-op when the
 token is stale.
 
+Never give a `visible` control a `fallback:`. The fallback runs the
+element's native behavior whenever the island is not live, and for a
+sentinel that means scrolling into view would navigate. When the control
+needs a degraded path, split it as the scaffold does: a wrapper that
+carries only `visible`, and a link inside it that carries `click`, a real
+href, and `fallback: true`.
+
 The shape of this helper interface is inspired by
 [phlex-reactive](https://phlex-reactive.zoolutions.llc)'s `on(...)`
 actions.

@@ -153,12 +153,12 @@ handed to someone else, brings the page back in that exact state.
 **Every control has a path without JavaScript.** The New and Edit links carry
 real hrefs to the standard pages. The Destroy button is a real `button_to`
 DELETE form. The search, filter, and sort controls are one GET form to the
-index, and the page control's links carry real `?page=N` hrefs. When
-JavaScript is unavailable, the browser does what the markup says, and the
-Rails controller answers with a full page.
+index, and the page control's links carry real `?page=N` hrefs, as does the
+Load-more link under `--infinite-scroll`. When JavaScript is unavailable, the
+browser does what the markup says, and the Rails controller answers with a
+full page.
 
-The one deliberate exception is `--infinite-scroll`, whose load-more control
-has no paginated fallback. [CRUD notes]({{ "/crud-notes/" | relative_url
+[CRUD notes]({{ "/crud-notes/" | relative_url
 }}#the-address-bar-and-life-without-javascript) covers both behaviours in
 more depth, and walks the fallback paths one by one.
 
@@ -189,8 +189,8 @@ bin/rails g hibiki:rails:scaffold Book title:string ... --css=tailwind
 
 **Infinite scroll.** The index grows as the reader scrolls, driven by an
 `IntersectionObserver`. Because the list is already live, the change is
-small, but this is the one control with no fallback when JavaScript is
-unavailable:
+small. The Load-more link keeps a real `?page=N` href, so without JavaScript
+each click shows one more window:
 
 ```sh
 bin/rails g hibiki:rails:scaffold Book title:string ... --infinite-scroll

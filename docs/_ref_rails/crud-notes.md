@@ -194,7 +194,8 @@ where the page left off. A reload or a shared link works as expected.
 **Every control's native behavior is its fallback.** Each control is real
 markup: New and Edit carry real hrefs, Destroy is a real `button_to` DELETE
 form, search/filter/sort are one GET form to the index, and the page links
-carry real `?page=N` hrefs. While the island is live, the JS client
+carry real `?page=N` hrefs. Under `--infinite-scroll` the Load-more link
+carries one too. While the island is live, the JS client
 intercepts each gesture (`fallback: true`) and the channel answers without a
 page load. Otherwise — connecting, offline, stalled, or no JavaScript at
 all — the browser follows the markup, and the controller answers with a full
@@ -206,10 +207,14 @@ token freshened — is documented in
 [The JS client]({{ "/the-js-client/" | relative_url
 }}#falling-back-to-native-behavior).
 
-One deliberate exception: under `--infinite-scroll` the load-more control has
-no deep-pagination fallback. It doubles as the scroll sentinel, and a control
-that navigates on a dead socket would make *scrolling* navigate — so a
-degraded infinite index shows the first window only.
+The infinite-scroll control is two elements, because its two jobs need
+opposite fallback rules. The wrapper is the scroll sentinel: it carries only
+the `visible` event and never a fallback, since a sentinel that navigates on
+a dead socket would make *scrolling* navigate. The Load-more link inside it
+is the click path, with a real `?page=N` href and `fallback: true`. Under
+`--infinite-scroll` the query reads `?page=N` as a growing window, so a
+degraded click shows every window up to N, and the link's fragment lands the
+reader on the last row they had already seen.
 
 ## The fallback paths, piece by piece
 
@@ -422,7 +427,7 @@ once per app, and the generator wires it in for you.
 | --- | --- |
 | The counts line in `_controls` | A small spinner beside the sentence. This partial is never re-rendered, which makes it the safest home for an island-level indicator. |
 | Above the list | A non-blocking progress bar. The site that needs one most: the page links are real anchors that jump to the list, so by the time a reply lands the reader is already staring at the *old* list, scrolled to the top of it. |
-| The infinite-scroll sentinel | The Load-more control *is* the spinner — it already carries the busy attribute, so this costs no markup. |
+| The Load-more link | The link *is* the spinner — it already carries the busy attribute, so this costs no markup. A page the sentinel triggered shows only the island-level indicators. |
 | Each row's destroy button | Dimmed while its own trip is in flight. |
 | The inline-edit Save button | A spinner in the button. |
 
