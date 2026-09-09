@@ -131,6 +131,7 @@ Per resource, with `Book` as the example:
 | `app/views/books/*` | `index`, `show`, `new`, and `edit`, plus the `_list`, `_row`, `_row_form`, `_form`, and `_controls` partials, or their Phlex equivalents |
 | `app/views/shared/*` | The page control, the field-error line, and the form-error summary. Written once per app and shared by every scaffolded resource; a second scaffold finds them and leaves them alone |
 | `app/assets/stylesheets/hibiki_busy.css` | The loading and connection styles. Once per app, like the shared views |
+| `app/assets/stylesheets/hibiki_motion.css` | The enter and leave transitions the views name. Once per app; `app/javascript/application.js` gains the one import line that drives them |
 
 Every file is ordinary Rails code. Nothing in the gem reads it back, and the
 generator stops owning a file the moment it writes it, so you can build on top of the output
@@ -173,6 +174,7 @@ Both scaffold commands take the same options:
 | `--skip-pagination` | No paging at all; the index lists every row |
 | `--skip-search` | Omit the search box and the `LIKE` terms behind it |
 | `--skip-create` | Omit the inline create form, so the New link always navigates to `/books/new` |
+| `--skip-motion` | Omit the enter and leave motion: no `hibiki_motion.css`, no import, no marks in the views |
 | `--page-size=N` | Rows per page (default 20) |
 | `--phlex` | Phlex components under `app/views/books/` instead of ERB templates |
 | `--skip-routes` | Leave `config/routes.rb` alone. `scaffold_controller` only; the full scaffold takes Rails' own `--skip-resource-route` |
@@ -195,6 +197,16 @@ each click shows one more window:
 ```sh
 bin/rails g hibiki:rails:scaffold Book title:string ... --infinite-scroll
 ```
+
+**Motion.** The create form slides open and shut, the inline edit form does
+the same, and a row you destroy slides out to the left before the list
+closes the gap. The views carry class names and a `data-motion` mark; the
+timing lives in `hibiki_motion.css`, and the holding is done by the
+`hibiki-rails/motion` module the generator imports for you.
+[Motion]({{ "/motion/" | relative_url }}) explains the contract. Under
+`--css=none` nothing of this is written, because the transitions are
+Tailwind utilities; `--skip-motion` leaves it out of the styled variants
+too.
 
 **Phlex.** The generator writes Phlex components instead of ERB templates.
 The view layer is the only thing that changes. See
@@ -294,6 +306,8 @@ To understand what you were handed:
   the choices behind the output.
 - [The JS client]({{ "/the-js-client/" | relative_url }}) covers the island,
   the helpers, the events, and the loading and connection attributes.
+- [Motion]({{ "/motion/" | relative_url }}) covers the enter and leave
+  transitions, the `data-motion` mark, and the class names the views use.
 - [Reactive values]({{ "/reactive-values/" | relative_url }}) covers the
   counts sentence and the sort label, which live outside the re-rendered
   list.

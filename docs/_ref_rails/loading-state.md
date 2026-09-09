@@ -54,6 +54,11 @@ the other direction: no helper emits them — the JS client writes them at
 runtime. To your app they are **read-only**, and CSS is the only place
 to read them.
 
+One other family works the same way and is public: `data-motion`, which
+you write, and `data-motion-leaving` / `data-motion-entering`, which the
+motion module writes around a swap. [Motion]({{ "/motion/" |
+relative_url }}) covers them.
+
 ## Making the loading state visible
 
 The pattern is always the same two pieces: put the element you want the
