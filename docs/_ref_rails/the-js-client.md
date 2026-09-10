@@ -25,9 +25,9 @@ boilerplate — added for you because a stock Rails app has none until a
 first `rails g channel` is run. The client rides turbo-rails' Action Cable
 consumer, so there is no `@rails/actioncable` pin to add (since 0.11.0; an
 older install's pin is harmless). A second pin, `hibiki-rails/motion`,
-serves the optional module that lets a marked element finish its
-transition before a render removes it; the scaffold imports it, and
-[Motion]({{ "/motion/" | relative_url }}) describes it.
+serves an optional module: with it, an element you mark can finish a CSS
+transition before a re-render removes it from the page. The scaffold
+imports it, and [Motion explained]({{ "/motion-explained/" | relative_url }}) describes it.
 
 If you do not wish to use the install generator, you can create the one-line shim yourself:
 
@@ -372,11 +372,12 @@ subscribes it; every later change re-renders and re-sends. When the
 `{ html: }` message arrives, the client replaces each element on the page
 whose DOM id matches a top-level element of the fragment, so the
 fragment's root must carry a stable id. Just before it swaps, the client
-dispatches `hibiki:before-render` from the island root, with the render
-in `event.detail.render` for a listener to replace, the way Turbo's own
-`turbo:before-stream-render` works. The motion module uses that seam to
-hold a swap; app code rarely needs it. With ERB, render the partial
-yourself inside a plain effect:
+dispatches `hibiki:before-render` from the island root, with the swap
+itself in `event.detail.render`. A listener may replace that function
+with one that waits, the way Turbo's own `turbo:before-stream-render`
+allows. The motion module uses this to hold a swap until a leaving
+element's transition ends; app code rarely needs it. With ERB, render the
+partial yourself inside a plain effect:
 
 ```ruby
 def build_graph

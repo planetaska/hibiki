@@ -54,10 +54,12 @@ the other direction: no helper emits them — the JS client writes them at
 runtime. To your app they are **read-only**, and CSS is the only place
 to read them.
 
-One other family works the same way and is public: `data-motion`, which
-you write, and `data-motion-leaving` / `data-motion-entering`, which the
-motion module writes around a swap. [Motion]({{ "/motion/" |
-relative_url }}) covers them.
+One other family of attributes works the same way, and is public:
+`data-motion`, which you write on an element that should animate, and
+`data-motion-leaving` / `data-motion-entering`, which the motion module
+sets on that element while a re-render removes or inserts it.
+[Motion explained]({{ "/motion-explained/" | relative_url }}) covers them.
+{: .note }
 
 ## Making the loading state visible
 

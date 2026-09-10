@@ -408,12 +408,14 @@ would look complete while a field is missing.
 `hibiki:rails:install` hasn't run, or has been partly undone. Nothing on the
 generated page will be live until the install is complete.
 
-### `motion` — the module that holds a render
+### `motion` — the import behind the sliding forms and rows
 
 The blue form says `app/javascript/application.js` now imports
-`hibiki-rails/motion`. The yellow form says the file was not found: import
-the module from whatever your JavaScript entry point is, or rows and forms
-will pop instead of sliding. Nothing else is wrong, and nothing raises.
+`hibiki-rails/motion`, the module that lets a form or a row finish its
+slide before a re-render removes it. The yellow form says the generator
+could not find that file: add the import to whatever your JavaScript entry
+point is, or the forms and rows will appear and disappear at once instead
+of sliding. Nothing else is affected, and nothing raises.
 
 ## Loading and connection state
 
@@ -485,38 +487,44 @@ under their fingers reads as a fault, not as feedback.
 
 ## Motion
 
-The mechanism is documented on [the Motion page]({{ "/motion/" |
-relative_url }}): the `data-motion` mark, the two attributes the module
-writes, and the hold that lets a leaving element finish its transition.
-What follows is what the generator does with it.
+Forms and rows on the generated index slide instead of appearing and
+disappearing at once. **The mechanism is documented on
+[Motion explained]({{ "/motion-explained/" | relative_url }})**: the `data-motion`
+attribute you put on an element, the two attributes the motion module sets
+on it while it enters or leaves, and the hold that keeps a re-render back
+until a leaving element has finished its transition. What follows is only
+what the generator does with it.
 
 Three elements are marked. The inline create card, `#book_new`, and the
 row's edit wrapper, `#book_7_edit`, carry a plain `data-motion` and the
-`hbk-slide` pair, so they slide open and shut. The row itself,
+`hbk-slide` pair of classes, so they slide open and shut. The row itself,
 `#book_7`, carries `data-motion="own"` and the `hbk-slide-x` pair, so it
-slides out to the left only when its own Destroy removed it; rows that
-page or filter away, and rows destroyed from another tab, go at once.
+slides out to the left only when its own Destroy button removed it. A row
+that pages or filters away, or that another tab destroyed, goes at once.
 
-Two shapes in the row exist for the merge, not for the eye. The display
-markup is wrapped in `<div id="book_7_display" class="contents">`, an
-element with no box of its own, so that opening the edit form swaps one
-id-bearing element for another: the merge would otherwise rewrite a bare
-`<div>` into the edit wrapper in place, and a rewrite never fires the
-enter transition. And under motion the row's card and its body are one
-element, `hbk-slide-x-body card card-body`, with the sliding wrapper
-above it. That keeps the row's fields at the same indentation as without
-motion, which is where the add-on generators expect to inject their
-lines.
+Two shapes in the row markup exist for the update mechanism, not for the
+eye. The first is the wrapper around the display markup,
+`<div id="book_7_display" class="contents">`, an element with no box of
+its own. The list updates by morph: Turbo pairs each old element with its
+counterpart in the new HTML, by id first and by tag otherwise, and
+rewrites each pair in place. With the wrapper, opening the edit form swaps
+one id-bearing element for another. Without it, the morph would rewrite a
+bare `<div>` into the edit wrapper in place, and an element rewritten in
+place never plays its entrance. The second is that, under motion, the
+row's card and its body are one element, `hbk-slide-x-body card
+card-body`, with the sliding wrapper above it. That keeps the row's fields
+at the same indentation as without motion, which is where the add-on
+generators expect to inject their lines.
 
-`app/assets/stylesheets/hibiki_motion.css` names each transition as a
-Tailwind `@utility`, once per app, and reaches the page the same four ways
-the loading stylesheet does. `app/javascript/application.js` gains
+`app/assets/stylesheets/hibiki_motion.css` defines each transition as a
+Tailwind utility class, once per app, and reaches the page the same four
+ways the loading stylesheet does. `app/javascript/application.js` gains
 `import "hibiki-rails/motion"`, once. The post-install output reports both.
 
 `--skip-motion` writes none of it, and the views come out exactly as they
 did before motion existed. `--css=none` never writes it either: the
 transitions are Tailwind utilities, and an app styling by hand wires its
-own. The two are the same output.
+own. The two produce the same output.
 
 ## Phlex instead of ERB
 
