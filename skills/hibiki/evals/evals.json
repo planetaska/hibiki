@@ -1,0 +1,23 @@
+{
+  "skill_name": "hibiki",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "My Hibiki effect prints the total once but never again after I do `cart.items << item`. Why?",
+      "expected_output": "Explains that in-place mutation is not a write (the state still holds the same object, so `==` sees no change), and shows the fix: assign a fresh array (`cart.items = cart.items + [item]` or `update { it + [item] }`), or `equals: false` as the escape hatch.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Write a Ruby class with hibiki that tracks a temperature and only logs when it changes by more than 0.5 degrees.",
+      "expected_output": "A class including Hibiki::Reactive (or plain signals) with `state :temperature, ..., equals: ->(prev, nxt) { (prev - nxt).abs <= 0.5 }` and an `effect { puts ... }`; explains that the comparator returning truthy means unchanged, and that the effect runs once at creation.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "I'm using hibiki signals from a Sidekiq job and a Puma thread and getting weird results — is it thread safe?",
+      "expected_output": "Explains confinement, not locking: a graph belongs to one thread, other threads send it messages (Queue or actor pattern) rather than writing signals directly; tracking window is per fiber and inherited, batch state is per thread and not inherited; one world per Ractor.",
+      "files": []
+    }
+  ]
+}
