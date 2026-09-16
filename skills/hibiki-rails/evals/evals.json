@@ -5,19 +5,43 @@
       "id": 1,
       "prompt": "Add a live 'remaining' count to the heading of my todos page using hibiki_rails without re-rendering the whole list.",
       "expected_output": "Uses a reactive value: `reactive :remaining` (or `reactive_attrs`) placeholder in the heading paired with `transmit_value(:remaining) { ... }` in `build_graph`; notes it is text-only, matched by name document-wide, and needs no Turbo stream line because it rides the transmit transport.",
-      "files": []
+      "files": [],
+      "expectations": [
+        "Uses a reactive value placeholder in the heading (`reactive :remaining` or `reactive_attrs(:remaining)`) rather than re-rendering the list fragment",
+        "Pairs it with `transmit_value(:remaining) { ... }` inside `build_graph`",
+        "States that a reactive value is text only, matched by name, and that it needs no `turbo_stream_from` line (transmit transport)",
+        "Shows the count derived from signals (e.g. a derived or the block reading the todos state), not computed once",
+        "Uses correct helper spellings from hibiki_rails 0.15.0 (`reactive`, `reactive_attrs`, `transmit_value`)",
+        "Signals in the channel are declared with `Hibiki::State.new` / `Hibiki::Derived.new` in ivars inside `build_graph`, or on a `Hibiki::Reactive` object the channel holds; not with `state`/`derived` macros called inside `build_graph`",
+        "The placeholder renders the real initial count (from the controller's data), not a static 0"
+      ]
     },
     {
       "id": 2,
       "prompt": "My hibiki channel action runs (I see it in the log) but the page never changes. The list is rebuilt from `Todo.order(:id).to_a` in the action.",
       "expected_output": "Diagnoses that the action must write a signal, and that a derived reading SQL without a signal never re-runs; recommends a version signal (`@db_version`) bumped in the action with a lazy derived doing the query, or `equals: Hibiki::Rails.record_equals` when assigning record arrays; mentions the AR `==` (class + id) swallowed-write trap and the dev warning.",
-      "files": []
+      "files": [],
+      "expectations": [
+        "Diagnoses that the action must write a signal for effects to re-run; rebuilding an array without a signal write (or with an equal write) sends nothing",
+        "Explains the AR `==` (class + id) trap: a reloaded record array can compare equal and be swallowed, mentioning `Hibiki::Rails.record_equals` or a version signal",
+        "Recommends the version-signal + lazy derived pattern (`@db_version += 1` in the action, derived does the query)",
+        "Mentions the development warning `State write dropped by ==` or the swallowed-write tripwire",
+        "States that an equal write is a no-op that sends zero bytes, and that the client still receives the ack (the busy state clears) so the round trip looks like it worked"
+      ]
     },
     {
       "id": 3,
       "prompt": "How do I make a hibiki island update when a background job creates records? We use solid_queue in a separate process.",
       "expected_output": "Shows the after_commit bridge: the model broadcasts a ping on a stream, the channel `stream_from`s it and hops to the graph thread with `graph_actor&.post { Hibiki.batch { @db_version += 1 } }`; warns that the `async` cable adapter never crosses processes (use solid_cable/redis), that bulk writes skip callbacks, and that stream names come from the connection, not params.",
-      "files": []
+      "files": [],
+      "expectations": [
+        "Shows an `after_commit` callback on the model broadcasting a ping on a named stream",
+        "Shows the channel `stream_from` that stream and hopping to the graph thread with `graph_actor&.post { Hibiki.batch { ... } }` (or equivalent) before writing a signal",
+        "Warns that the `async` Action Cable adapter is in-process and cannot cross the solid_queue worker process (use solid_cable, redis, or postgres)",
+        "Warns that bulk writes (`insert_all`, `update_all`, `update_column`) skip `after_commit`",
+        "Recommends coalescing per-record pings (a thread-local quiet flag with one ping at the end, `Hibiki::Rails::Debounce` as an effect scheduler, or `broadcast_refresh_effect`) rather than leaving a per-record `after_commit` alone for bulk jobs",
+        "Warns that the ping-driven re-query must not assign an AR record array into a plain `==` state (class + id equality swallows the change); uses a version signal + lazy derived, `Data` rows, or `equals: Hibiki::Rails.record_equals`"
+      ]
     }
   ]
 }

@@ -5,19 +5,43 @@
       "id": 1,
       "prompt": "My Hibiki effect prints the total once but never again after I do `cart.items << item`. Why?",
       "expected_output": "Explains that in-place mutation is not a write (the state still holds the same object, so `==` sees no change), and shows the fix: assign a fresh array (`cart.items = cart.items + [item]` or `update { it + [item] }`), or `equals: false` as the escape hatch.",
-      "files": []
+      "files": [],
+      "expectations": [
+        "Explains that `<<` mutates the array in place and never goes through the signal's writer, so no subscriber is notified",
+        "Recommends assigning a fresh array (`+= [item]`, `+`, `[*items, item]`, `update { it + [item] }`) as the primary fix",
+        "Warns that assigning the same (mutated) object back is also dropped because it is `==` to itself",
+        "Mentions `equals: false` as the escape hatch that makes a self-assignment notify",
+        "Mentions the positional-vs-block default trap for `Hibiki::Reactive` (`state(:items) { [] }`)",
+        "Every code sample uses real entry points (`Hibiki::State.new`, `Hibiki::Effect.new`, `include Hibiki::DSL` + `state`/`effect`, or `Hibiki::Reactive` macros); no invented module methods such as `Hibiki.effect`"
+      ]
     },
     {
       "id": 2,
       "prompt": "Write a Ruby class with hibiki that tracks a temperature and only logs when it changes by more than 0.5 degrees.",
       "expected_output": "A class including Hibiki::Reactive (or plain signals) with `state :temperature, ..., equals: ->(prev, nxt) { (prev - nxt).abs <= 0.5 }` and an `effect { puts ... }`; explains that the comparator returning truthy means unchanged, and that the effect runs once at creation.",
-      "files": []
+      "files": [],
+      "expectations": [
+        "Uses the `equals:` option with a callable comparator taking (prev, next) rather than hand-rolled diffing in the effect",
+        "The comparator returns truthy when the difference is within 0.5 (treated as unchanged) and falsy otherwise",
+        "The logging is an `effect` (or Reactive `effect { }`), not a manual method call after each write",
+        "Notes that the effect runs once at creation (first log at construction)",
+        "Uses correct hibiki API spellings (`Hibiki::State.new(v, equals:)` / `state :temp, v, equals:` / `include Hibiki::Reactive`)",
+        "Saved thermometer.rb runs under `ruby -I lib` and logs exactly three times for the sequence 20.0, 20.3, 20.5, 20.6, 20.2, 19.9 (at 20.0, 20.6, 19.9)"
+      ]
     },
     {
       "id": 3,
-      "prompt": "I'm using hibiki signals from a Sidekiq job and a Puma thread and getting weird results — is it thread safe?",
+      "prompt": "I'm using hibiki signals from a Sidekiq job and a Puma thread and getting weird results \u2014 is it thread safe?",
       "expected_output": "Explains confinement, not locking: a graph belongs to one thread, other threads send it messages (Queue or actor pattern) rather than writing signals directly; tracking window is per fiber and inherited, batch state is per thread and not inherited; one world per Ractor.",
-      "files": []
+      "files": [],
+      "expectations": [
+        "States that signals hold no locks and a graph belongs to one thread (confinement, not locking)",
+        "Recommends sending writes from other threads to the owner thread via a Queue or actor pattern rather than writing signals directly",
+        "Mentions that tracking state is per fiber and inherited while batch state is per thread and not inherited by new fibers",
+        "Mentions that each Ractor has an independent reactive world",
+        "Does not claim hibiki is thread-safe for concurrent writes",
+        "Points out that Sidekiq and Puma are normally separate processes, so a signal graph in one is invisible to the other and the fix is cross-process messaging (DB, Redis, broadcast), not locking"
+      ]
     }
   ]
 }
