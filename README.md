@@ -118,6 +118,21 @@ Full documentation: <https://planetaska.github.io/hibiki/>
 - [Rails](https://planetaska.github.io/hibiki/rails-introduction/) — the `hibiki_rails` and `hibiki_phlex` integration, generators, CRUD scaffolding
 - [Reference](https://planetaska.github.io/hibiki/threading-model/) — threading model, lifecycle in detail, status and limitations
 
+## Agent skills
+
+Six [Agent Skills](https://agentskills.io) for coding agents (Claude Code,
+Codex, Gemini CLI, Cursor and others) live under [`skills/`](skills/): one
+for the core gem, and one each for the Rails integration, forms, the
+generators, motion, and Phlex. Install them all with the
+[`skills` CLI](https://github.com/vercel-labs/skills):
+
+```sh
+npx skills add planetaska/hibiki --all
+```
+
+See [Agent skills](https://planetaska.github.io/hibiki/agent-skills/) in the
+docs for what each one covers.
+
 ## Development
 
 ```sh
