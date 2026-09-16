@@ -1,0 +1,23 @@
+{
+  "skill_name": "hibiki-rails",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Add a live 'remaining' count to the heading of my todos page using hibiki_rails without re-rendering the whole list.",
+      "expected_output": "Uses a reactive value: `reactive :remaining` (or `reactive_attrs`) placeholder in the heading paired with `transmit_value(:remaining) { ... }` in `build_graph`; notes it is text-only, matched by name document-wide, and needs no Turbo stream line because it rides the transmit transport.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "My hibiki channel action runs (I see it in the log) but the page never changes. The list is rebuilt from `Todo.order(:id).to_a` in the action.",
+      "expected_output": "Diagnoses that the action must write a signal, and that a derived reading SQL without a signal never re-runs; recommends a version signal (`@db_version`) bumped in the action with a lazy derived doing the query, or `equals: Hibiki::Rails.record_equals` when assigning record arrays; mentions the AR `==` (class + id) swallowed-write trap and the dev warning.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "How do I make a hibiki island update when a background job creates records? We use solid_queue in a separate process.",
+      "expected_output": "Shows the after_commit bridge: the model broadcasts a ping on a stream, the channel `stream_from`s it and hops to the graph thread with `graph_actor&.post { Hibiki.batch { @db_version += 1 } }`; warns that the `async` cable adapter never crosses processes (use solid_cable/redis), that bulk writes skip callbacks, and that stream names come from the connection, not params.",
+      "files": []
+    }
+  ]
+}
