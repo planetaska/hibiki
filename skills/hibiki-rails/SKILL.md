@@ -173,19 +173,31 @@ A channel renders outside any request (empty `params` and `session`, nil
 Two rules: records stop at the boundary (a plain copy, or a frozen record
 behind a real comparator, is what crosses into a signal), and every database
 write pairs with a signal write, since the database cannot announce its own
-changes. Patterns, ranked:
+changes. The snippets below use the `Hibiki::Reactive` macros, so they belong
+in a reactive object the channel holds (`@list = TodoList.new` in
+`build_graph`, actions delegating to it); `build_graph` itself has no `state`
+or `derived` macro, so spell the same thing there with `Hibiki::State.new` and
+`Hibiki::Derived.new` in ivars, as in the channel above. Patterns, ranked:
 
 1. Version signal + lazy derived query, the default for lists:
 
 ```ruby
-state :db_version, 0
-derived(:items) do
-  db_version   # the tracked dependency; the query re-runs when it bumps
-  Todo.order(:id).map { Row.new(id: it.id, title: it.title, done: it.done) }
+class TodoList
+  include Hibiki::Reactive
+
+  state :db_version, 0
+  derived(:items) do
+    db_version   # the tracked dependency; the query re-runs when it bumps
+    Todo.order(:id).map { Row.new(id: it.id, title: it.title, done: it.done) }
+  end
+  def invalidate = self.db_version += 1
+  def toggle(id) = (Todo.find(id).toggle!(:done); invalidate)
 end
-def invalidate = self.db_version += 1
-def toggle(id) = (Todo.find(id).toggle!(:done); invalidate)
 ```
+
+Inside `build_graph` the same pattern is `@db_version = Hibiki::State.new(0)`
+and `@items = Hibiki::Derived.new { @db_version.value; Todo.order(:id).map { ... } }`,
+with `@db_version.value += 1` in the action.
 
 2. `state(:items, equals: Hibiki::Rails.record_equals) { fetch }` over
    `Todo.order(:id).strict_loading.map { it.readonly!; it.freeze }`: compares

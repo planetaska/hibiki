@@ -29,18 +29,29 @@ database plug into the graph, and who re-syncs?" With ERB, declare the `state`/`
 | reactive form object (`hibiki-rails-forms`) | editing one record, live validation, dirty state |
 | `after_commit` bridge | rows change outside the channel's actions (controllers, jobs, other users) |
 
+The snippets use the `Hibiki::Reactive` macros, so they belong in a reactive
+object the channel holds (`@list = TodoList.new` in `build_graph`, actions
+delegating to it). `build_graph` has no `state` or `derived` macro: there,
+write `@db_version = Hibiki::State.new(0)` and
+`@items = Hibiki::Derived.new { @db_version.value; ... }`, and bump with
+`@db_version.value += 1` in the action.
+
 Version signal + lazy derived (the database stays the source of truth, mutators
 cannot forget, and bursts collapse into one query since a derived recomputes on read):
 
 ```ruby
-state :db_version, 0                          # the invalidation token
-derived(:items) do
-  db_version                                  # tracked; the query re-runs when it bumps
-  Todo.order(:id).map { |t| Row.new(id: t.id, title: t.title, done: t.done) }
-end
+class TodoList
+  include Hibiki::Reactive
 
-def invalidate = self.db_version += 1
-def toggle(id) = (Todo.find(id).toggle!(:done); invalidate)
+  state :db_version, 0                          # the invalidation token
+  derived(:items) do
+    db_version                                  # tracked; the query re-runs when it bumps
+    Todo.order(:id).map { |t| Row.new(id: t.id, title: t.title, done: t.done) }
+  end
+
+  def invalidate = self.db_version += 1
+  def toggle(id) = (Todo.find(id).toggle!(:done); invalidate)
+end
 ```
 
 `record_equals` + frozen rows (hibiki 0.3 `equals:`; compares class +
