@@ -127,9 +127,14 @@ holding the input being typed in; morph where a form is open, since a replace dr
 ## Reactive values and the address bar
 
 Send one piece of text instead of a fragment. A placeholder,
-`<h1>todos (<%= reactive :remaining, 0 %> left)</h1>`, and a channel block in
+`<h1>todos (<%= reactive :remaining, @remaining %> left)</h1>`, and a channel block in
 `build_graph`, `transmit_value(:remaining) { @list.remaining }`, are joined by
-a name that must be unique across the page. Values are text only (assigned as `textContent`), matched by name
+a name that must be unique across the page. The placeholder's second argument
+is the text the server-rendered page shows, so pass the real starting value:
+the controller computes it (`@remaining = Todo.where(done: false).count`) and
+the view only prints it. A literal `0` is right only for a list that starts
+empty; a query in the view works but puts data access in the template.
+Values are text only (assigned as `textContent`), matched by name
 document-wide like a class, so a nav badge and a heading can share one.
 `transmit_value` and `transmit_url` are equality-gated on the emitted string,
 so a run whose text matches the last one sends nothing. `transmit_url { ... }`
@@ -228,7 +233,7 @@ The client writes read-only attributes for your CSS (start with
 `aria-busy="true"` on the island root while an action is in flight,
 `data-hibiki-busy` on the firing control, and `data-hibiki-state` on the root
 (`connecting`, `ready`, `offline`, `stalled`). Busy clears on the server's
-`hbk` ack, not on returning HTML, because an equal write may send zero bytes.
+`{ ack: seq }` reply to the action's `hbk` number, not on returning HTML, because an equal write may send zero bytes.
 Clicks queue only during the first connect window; after a drop they are
 dropped, since a reconnect builds a fresh graph. Timings are statics on the
 controller class (`busyDelay` 150, `busyGrace` 60, `busyCeiling` 10000 ms),
@@ -279,12 +284,17 @@ writes are no-ops; in-place mutation is not a write (`self.items = items +
 [item]`); AR `==` is class + id, so a reloaded record is dropped (dev log:
 `[hibiki_rails] State write dropped by == ...`). See `references/troubleshooting.md`.
 
+A dropped write looks like a trip that worked, so say so when you diagnose
+one: the action logs, the server still sends its `{ ack: seq }` reply, and busy clears on
+that ack, while zero bytes of HTML come down. A spinner that clears proves the
+action ran, not that anything changed.
+
 ## Pitfalls
 
 - Broadcast helpers need `turbo_stream_from` in the island; transmit does not. Each route has its own listener, and `island` writes the line unless `transport: :transmit`. (rails-usage)
 - The first broadcast is lost when the channel subscribes before the stream confirms. Wait on `streamConnected` in a hand-written client; the packaged one already does. (rails-usage)
 - A wrong `target:` id or value name fails silently. Replacing a missing element is not an error. (troubleshooting)
-- An equal write sends zero bytes, yet busy clears. The `hbk` ack, not the HTML, ends a trip. (loading-state)
+- An equal write sends zero bytes, yet busy clears. The `{ ack: seq }` reply, not the HTML, ends a trip. (loading-state)
 - Every public channel method is an action. Only `build_graph`, `subscribed`, `unsubscribed` are hidden; make the rest private. (rails-usage)
 - A subscription without `cid` is rejected. The per-page id is what gives each tab its own graph. (channel-lifecycle)
 - Only the graph thread may touch signals. A `stream_from` callback runs on a cable thread, so hop with `graph_actor&.post { Hibiki.batch { ... } }`. (working-with-active-record)

@@ -4,8 +4,15 @@ A reactive value sends one piece of text, not a fragment: a count in a
 heading, an error under a field. Two halves joined by a name that is the same
 on both sides and unique across the page; a typo fails silently.
 
+```ruby
+# controller: the page's starting value is its job, like any other page data
+def index
+  @remaining = Todo.where(done: false).count
+end
+```
+
 ```erb
-<h1>todos (<%= reactive :remaining, 0 %> left)</h1>
+<h1>todos (<%= reactive :remaining, @remaining %> left)</h1>
 ```
 
 ```ruby
@@ -17,13 +24,18 @@ end
 
 | Half | API | Notes |
 | --- | --- | --- |
-| placeholder (ERB) | `reactive(name, placeholder = "", tag_name: :span)` | emits `<span data-hibiki-value="remaining">0</span>`; the placeholder shows until the first value lands |
-| placeholder (Phlex) | `span(**reactive_attrs(:remaining)) { "0" }` | same attribute on an element of your own |
+| placeholder (ERB) | `reactive(name, placeholder = "", tag_name: :span)` | emits `<span data-hibiki-value="remaining">3</span>`; the placeholder shows until the first value lands |
+| placeholder (Phlex) | `span(**reactive_attrs(:remaining)) { @remaining.to_s }` | same attribute on an element of your own |
 | channel | `transmit_value(name) { ... }` in `build_graph` | wraps the block in an effect; each run sends `to_s` of the result as `{ value: { name:, text: } }` |
 | address bar | `transmit_url { ... }` in `build_graph` | sends `{ url: }`; the client calls `history.replaceState` |
 
 Rules:
 
+- Pass the real starting value as the placeholder, computed in the controller
+  and handed to the view (or to the Phlex component as an argument). The first
+  value lands a moment after the page appears, so a literal `0` over a
+  database-backed list shows a wrong number and then jumps. `0` is right only
+  when the graph starts empty. Keep the query out of the template.
 - The block tracks whatever signals it reads; the name is the only thing you
   declare.
 - Equality-gated on the emitted string: a run whose text equals the last text

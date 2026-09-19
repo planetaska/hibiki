@@ -18,7 +18,7 @@ write them by hand.
 | `island(channel, cid: nil, params: nil, transport: :broadcast, tag_name: :div, **attributes) { \|cid\| }` | the root element | ERB-only (needs `capture`; raises elsewhere); class-only; generates a UUID cid; `:broadcast` adds `turbo_stream_from channel.channel_name, cid`; other keywords land on the root, `data:` merged beneath the island's keys |
 | `on(action, event: :click, with: nil, debounce: nil, confirm: nil, reset: nil, fallback: nil)` | `{ data: {...} }` to splat | one `event->action` token per event; names must match `/\A[a-z][a-z0-9_.-]*\z/i` |
 | `reactive(name, placeholder = "", tag_name: :span)` | a complete element | `<span data-hibiki-value="name">0</span>`; names match `/\A[a-z][a-z0-9_-]*\z/i` |
-| `reactive_attrs(name)` | `{ data: { hibiki_value: } }` | the Phlex form: `span(**reactive_attrs(:remaining)) { "0" }` |
+| `reactive_attrs(name)` | `{ data: { hibiki_value: } }` | the Phlex form: `span(**reactive_attrs(:remaining)) { @remaining.to_s }` |
 
 ## `on` options
 

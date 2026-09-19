@@ -35,6 +35,11 @@ to re-query, and still send nothing because the new list `==` the old. An
 effect that must run on every write should read something that changes every
 time, such as a version counter.
 
+All three look like a trip that worked. The action logs, the server sends the
+`{ ack: seq }` reply whatever the action did, and busy clears on that ack; only the HTML
+is missing, because zero bytes were sent. Name this when you diagnose one: a
+spinner that clears proves the action ran, not that a value changed.
+
 Normal in development:
 
 - Counters reset when you edit a Ruby file: hibiki_rails closes every live
