@@ -24,7 +24,7 @@
       "expectations": [
         "Diagnoses that the action must write a signal for effects to re-run; rebuilding an array without a signal write (or with an equal write) sends nothing",
         "Explains the AR `==` (class + id) trap: a reloaded record array can compare equal and be swallowed, mentioning `Hibiki::Rails.record_equals` or a version signal",
-        "Recommends the version-signal + lazy derived pattern (`@db_version += 1` in the action, derived does the query)",
+        "Recommends the version-signal + lazy derived pattern (`@db_version.value += 1` in the action, derived does the query)",
         "Mentions the development warning `State write dropped by ==` or the swallowed-write tripwire",
         "States that an equal write is a no-op that sends zero bytes, and that the client still receives the ack (the busy state clears) so the round trip looks like it worked"
       ]
@@ -37,10 +37,11 @@
       "expectations": [
         "Shows an `after_commit` callback on the model broadcasting a ping on a named stream",
         "Shows the channel `stream_from` that stream and hopping to the graph thread with `graph_actor&.post { Hibiki.batch { ... } }` (or equivalent) before writing a signal",
-        "Warns that the `async` Action Cable adapter is in-process and cannot cross the solid_queue worker process (use solid_cable, redis, or postgres)",
-        "Warns that bulk writes (`insert_all`, `update_all`, `update_column`) skip `after_commit`",
+        "Warns that the `async` Action Cable adapter delivers only inside the sending process, so a ping from the separate solid_queue worker is lost silently (says no error is raised), and names at least one cross-process adapter to switch to (`solid_cable`, `redis`, or `postgresql`)",
+        "Warns that bulk writes skip `after_commit`, naming `insert_all`, `update_all`, and at least one of `update_column`/`update_columns`, and tells the reader to send the ping by hand after a bulk write",
         "Recommends coalescing per-record pings (a thread-local quiet flag with one ping at the end, `Hibiki::Rails::Debounce` as an effect scheduler, or `broadcast_refresh_effect`) rather than leaving a per-record `after_commit` alone for bulk jobs",
-        "Warns that the ping-driven re-query must not assign an AR record array into a plain `==` state (class + id equality swallows the change); uses a version signal + lazy derived, `Data` rows, or `equals: Hibiki::Rails.record_equals`"
+        "Warns that the ping-driven re-query must not assign an AR record array into a plain `==` state (class + id equality swallows the change); uses a version signal + lazy derived, `Data` rows, or `equals: Hibiki::Rails.record_equals`",
+        "Puts the `stream_from` in a `subscribed` override that calls `super` before streaming, and says or shows why `super` matters (the base `subscribed` builds the graph)"
       ]
     }
   ]

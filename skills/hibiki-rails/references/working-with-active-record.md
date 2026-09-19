@@ -92,7 +92,8 @@ def subscribed
 end
 ```
 
-The callback never touches a signal directly: ActionCable delivers on a worker
+`super` comes first because the base `subscribed` builds the graph; without it
+there is nothing to invalidate. The callback never touches a signal directly: ActionCable delivers on a worker
 thread and only the graph thread may. You may drop `invalidate` from the
 mutators and let the ping be the only path, at the cost of a pubsub hop; for
 bursts of pings, debounce at the render effect (`scheduler:`), not the pings.
@@ -103,8 +104,9 @@ bursts of pings, debounce at the render effect (`scheduler:`), not the pings.
 every writer reaches every live graph without knowing hibiki exists. Four things break that:
 
 1. Bulk writes skip callbacks: `update_all`, `delete_all`, `insert_all`,
-   `upsert_all`, `update_column(s)`, `touch_all`, raw SQL. Broadcast the ping
-   yourself after them.
+   `upsert_all`, `update_column`, `update_columns`, `touch_all`, raw SQL.
+   Broadcast the ping yourself after them (`TodoChanges.notify` at the end of
+   the job).
 2. The `async` cable adapter (the development default) delivers only inside
    the sending process, so a separate worker process pings into nothing with
    no error. Use `solid_cable` or `redis` once anything writes from outside.

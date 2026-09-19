@@ -214,14 +214,17 @@ with `@db_version.value += 1` in the action.
 
 Other writers (controllers, jobs, other tabs) reach the graph through a model
 ping, `after_commit { ActionCable.server.broadcast("todos:changed", {}) }`,
-which the channel subscribes to in a private `subscribed` (after `super` and a
-`subscription_rejected?` check) with `stream_from "todos:changed" do ... end`;
+which the channel subscribes to in a private `subscribed` with
+`stream_from "todos:changed" do ... end`. Call `super` first, because the base
+`subscribed` builds the graph and a channel that skips it has no graph to
+invalidate, then `return if subscription_rejected?`;
 the block runs on a cable thread, so it hops first with
 `graph_actor&.post { Hibiki.batch { @list.invalidate } }`.
 
-Gotchas: bulk writes (`update_all`, `insert_all`, `update_columns`, raw SQL)
-skip the callback, so ping by hand; the `async` cable adapter is in-process,
-so a separate worker needs `solid_cable` or `redis`; 500 saves mean 500 pings,
+Gotchas: bulk writes (`update_all`, `insert_all`, `update_column(s)`, raw SQL)
+skip the callback, so send the ping by hand after them; the `async` cable
+adapter delivers only inside the sending process, so a separate worker's ping
+is lost and nothing raises: switch to `solid_cable` or `redis`; 500 saves mean 500 pings,
 so quiet the callback with a thread-local and ping once; scope stream names
 from the connection's identity, never from a client param. See
 `references/working-with-active-record.md`.
