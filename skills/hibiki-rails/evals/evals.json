@@ -26,7 +26,8 @@
         "Explains the AR `==` (class + id) trap: a reloaded record array can compare equal and be swallowed, mentioning `Hibiki::Rails.record_equals` or a version signal",
         "Recommends the version-signal + lazy derived pattern (`@db_version.value += 1` in the action, derived does the query)",
         "Mentions the development warning `State write dropped by ==` or the swallowed-write tripwire",
-        "States that an equal write is a no-op that sends zero bytes, and that the client still receives the ack (the busy state clears) so the round trip looks like it worked"
+        "States that an equal write is a no-op that sends zero bytes, and that the client still receives the ack (the busy state clears) so the round trip looks like it worked",
+        "Makes the list comparable by content, not identity, wherever it lives (the derived that re-queries, or the state the action assigns): holds plain rows (`Data`, `Struct`, or hashes) or uses an attribute comparator such as `equals: Hibiki::Rails.record_equals`, and says why (records compare by class + id, so a re-queried list still `==` the old one and nothing is sent)"
       ]
     },
     {
