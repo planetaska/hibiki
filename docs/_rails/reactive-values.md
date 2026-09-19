@@ -53,9 +53,25 @@ placeholder text inside:
 ```
 
 The placeholder text is what the page shows until the first value
-arrives, which happens within a moment of the page appearing. Pass
-`tag_name:` to get an element other than a `span`. In a Phlex component,
-add the attribute to an element of your own with `reactive_attrs`:
+arrives, which happens within a moment of the page appearing. Give it
+the value the graph starts with, so the number does not jump when the
+first value lands. `0` is right here because this list starts empty. When
+the count comes from the database, compute it in the controller and pass
+it to the view, as you would any other page data:
+
+```ruby
+def index
+  @remaining = Todo.where(done: false).count
+end
+```
+
+```erb
+<h1>todos (<%= reactive :remaining, @remaining %> left)</h1>
+```
+
+Pass `tag_name:` to get an element other than a `span`. In a Phlex
+component, add the attribute to an element of your own with
+`reactive_attrs`:
 
 ```ruby
 span(**reactive_attrs(:remaining)) { "0" }
