@@ -261,7 +261,6 @@ the rest alone. They belong to the `hibiki-rails-forms` skill; the commands:
 - Dropping the island's `params:` resets every reload to page 1. The controller reads the URL but the graph's first render replaces it with the defaults. (crud-notes)
 - A parent's ping refreshes indexes, not show pages. Reaching each show page would load every child inside the callback, so a stale author name on `/books/7` is by design. (crud-notes)
 - Frozen rows raise on a lazy association. `strict_loading` is deliberate; add the preload to `window_scope` instead of unfreezing. (crud-notes)
-- A pre-0.13 `app/models/book_query.rb` loads ahead of `app/queries`. Delete it when the `stale` notice names it. (crud-notes)
 - Empty values sort to opposite ends on SQLite and PostgreSQL. No `NULLS` clause is emitted; pin it in `book_query.rb` per adapter. (crud-notes)
 - Phlex views raise on non-string values, drop `false` attributes and emit no whitespace. The generated components call `to_s`, write `data-turbo` as `"false"` and space siblings explicitly; keep that when editing. (crud-notes)
 - Bulk writes never ping. `update_all`, `insert_all`, `update_column` and raw SQL skip `after_commit`; call `invalidate` from the action or bump `@db_version` yourself. (working-with-active-record)
