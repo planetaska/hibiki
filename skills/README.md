@@ -27,11 +27,17 @@ List the skills:
 npx skills add planetaska/hibiki --list
 ```
 
-Install all six into the current project, for every agent it detects:
+Install all six into the current project, for one agent:
 
 ```sh
-npx skills add planetaska/hibiki --all
+npx skills add planetaska/hibiki --skill '*' -a claude-code
 ```
+
+`--all` instead installs for every agent the CLI supports and creates a
+folder for each one that has its own, such as `.claude/skills/` and
+`agent/skills/`. See
+[Agent skills](https://planetaska.github.io/hibiki/agent-skills/) for what the
+CLI writes.
 
 Install one skill, for one agent, globally:
 

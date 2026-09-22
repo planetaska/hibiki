@@ -54,13 +54,18 @@ of the core repository.
 
 ## Installing the skills
 
-The [`skills` CLI](https://github.com/vercel-labs/skills) reads that
-directory straight from GitHub and installs into every agent it finds on
-your machine. To install all six into the current project:
+The [`skills` CLI](https://github.com/vercel-labs/skills), a third-party
+installer from Vercel, reads that directory straight from GitHub. Name the
+agent you use with `-a`. To install all six skills for Claude Code in the
+current project:
 
 ```sh
-npx skills add planetaska/hibiki --all
+npx skills add planetaska/hibiki --skill '*' -a claude-code
 ```
+
+The agent ids you are most likely to want are `claude-code`, `codex`,
+`gemini-cli`, `cursor`, `github-copilot`, `opencode`, `windsurf` and `zed`.
+Pass `-a` more than once to install for several agents.
 
 To list the six without installing anything:
 
@@ -68,15 +73,49 @@ To list the six without installing anything:
 npx skills add planetaska/hibiki --list
 ```
 
-To install one skill, for one agent, in that agent's global folder rather
-than the project:
+To install one skill in the agent's global folder rather than the project:
 
 ```sh
 npx skills add planetaska/hibiki --skill hibiki-rails-forms -a claude-code --global
 ```
 
-The agent ids you are most likely to want are `claude-code`, `codex`,
-`gemini-cli`, `cursor`, `github-copilot`, `opencode`, `windsurf` and `zed`.
+### What the CLI writes
+
+Everything in this section is the `skills` CLI's own behavior, the same for
+any skill it installs. Hibiki's skills neither ask for nor change any of it.
+
+The CLI keeps one copy of each skill in `.agents/skills/`, the folder that
+Codex, Cursor, Copilot and many other agents share. Agents with their own
+folder get a link or a copy there as well: Claude Code reads
+`.claude/skills/`, which holds links back to `.agents/skills/`.
+
+It also writes `skills-lock.json` in the project root. The file records
+where each skill came from and a hash of its contents, much as a
+`package-lock.json` records packages. Commit it if you want your team to
+install the same skills.
+
+The first time you run the CLI interactively, it asks:
+
+> Install the find-skills skill? It helps your agent discover and suggest skills.
+
+`find-skills` is a skill published by the CLI's authors. With it installed,
+your agent searches the public skills directory at
+[skills.sh](https://skills.sh) and suggests `npx skills add` commands for
+skills it finds. The Hibiki skills work the same whichever way you answer,
+and the CLI asks only once.
+
+### The `--all` flag
+
+The CLI's `--all` flag installs every skill for every agent it supports and
+answers each prompt yes:
+
+```sh
+npx skills add planetaska/hibiki --all
+```
+
+Besides `.agents/skills/` and `.claude/skills/`, it creates `agent/skills/`
+for Eve, another agent the CLI supports, whether or not you use Eve. Use
+`--all` only when you want the skills in front of every agent.
 
 You can also install by hand. Copy a skill's directory from the repository
 into your agent's skills folder: `.claude/skills/` for Claude Code,

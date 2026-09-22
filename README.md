@@ -123,15 +123,17 @@ Full documentation: <https://planetaska.github.io/hibiki/>
 Six [Agent Skills](https://agentskills.io) for coding agents (Claude Code,
 Codex, Gemini CLI, Cursor and others) live under [`skills/`](skills/): one
 for the core gem, and one each for the Rails integration, forms, the
-generators, motion, and Phlex. Install them all with the
-[`skills` CLI](https://github.com/vercel-labs/skills):
+generators, motion, and Phlex. Install them all for your agent with the
+third-party [`skills` CLI](https://github.com/vercel-labs/skills), naming the
+agent with `-a`:
 
 ```sh
-npx skills add planetaska/hibiki --all
+npx skills add planetaska/hibiki --skill '*' -a claude-code
 ```
 
 See [Agent skills](https://planetaska.github.io/hibiki/agent-skills/) in the
-docs for what each one covers.
+docs for what each one covers, and for the folders and lock file the CLI
+writes.
 
 ## Development
 
