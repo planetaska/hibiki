@@ -119,7 +119,10 @@ value can be styled differently.
 A reactive value is text and only text. The browser assigns it as the
 element's text content, so an angle bracket in the value shows up as an
 angle bracket. Nothing is ever interpreted as HTML. When the thing that
-changes is markup, send a fragment.
+changes is markup, send a fragment. When it is a property of an element
+that has no attribute, such as a checkbox's `indeterminate`, use the
+`props` helper described in
+[The JS client]({{ "/the-js-client/#dom-properties" | relative_url }}).
 
 Two related limits follow from the shape:
 

@@ -115,7 +115,7 @@ than by Turbo broadcast, so the root needs no stream source. [Does an
 island need a Turbo stream?](#does-an-island-need-a-turbo-stream) explains
 the choice.
 
-Four helpers cover the surface:
+Five helpers cover the surface:
 
 - `hibiki_island(channel, cid:, params:)` — the island root: one
   subscription to `channel`, identified by the page's `cid` — a
@@ -139,6 +139,9 @@ Four helpers cover the surface:
 - `reactive(name, placeholder)` / `reactive_attrs(name)` — placeholder for
   a single reactive value, paired with the channel's `transmit_value` (see
   [Reactive values]({{ "/reactive-values/" | relative_url }})).
+- `props(indeterminate:, scroll_top:, scroll_left:, key:)` — state of an
+  element that no HTML attribute can express. See
+  [DOM properties](#dom-properties).
 
 ## Events and modifiers
 
@@ -233,6 +236,69 @@ scaffold leans on this pattern for its New and Edit links, its destroy
 `button_to`, its controls form and its page control —
 [CRUD scaffolding]({{ "/crud-scaffolding/" | relative_url }}) shows the
 pattern in full.
+
+## DOM properties
+
+Some state of a control has no HTML attribute. A checkbox's
+`indeterminate`, the dash a select-all box shows when only some rows are
+ticked, exists only as a property of the DOM element. So does a
+container's scroll position. A re-rendered fragment is HTML, so it cannot
+carry either one. The `props` helper (since 0.16.0) writes the wanted
+properties beside the element's other attributes, and the client assigns
+them when the island connects and again after every render:
+
+```erb
+<%= check_box_tag "all", "1", all_selected,
+      **on(:select_all, event: :change)
+          .deep_merge(props(indeterminate: some_selected)) %>
+```
+
+The channel needs nothing new. It re-renders the fragment as it always
+does, with `some_selected` computed from its signals, and the property
+follows the markup. Both transports are covered, and so is a page refresh
+sent with `broadcast_refresh`.
+
+`on` and `props` each return a hash under the same `data:` key, so
+splatting both into one tag keeps only the second. Combine them with
+`deep_merge`, as above, or with `mix` in a Phlex component:
+`input(type: "checkbox", **mix(on(:select_all, event: :change), props(indeterminate: some)))`.
+{: .tip }
+
+`props` accepts three properties:
+
+| property | value | when the client assigns it |
+| -------- | ----- | -------------------------- |
+| `indeterminate:` | `true` or `false` | after every render. The browser clears the property when the box is clicked, and the next render sets it to what the server says. |
+| `scroll_top:`, `scroll_left:` | pixels; `nil` leaves the position alone | when the element is new, and again only when the helper's output changes. The visitor's own scrolling survives every other render. |
+
+A scroll position often has to be applied again though its value stays
+the same: "back to the top on each page change" is always `0`. For that,
+`props` takes `key:`, any value that converts to JSON. The client ignores
+the key itself; a different key makes the output different, and a
+different output is assigned again.
+
+```erb
+<%= tag.div class: "list", **props(scroll_top: 0, key: page) do %>
+```
+
+This pane scrolls to the top whenever `page` changes and keeps its
+position through every render in between.
+
+Three limits apply:
+
+- **The element must be inside an island.** The client looks for
+  properties only there.
+- **The three names are an allowlist.** Any other name raises an
+  `ArgumentError` when the view renders, and the client ignores a name it
+  does not know, so a fragment can never set `innerHTML` or an event
+  handler.
+- **`props` assigns properties and calls no methods.** Opening a modal
+  dialog, moving focus, and playing media are method calls, and they still
+  need JavaScript of your own.
+
+State that has an attribute needs no helper. `value`, `checked`,
+`disabled`, and `open` on a `<details>` element ride the fragment like any
+other markup.
 
 ## Subscribe params
 
