@@ -19,6 +19,7 @@ write them by hand.
 | `on(action, event: :click, with: nil, debounce: nil, confirm: nil, reset: nil, fallback: nil)` | `{ data: {...} }` to splat | one `event->action` token per event; names must match `/\A[a-z][a-z0-9_.-]*\z/i` |
 | `reactive(name, placeholder = "", tag_name: :span)` | a complete element | `<span data-hibiki-value="name">0</span>`; names match `/\A[a-z][a-z0-9_-]*\z/i` |
 | `reactive_attrs(name)` | `{ data: { hibiki_value: } }` | the Phlex form: `span(**reactive_attrs(:remaining)) { @remaining.to_s }` |
+| `props(indeterminate:, scroll_top:, scroll_left:, key: nil)` | `{ data: {...} }` to splat | DOM properties that have no attribute (below); any other name raises `ArgumentError` |
 
 ## `on` options
 
@@ -43,6 +44,38 @@ in `with:` and no-op on a stale one, since it can fire again before a swap
 lands. Never give a `visible` control `fallback:` (off-ready, scrolling into
 view would navigate); split it into a `visible`-only wrapper and an inner link
 with `click`, a real href, and `fallback: true`.
+
+## `props`: DOM properties (since 0.16.0)
+
+A checkbox's `indeterminate` and a container's scroll position exist only as
+DOM properties, so a fragment cannot carry them. `props` writes them beside
+the element's attributes; the client assigns them when the island connects
+and after every render (transmit swap, Turbo stream, Turbo page refresh).
+The channel needs nothing new: it re-renders the fragment as usual.
+
+```erb
+<%= check_box_tag "all", "1", all_selected,
+      **on(:select_all, event: :change)
+          .deep_merge(props(indeterminate: some_selected)) %>
+<%= tag.div class: "list", **props(scroll_top: 0, key: page) do %>
+```
+
+| Property | Value | Assigned |
+| --- | --- | --- |
+| `indeterminate:` | truthy/falsy, always emitted | after every render, so the server's value wins over a click (the browser clears it on click) |
+| `scroll_top:`, `scroll_left:` | a finite number; `nil` omits it | to a new element, and again only when the helper's output changes; the visitor's own scrolling survives other renders |
+| `key:` | any JSON value | never assigned; it only changes the output, so `scroll_top: 0, key: page` scrolls to the top on each page change |
+
+- `on` and `props` both return a `data:` hash, and two splats keep only the
+  second. Use `on(...).deep_merge(props(...))`, or `mix(on(...), props(...))`
+  in Phlex.
+- The element must be inside an island and be part of a fragment the channel
+  re-renders, or its property never changes after first paint.
+- The client ignores names outside the list, so a fragment cannot set
+  `innerHTML` or a handler.
+- State with an attribute (`value`, `checked`, `disabled`, `<details open>`)
+  needs no helper. Method calls (`showModal()`, `focus()`, `play()`) are not
+  covered; they need JavaScript of your own.
 
 ## Fallback contract
 

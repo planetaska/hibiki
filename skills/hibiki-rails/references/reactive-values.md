@@ -44,7 +44,9 @@ Rules:
   times, inside or outside the island, and every copy updates while keeping
   its own tag, classes, and attributes.
 - Text only: the client assigns `textContent`, so markup is never
-  interpreted. Send a fragment when the thing that changes is markup.
+  interpreted. Send a fragment when the thing that changes is markup. A DOM
+  property with no attribute (`indeterminate`, scroll position) is neither:
+  use `props` on an element inside a re-rendered fragment (the-js-client).
 - Several values that always change together are cheaper as one fragment.
 - A placeholder inside a fragment a broadcast replaces must render its
   current value, because the swap resets the text and the gate will not

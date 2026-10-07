@@ -8,6 +8,7 @@ this for free because they serve the copy inside the gem.
 
 | gem = npm | Client change |
 | --- | --- |
+| 0.16.0 | assigns DOM properties from `props` (`indeterminate`, `scrollTop`, `scrollLeft`) on connect and after every render; rescans on `turbo:render`, so props and `visible` survive a page refresh |
 | 0.15.0 | `hibiki-rails/motion` module (`data-motion`, `data-motion-leaving`/`-entering`); `islandFor` and `hibiki:before-render` seams; scaffold emits motion, `--skip-motion` |
 | 0.14.0 | none (scaffold's load-more split into a `visible` sentinel + fallback link) |
 | 0.13.0 | none (scaffold query object moves to `app/queries`) |

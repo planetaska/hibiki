@@ -11,7 +11,7 @@
         "Pairs it with `transmit_value(:remaining) { ... }` inside `build_graph`",
         "States that a reactive value is text only, matched by name, and that it needs no `turbo_stream_from` line (transmit transport)",
         "Shows the count derived from signals (e.g. a derived or the block reading the todos state), not computed once",
-        "Uses correct helper spellings from hibiki_rails 0.15.0 (`reactive`, `reactive_attrs`, `transmit_value`)",
+        "Uses correct helper spellings from hibiki_rails 0.16.0 (`reactive`, `reactive_attrs`, `transmit_value`)",
         "Signals in the channel are declared with `Hibiki::State.new` / `Hibiki::Derived.new` in ivars inside `build_graph`, or on a `Hibiki::Reactive` object the channel holds; not with `state`/`derived` macros called inside `build_graph`",
         "The placeholder renders the real initial count (from the controller's data), not a static 0"
       ]
