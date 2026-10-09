@@ -20,12 +20,13 @@ write them by hand.
 | `reactive(name, placeholder = "", tag_name: :span)` | a complete element | `<span data-hibiki-value="name">0</span>`; names match `/\A[a-z][a-z0-9_-]*\z/i` |
 | `reactive_attrs(name)` | `{ data: { hibiki_value: } }` | the Phlex form: `span(**reactive_attrs(:remaining)) { @remaining.to_s }` |
 | `props(indeterminate:, scroll_top:, scroll_left:, key: nil)` | `{ data: {...} }` to splat | DOM properties that have no attribute (below); any other name raises `ArgumentError` |
+| `focus(select: false)` | `{ data: {...} }` to splat | the cursor in a field that a render opens (below); `select: true` also selects its text |
 
 ## `on` options
 
 | Option | Effect |
 | --- | --- |
-| `event:` | one event or a list: `:click` (default), `:change`, `:input`, `:submit`, or the `:visible` pseudo-event |
+| `event:` | one event or a list: `:click` (default), `:change`, `:input`, `:submit`, a key such as `"keydown.esc"` (below), or the `:visible` pseudo-event |
 | `with:` | a hash merged into every payload from this control |
 | `debounce:` | ms to let the gesture settle; `:input` gets 250 by default, `0` sends every keystroke; the payload is built when the action fires, so the last value wins |
 | `confirm:` | a `window.confirm` message; declining performs nothing and does not submit; `data-turbo-confirm` is ignored, the control is not Turbo-driven |
@@ -44,6 +45,79 @@ in `with:` and no-op on a stale one, since it can fire again before a swap
 lands. Never give a `visible` control `fallback:` (off-ready, scrolling into
 view would navigate); split it into a `visible`-only wrapper and an inner link
 with `click`, a real href, and `fallback: true`.
+
+Unsent typing (since 0.17.0): a field with a pending debounced `:input`
+keeps its typed text and caret through any render until the send fires; after
+that the server's value wins, so Reset and a failed save still overwrite it.
+An undebounced action first sends the island's pending debounced input, so
+Enter straight after the last keystroke saves the whole text. A field that
+sends only on `change` or `submit` is not kept: send each input when a form
+must keep its typing. Checkboxes, radios, file inputs, and multi-selects are
+not recorded.
+
+## Keys in `on` (since 0.17.0)
+
+```erb
+<%= tag.div(**on(:cancel, event: "keydown.esc")) do %>
+  <%= tag.form(**on(:save, event: :submit, reset: false)) do %> ... <% end %>
+<% end %>
+<%= link_to "New song", new_song_path,
+      **on(:new_form, event: ["click", "keydown.n@window"]) %>
+```
+
+| Token | Heard |
+| --- | --- |
+| `keydown.<key>` | while focus is inside the element; the client walks up from the focused element to the nearest element declaring that key |
+| `keydown.<key>@window` | anywhere on the page while the element is rendered, hidden or not; in a text field, select, or editable element only `esc` and `ctrl`/`meta` combinations fire |
+
+- Keys: a letter, a digit, or `enter tab esc space up down left right home
+  end page_up page_down`.
+- Modifiers: `ctrl`, `meta`, `shift`, in front and joined by `+`
+  (`keydown.meta+shift+k`), matched exactly: `keydown.s` does not fire on
+  Ctrl+S. No `alt`. Cmd-or-Ctrl is two tokens:
+  `event: ["keydown.ctrl+s", "keydown.meta+s"]`.
+- An unknown key or modifier, `shift` with a digit, and a bare `keydown`
+  raise `ArgumentError` at render. Typed text is `:input`.
+- A matched key's default is prevented. IME composition and a held key's
+  repeats send nothing.
+- The payload is `with:` only; `confirm:`, `debounce:`, and the busy mark
+  apply as to a click.
+- One element takes one action: a form wired for `submit` cannot also send
+  `cancel` on Escape. Put the key on a wrapper.
+- A key without a scope needs focus inside its element; `focus` puts it
+  there when a form opens.
+
+## `focus`: the cursor in an opened field (since 0.17.0)
+
+```erb
+<%= text_field_tag "title", form.title, **focus(select: true) %>
+```
+
+The client focuses a marked element:
+
+- once, on the render that brings it; later renders that keep it do nothing;
+- only on a render this tab's own action caused, never on another visitor's
+  save or a `broadcast_refresh`;
+- never on page load (use `autofocus` there), and never away from a field
+  with unsent typing.
+
+The element must be inside an island. Merge with `on` as `props` does:
+`on(:set_field, event: :input).deep_merge(focus)`, or `mix` in Phlex.
+
+Focus return needs no markup. When a render removes the focused element, the
+client focuses, in order:
+
+1. the element with the same id, caret included (every id-bearing field under
+   transmit, which replaces elements on each render);
+2. the control that opened the form, if the form's field carries `focus`
+   (found again by id, or by its action and `with:` payload);
+3. the first control inside the nearest id-bearing ancestor still on the page.
+
+Only a control takes focus, never a container; with no target (a destroyed
+row) focus stays where the browser put it. It applies to every render on both
+transports and never moves focus the visitor has since put elsewhere. Scaffolded
+forms carry no `focus`, so they get 1 and 3 only; add `focus` to a generated
+form's first field for the cursor on open and the return to Edit or New.
 
 ## `props`: DOM properties (since 0.16.0)
 
@@ -74,8 +148,8 @@ The channel needs nothing new: it re-renders the fragment as usual.
 - The client ignores names outside the list, so a fragment cannot set
   `innerHTML` or a handler.
 - State with an attribute (`value`, `checked`, `disabled`, `<details open>`)
-  needs no helper. Method calls (`showModal()`, `focus()`, `play()`) are not
-  covered; they need JavaScript of your own.
+  needs no helper. Method calls (`showModal()`, `play()`) are not covered;
+  they need JavaScript of your own. Focus has its own helper (above).
 
 ## Fallback contract
 

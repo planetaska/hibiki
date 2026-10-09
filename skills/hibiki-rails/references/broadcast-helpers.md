@@ -26,7 +26,9 @@ end
 Morph or replace:
 
 - Reach for `broadcast_morph` wherever a form can be open inside the
-  fragment; a replace moves focus to `<body>` and drops the caret.
+  fragment. A replace swaps the field for a new element: since 0.17.0 the
+  client puts focus and the caret back on a field that keeps its id, but
+  unsent text returns only for a debounced `:input` field.
 - Morph requires a stable id on every child of the morphed container (rows,
   the empty-state paragraph, a trailing load-more wrapper). An id-less node is
   paired positionally and rebuilt. Keep a row's id the same across its

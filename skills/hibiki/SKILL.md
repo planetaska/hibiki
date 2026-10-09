@@ -6,7 +6,7 @@ license: MIT
 metadata:
   author: planetaska
   hibiki: "0.3.0"
-  hibiki_rails: "0.16.0"
+  hibiki_rails: "0.17.0"
   hibiki_phlex: "0.1.0"
 ---
 
@@ -55,8 +55,8 @@ This is the one shared versions table; sibling skills point here instead of repe
 | Package | Version | Notes |
 |---|---|---|
 | `hibiki` gem | 0.3.0 | the core; no runtime dependencies |
-| `hibiki_rails` gem | 0.16.0 | Rails >= 8.0 (`actioncable`, `railties`), `turbo-rails >= 2.0`, `hibiki ~> 0.3` |
-| `hibiki-rails` npm | 0.16.0 | lockstep with the gem, so pin both to the same number; peers `@hotwired/stimulus >= 3.2`, `@hotwired/turbo-rails >= 8.0` |
+| `hibiki_rails` gem | 0.17.0 | Rails >= 8.0 (`actioncable`, `railties`), `turbo-rails >= 2.0`, `hibiki ~> 0.3` |
+| `hibiki-rails` npm | 0.17.0 | lockstep with the gem, so pin both to the same number; peers `@hotwired/stimulus >= 3.2`, `@hotwired/turbo-rails >= 8.0` |
 | `hibiki_phlex` gem | 0.1.0 | deps hibiki + phlex only; strict pin `phlex >= 2.4, < 2.5` |
 
 Ruby >= 3.4 for all three gems. Docs root: https://planetaska.github.io/hibiki/

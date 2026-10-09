@@ -1,18 +1,18 @@
 ---
 name: hibiki-rails
 description: >-
-  Rails integration for hibiki (hibiki_rails 0.16.0 + npm hibiki-rails 0.16.0): channels with Hibiki::Rails::Channel, build_graph and public-method actions, transmit({ html: }), transmit_value, transmit_url, broadcast_replace/morph/refresh(_effect), the island/hibiki_island/on/reactive/reactive_attrs/props helpers (props for DOM properties such as a checkbox's indeterminate or a scroll position), subscribe params, the JS client (HibikiController, ChannelController, perform/performOn, fallback:, debounce:, confirm:, visible), loading state (data-hibiki-busy, data-hibiki-state), channel lifecycle and the graph thread, error layers, ActiveRecord patterns (Hibiki::Rails.record_equals, db_version, after_commit pings), hibiki:rails:install, troubleshooting. Load for any app/channels/*_channel.rb using Hibiki, any view with island/on, "page doesn't update", "first update never arrives", "button does nothing", "State write dropped by ==". Load hibiki-rails-forms for ReactiveForm, hibiki-rails-scaffold for generators, hibiki-rails-motion for data-motion, hibiki-phlex for Phlex components.
+  Rails integration for hibiki (hibiki_rails 0.17.0 + npm hibiki-rails 0.17.0): channels with Hibiki::Rails::Channel, build_graph and public-method actions, transmit({ html: }), transmit_value, transmit_url, broadcast_replace/morph/refresh(_effect), the island/hibiki_island/on/reactive/reactive_attrs/props/focus helpers (props for DOM properties such as a checkbox's indeterminate or a scroll position; focus for the cursor in a field a render opens), keys in on (keydown.esc, keydown.ctrl+s, keydown.n@window hotkeys), subscribe params, the JS client (HibikiController, ChannelController, perform/performOn, fallback:, debounce:, confirm:, visible), loading state (data-hibiki-busy, data-hibiki-state), channel lifecycle and the graph thread, error layers, ActiveRecord patterns (Hibiki::Rails.record_equals, db_version, after_commit pings), hibiki:rails:install, troubleshooting. Load for any app/channels/*_channel.rb using Hibiki, any view with island/on, "page doesn't update", "first update never arrives", "button does nothing", "State write dropped by ==". Load hibiki-rails-forms for ReactiveForm, hibiki-rails-scaffold for generators, hibiki-rails-motion for data-motion, hibiki-phlex for Phlex components.
 license: MIT
 metadata:
   author: planetaska
   hibiki: "0.3.0"
-  hibiki_rails: "0.16.0"
+  hibiki_rails: "0.17.0"
   hibiki_phlex: "0.1.0"
 ---
 
 # hibiki-rails
 
-hibiki_rails 0.16.0 and npm hibiki-rails 0.16.0, in lockstep; the family versions table lives in the `hibiki` skill.
+hibiki_rails 0.17.0 and npm hibiki-rails 0.17.0, in lockstep; the family versions table lives in the `hibiki` skill.
 
 ## The round trip
 
@@ -107,6 +107,13 @@ contract you never write by hand. Island shape, ERB, no JavaScript of yours:
   properties that have no attribute, on an element inside a re-rendered
   fragment. On an element that also has `on`, write
   `on(...).deep_merge(props(...))`. Details: `references/the-js-client.md`.
+- `event:` also takes a key: `on(:cancel, event: "keydown.esc")` is heard
+  while focus is inside the element, `"keydown.n@window"` anywhere on the
+  page. Keys, modifiers, and rules: `references/the-js-client.md`.
+- `focus(select:)` marks the field that takes the cursor when this tab's
+  own action renders it; `select: true` selects its text. When a render
+  removes the focused element, the client returns focus to a control with
+  no markup from you. Details: `references/the-js-client.md`.
 
 Stimulus shape, with a controller of your own: the root carries
 `data-controller="counter"`, `data-counter-cid-value`, and
@@ -316,6 +323,10 @@ action ran, not that anything changed.
 - The default form reset is wrong for edit forms. It runs before the reply, so a failed commit discards the input; pass `reset: false`. (the-js-client)
 - `data-turbo-confirm` is ignored on a hibiki control. Use `confirm:`, which also gates the fallback path. (the-js-client)
 - `on` and `props` on one element need `deep_merge`. Both return a `data:` hash, and a second `**` splat silently replaces the first. (the-js-client)
+- One element takes one action. A form wired `submit` cannot also carry `keydown.esc`; put the key on a wrapper element around it. (the-js-client)
+- A bare `keydown` raises. Name the key (`keydown.esc`), and use `:input` for typed text. (the-js-client)
+- `focus` does nothing on page load or on another visitor's render. Use `autofocus` for the page's first HTML only: inside a broadcast fragment, Turbo acts on it for renders the visitor did not cause. (the-js-client)
+- Escape and hotkeys need no Stimulus controller since 0.17.0. Do not write one that calls `performOn` for a key or for `focus()`. (the-js-client)
 - `indeterminate` has no HTML attribute. Set it with `props(indeterminate:)`; an `indeterminate` attribute or a `transmit_value` does nothing. (the-js-client)
 - A `visible` control never gets `fallback:`. Off-ready, scrolling into view would navigate; split it into a sentinel wrapper and an inner fallback link. (the-js-client)
 - Morph needs a stable id on every child of the container. An id-less trailing node is matched positionally and rebuilt. (broadcast-helpers)
@@ -330,7 +341,7 @@ action ran, not that anything changed.
 
 - `references/rails-quick-start.md`: install steps, what the generator writes, importmap vs bundler, first component.
 - `references/rails-usage.md`: channel anatomy, the three view shapes, cid, the two routes, placeholders, rendering without a request.
-- `references/the-js-client.md`: helper signatures, the `on` option table, payload shapes, `visible`, fallback contract, subscribe-param trust, message shapes, `hibiki:before-render`, exports, `props` (DOM properties).
+- `references/the-js-client.md`: helper signatures, the `on` option table, payload shapes, `visible`, fallback contract, subscribe-param trust, message shapes, `hibiki:before-render`, exports, unsent typing, keys in `on`, `focus` and focus return, `props` (DOM properties).
 - `references/reactive-values.md`: `reactive`/`reactive_attrs` + `transmit_value`, text-only rules, `transmit_url`.
 - `references/broadcast-helpers.md`: the four signatures, morph vs replace, rendering outside a request, `stream_name`.
 - `references/channel-lifecycle.md`: GraphActor, executor wrap, subscribe/unsubscribe, hooks, dev reload.

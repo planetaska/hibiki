@@ -1,7 +1,8 @@
 # Driving an island from your own JavaScript
 
 For gestures no markup attribute can declare (a drag library's drop callback,
-a canvas widget, a `window` keyboard shortcut), fire the action from code.
+a canvas widget), fire the action from code. A keyboard shortcut is declared
+with `on` since 0.17.0 (`keydown.<key>`, the-js-client).
 
 ```js
 import { performOn } from "hibiki-rails"

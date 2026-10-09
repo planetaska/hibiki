@@ -1,18 +1,18 @@
 ---
 name: hibiki-rails-scaffold
 description: >-
-  hibiki_rails 0.16.0 generators: `hibiki:rails:install`, `hibiki:rails:scaffold Model field:type ...`, `hibiki:rails:scaffold_controller Model`, and the component shapes `stimulus`, `island`, `phlex`. Every option (`--css=daisyui|tailwind|none`, `--infinite-scroll`, the `--skip-*` flags, `--page-size=N`, `--phlex`, `--skip-routes`), what a scaffold writes (channels, controller, ReactiveForm, `app/queries/book_query.rb`, ERB or Phlex views, busy and motion CSS), what it modifies (model after_commit ping, parent has_many, routes, application.js), the post-install notices (restart, css, assoc, order, fields, form, unique, skip, hint, motion), address-bar mirroring, no-JS fallbacks. Load when generating or reshaping a live CRUD resource, on "NameError after scaffold" / "uninitialized constant BookQuery", or when choosing `--phlex` vs hibiki_phlex. Add-on generators (form, nested, multiselect, upload_field) are in hibiki-rails-forms; `hbk-*` motion in hibiki-rails-motion; channels and JS client in hibiki-rails.
+  hibiki_rails 0.17.0 generators: `hibiki:rails:install`, `hibiki:rails:scaffold Model field:type ...`, `hibiki:rails:scaffold_controller Model`, and the component shapes `stimulus`, `island`, `phlex`. Every option (`--css=daisyui|tailwind|none`, `--infinite-scroll`, the `--skip-*` flags, `--page-size=N`, `--phlex`, `--skip-routes`), what a scaffold writes (channels, controller, ReactiveForm, `app/queries/book_query.rb`, ERB or Phlex views, busy and motion CSS), what it modifies (model after_commit ping, parent has_many, routes, application.js), the post-install notices (restart, css, assoc, order, fields, form, unique, skip, hint, motion), address-bar mirroring, no-JS fallbacks. Load when generating or reshaping a live CRUD resource, on "NameError after scaffold" / "uninitialized constant BookQuery", or when choosing `--phlex` vs hibiki_phlex. Add-on generators (form, nested, multiselect, upload_field) are in hibiki-rails-forms; `hbk-*` motion in hibiki-rails-motion; channels and JS client in hibiki-rails.
 license: MIT
 metadata:
   author: planetaska
   hibiki: "0.3.0"
-  hibiki_rails: "0.16.0"
+  hibiki_rails: "0.17.0"
   hibiki_phlex: "0.1.0"
 ---
 
 # hibiki-rails-scaffold
 
-Generators shipped with hibiki_rails 0.16.0 (the versions table for the whole
+Generators shipped with hibiki_rails 0.17.0 (the versions table for the whole
 family lives in the `hibiki` skill). This skill covers `rails g hibiki:rails:*`
 end to end: what each command writes, what it changes in files you own, and
 what the output means when it surprises you.
