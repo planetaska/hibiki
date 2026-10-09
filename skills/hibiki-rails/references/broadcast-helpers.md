@@ -9,8 +9,8 @@ the channel's `stream_name`, default `[channel_name, cid]`, which matches
 
 | Helper | Does |
 | --- | --- |
-| `broadcast_replace(target:, **rendering)` | replaces the element with DOM id `target`; `rendering` is `partial:` + `locals:`, `html:`, or anything Turbo's renderer takes |
-| `broadcast_morph(target:, **rendering)` | the same as a Turbo 8 morph (`method="morph"`): patches only what differs, so focus, caret, scroll survive |
+| `broadcast_replace(target:, attributes: {}, **rendering)` | replaces the element with DOM id `target`; `rendering` is `partial:` + `locals:`, `html:`, or anything Turbo's renderer takes; `attributes:` (since 0.17.1) are extra attributes for the `<turbo-stream>` element |
+| `broadcast_morph(target:, attributes: {}, **rendering)` | the same as a Turbo 8 morph (`method="morph"`): patches only what differs, so focus, caret, scroll survive |
 | `broadcast_refresh` | tells the page to re-fetch its own URL and morph it in |
 | `broadcast_refresh_effect(wait: 0.25) { ...reads... }` | an effect on a `Hibiki::Rails::Debounce` scheduler: one `broadcast_refresh` per `wait` window across actions; the first run broadcasts immediately |
 
@@ -34,6 +34,20 @@ Morph or replace:
   paired positionally and rebuilt. Keep a row's id the same across its
   display/edit switch, or the swap reads as delete plus insert.
 - Treat plain `broadcast_replace` as the display-only case.
+
+Order of arrival (since 0.17.1):
+
+- Action Cable hands each broadcast to a pool of threads, so two renders sent
+  a millisecond apart can arrive in either order. Before 0.17.1 a page that
+  drew both into one target could end on the older one.
+- Replace and morph renders are now numbered, and the packaged controller
+  applies them in the order sent. A render ahead of an earlier one waits for
+  it, at most `orderGrace` (100 ms, a static on `HibikiController`); an
+  earlier one arriving after that is drawn unless a newer render has drawn the
+  same target.
+- Not ordered: an island on a `ChannelController` subclass, and a stream sent
+  with `Turbo::StreamsChannel` directly. `broadcast_refresh` needs no order.
+- Both halves must be 0.17.1 or later.
 
 Rendering outside a request:
 

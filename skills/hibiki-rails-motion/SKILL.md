@@ -1,19 +1,19 @@
 ---
 name: hibiki-rails-motion
 description: >-
-  Enter and leave transitions for hibiki_rails re-renders (hibiki_rails 0.17.0): the `hibiki-rails/motion` module, `data-motion` and `data-motion="own"` you write, `data-motion-leaving` and `data-motion-entering` the module sets, the six utilities in `hibiki_motion.css` (`hbk-slide` + `hbk-slide-body`, `hbk-slide-x` + `hbk-slide-x-body`, `hbk-fade`, `hbk-fly`, `hbk-scale`, `hbk-blur`) with their `--hbk-*` parameters, duration/easing overrides, `@starting-style`, `motion-reduce`, plain CSS without Tailwind, the `hibiki:before-render` and `turbo:before-stream-render` seams for View Transitions or GSAP, id rules under morph, the one-second ceiling, `--skip-motion`. Load whenever a row, card, form, flash or toast on a hibiki_rails page should slide, fade, fly, scale or blur, an element "vanishes before its animation", "only animate my own destroy", or you are editing hibiki_motion.css. Load hibiki-rails for channels, islands and the JS client; hibiki-rails-scaffold for the generator that writes the marks.
+  Enter and leave transitions for hibiki_rails re-renders (hibiki_rails 0.17.1): the `hibiki-rails/motion` module, `data-motion` and `data-motion="own"` you write, `data-motion-leaving` and `data-motion-entering` the module sets, the six utilities in `hibiki_motion.css` (`hbk-slide` + `hbk-slide-body`, `hbk-slide-x` + `hbk-slide-x-body`, `hbk-fade`, `hbk-fly`, `hbk-scale`, `hbk-blur`) with their `--hbk-*` parameters, duration/easing overrides, `@starting-style`, `motion-reduce`, plain CSS without Tailwind, the `hibiki:before-render` and `turbo:before-stream-render` seams for View Transitions or GSAP, id rules under morph, the one-second ceiling, `--skip-motion`. Load whenever a row, card, form, flash or toast on a hibiki_rails page should slide, fade, fly, scale or blur, an element "vanishes before its animation", "only animate my own destroy", or you are editing hibiki_motion.css. Load hibiki-rails for channels, islands and the JS client; hibiki-rails-scaffold for the generator that writes the marks.
 license: MIT
 metadata:
   author: planetaska
   hibiki: "0.3.0"
-  hibiki_rails: "0.17.0"
+  hibiki_rails: "0.17.1"
   hibiki_phlex: "0.1.0"
 ---
 
 # hibiki-rails-motion
 
 Enter and leave transitions for pages that hibiki_rails re-renders from the
-server. This skill covers hibiki_rails 0.17.0 (npm `hibiki-rails` 0.17.0 in
+server. This skill covers hibiki_rails 0.17.1 (npm `hibiki-rails` 0.17.1 in
 lockstep); the family versions table lives in the `hibiki` skill.
 
 ## The problem in three lines

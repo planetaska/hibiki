@@ -60,6 +60,7 @@ The base class handles acks before `received`, so a subclass override without
 | `busyDelay` | 150 ms | a trip shorter than this shows nothing, so fast trips do not flash |
 | `busyGrace` | 60 ms | keep the flag up after the ack, so trailing HTML lands while still busy |
 | `busyCeiling` | 10000 ms | give the trip up and mark the island `stalled` |
+| `orderGrace` | 100 ms | not a busy timing: how long a broadcast render that arrived ahead of an earlier one waits for it (since 0.17.1, broadcast-helpers) |
 
 ```js
 // app/javascript/controllers/hibiki_controller.js

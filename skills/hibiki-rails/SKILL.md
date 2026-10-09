@@ -1,18 +1,18 @@
 ---
 name: hibiki-rails
 description: >-
-  Rails integration for hibiki (hibiki_rails 0.17.0 + npm hibiki-rails 0.17.0): channels with Hibiki::Rails::Channel, build_graph and public-method actions, transmit({ html: }), transmit_value, transmit_url, broadcast_replace/morph/refresh(_effect), the island/hibiki_island/on/reactive/reactive_attrs/props/focus helpers (props for DOM properties such as a checkbox's indeterminate or a scroll position; focus for the cursor in a field a render opens), keys in on (keydown.esc, keydown.ctrl+s, keydown.n@window hotkeys), subscribe params, the JS client (HibikiController, ChannelController, perform/performOn, fallback:, debounce:, confirm:, visible), loading state (data-hibiki-busy, data-hibiki-state), channel lifecycle and the graph thread, error layers, ActiveRecord patterns (Hibiki::Rails.record_equals, db_version, after_commit pings), hibiki:rails:install, troubleshooting. Load for any app/channels/*_channel.rb using Hibiki, any view with island/on, "page doesn't update", "first update never arrives", "button does nothing", "State write dropped by ==". Load hibiki-rails-forms for ReactiveForm, hibiki-rails-scaffold for generators, hibiki-rails-motion for data-motion, hibiki-phlex for Phlex components.
+  Rails integration for hibiki (hibiki_rails 0.17.1): channels with Hibiki::Rails::Channel, build_graph, actions, transmit, transmit_value, transmit_url, broadcast_replace/morph/refresh(_effect), the island/hibiki_island/on/reactive/reactive_attrs/props/focus helpers (props sets indeterminate and scroll; focus places the cursor), keys in on (keydown.esc, @window), the JS client (HibikiController, perform/performOn, fallback:, debounce:, confirm:, visible), loading state (data-hibiki-busy, data-hibiki-state), channel lifecycle, graph thread, error layers, ActiveRecord patterns (record_equals, db_version, after_commit pings), hibiki:rails:install, troubleshooting. Load for any app/channels/*_channel.rb using Hibiki, any view with island/on, "page doesn't update", "first update never arrives", "button does nothing", "State write dropped by ==", a page left on an older render. Siblings: hibiki-rails-forms (ReactiveForm), hibiki-rails-scaffold (generators), hibiki-rails-motion (data-motion), hibiki-phlex (Phlex).
 license: MIT
 metadata:
   author: planetaska
   hibiki: "0.3.0"
-  hibiki_rails: "0.17.0"
+  hibiki_rails: "0.17.1"
   hibiki_phlex: "0.1.0"
 ---
 
 # hibiki-rails
 
-hibiki_rails 0.17.0 and npm hibiki-rails 0.17.0, in lockstep; the family versions table lives in the `hibiki` skill.
+hibiki_rails 0.17.1 and npm hibiki-rails 0.17.1, in lockstep; the family versions table lives in the `hibiki` skill.
 
 ## The round trip
 
@@ -158,13 +158,19 @@ same-origin path and omit params at their defaults. See
 All private (a public helper would become an action), all bound to
 `stream_name`, default `[channel_name, cid]`:
 
-- `broadcast_replace(target:, **rendering)`: replace the element with DOM id
-  `target`; `partial:`/`locals:`, `html:`, or anything Turbo's renderer takes.
-- `broadcast_morph(target:, **rendering)`: the same as a Turbo 8 morph, which
-  keeps focus and scroll but needs a stable id on every child of the container.
+- `broadcast_replace(target:, attributes: {}, **rendering)`: replace the
+  element with DOM id `target`; `partial:`/`locals:`, `html:`, or anything
+  Turbo's renderer takes. `attributes:` go on the `<turbo-stream>` element.
+- `broadcast_morph(target:, attributes: {}, **rendering)`: the same as a
+  Turbo 8 morph, which keeps focus and scroll but needs a stable id on every
+  child of the container.
 - `broadcast_refresh`: the page re-fetches and morphs itself;
   `broadcast_refresh_effect(wait: 0.25) { ...reads... }` wraps it in an effect
   on a `Hibiki::Rails::Debounce` scheduler, one refresh per burst of actions.
+
+Action Cable can deliver two broadcasts out of order. Since 0.17.1 replace and
+morph renders are numbered, and the packaged controller applies them in the
+order sent, so write nothing for it.
 
 A channel renders outside any request (empty `params` and `session`, nil
 `action_name`, no controller ivars, nothing raises), so pass everything through
@@ -329,6 +335,7 @@ action ran, not that anything changed.
 - Escape and hotkeys need no Stimulus controller since 0.17.0. Do not write one that calls `performOn` for a key or for `focus()`. (the-js-client)
 - `indeterminate` has no HTML attribute. Set it with `props(indeterminate:)`; an `indeterminate` attribute or a `transmit_value` does nothing. (the-js-client)
 - A `visible` control never gets `fallback:`. Off-ready, scrolling into view would navigate; split it into a sentinel wrapper and an inner fallback link. (the-js-client)
+- Before 0.17.1, two broadcast renders of one target could land out of order and leave the older one on the page. Update the gem and the npm package together; do not add a delay or a second render to work around it. (broadcast-helpers)
 - Morph needs a stable id on every child of the container. An id-less trailing node is matched positionally and rebuilt. (broadcast-helpers)
 - A `received` override must call `super`. The base method writes values and swaps fragments; acks still clear without it. (reactive-values)
 - Importmap apps use the vendored pin; bundler apps install npm `hibiki-rails` at the gem's version. Mixing versions breaks the private attribute contract. (version-lockstep)

@@ -8,6 +8,7 @@ this for free because they serve the copy inside the gem.
 
 | gem = npm | Client change |
 | --- | --- |
+| 0.17.1 | applies Turbo broadcast renders in the order the channel sent them (`broadcast_replace` and `broadcast_morph` number each one); fixes a page ending on the older of two renders of one target. Needs both halves |
 | 0.17.0 | a field with unsent debounced input keeps its text and caret through a render, and an undebounced action flushes pending input first; keys in `on` (`keydown.<key>`, `@window`); the `focus` helper; focus returns to a control when a render removes the focused element |
 | 0.16.0 | assigns DOM properties from `props` (`indeterminate`, `scrollTop`, `scrollLeft`) on connect and after every render; rescans on `turbo:render`, so props and `visible` survive a page refresh |
 | 0.15.0 | `hibiki-rails/motion` module (`data-motion`, `data-motion-leaving`/`-entering`); `islandFor` and `hibiki:before-render` seams; scaffold emits motion, `--skip-motion` |
