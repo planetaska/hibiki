@@ -115,7 +115,7 @@ than by Turbo broadcast, so the root needs no stream source. [Does an
 island need a Turbo stream?](#does-an-island-need-a-turbo-stream) explains
 the choice.
 
-Five helpers cover the surface:
+Six helpers cover the surface:
 
 - `hibiki_island(channel, cid:, params:)` — the island root: one
   subscription to `channel`, identified by the page's `cid` — a
@@ -142,13 +142,16 @@ Five helpers cover the surface:
 - `props(indeterminate:, scroll_top:, scroll_left:, key:)` — state of an
   element that no HTML attribute can express. See
   [DOM properties](#dom-properties).
+- `focus(select:)` — put the cursor in a field that a render opens. See
+  [Focus](#focus).
 
 ## Events and modifiers
 
 `on` sets one `event->action` token per event on the control. The left
 side of that arrow always names an event — a DOM event like `:click` (the
-default), `:change`, `:input`, or `:submit`, or the `:visible`
-pseudo-event described below. Everything else about the gesture — how long
+default), `:change`, `:input`, or `:submit`, a key such as
+`"keydown.esc"` (see [Keys](#keys)), or the `:visible` pseudo-event
+described below. Everything else about the gesture — how long
 to wait, whether to ask first, whether to reset — lives in a separate
 attribute scoped to the control. That keeps the token list parseable by
 whitespace, and lets one element answer several events:
@@ -171,6 +174,22 @@ under its own `name`: a checkbox sends its **checked state** as a boolean,
 a multi-select sends an **array** of its selected values, everything else
 sends `value`. A submitted form sends its `FormData`.
 
+A debounced field holds text the server has not heard yet, and a render
+can reach the field during that wait: the visitor's own, or one that
+another visitor's save caused. Since 0.17.0 the field wins. The client
+keeps the typed text and the caret through the render until the debounced
+action is sent. After that the server's value wins again, so a Reset or a
+failed save can still overwrite the field. An action that is not debounced
+first sends the island's pending debounced input, so the server hears
+gestures in the order the visitor made them: Enter pressed straight after
+the last keystroke saves the whole text.
+
+Only a text field wired with a debounced `:input` is kept this way. A
+field that sends nothing until `change` or `submit` is drawn from the
+server's value on every render, so a form that must keep its typing sends
+each input, as the scaffold's forms do. Checkboxes, radio buttons, file
+inputs, and multi-selects are not recorded.
+
 `visible` fires when the control scrolls into view, backed by an
 `IntersectionObserver` that is always present in the client. It fires
 **once per observation** and re-attaches to the replacement element after
@@ -190,6 +209,65 @@ href, and `fallback: true`.
 The shape of this helper interface is inspired by
 [phlex-reactive](https://phlex-reactive.zoolutions.llc)'s `on(...)`
 actions.
+
+## Keys
+
+Since 0.17.0, `event:` also takes a key, written `keydown.<key>`. A form
+can close on Escape and a page can have hotkeys with no JavaScript of
+your own:
+
+```erb
+<%= tag.div(**on(:cancel, event: "keydown.esc")) do %>
+  <%= tag.form(**on(:save, event: :submit, reset: false)) do %>
+    ...
+  <% end %>
+<% end %>
+
+<%= link_to "New song", new_song_path,
+      **on(:new_form, event: ["click", "keydown.n@window"]) %>
+```
+
+Pressing the key sends the action with the control's `with:` payload.
+`confirm:`, `debounce:`, and the busy mark apply as they do to a click.
+
+A key is heard in one of two scopes:
+
+- **`keydown.<key>`** is heard while focus is inside the element. The
+  client walks up from the focused element and takes the nearest element
+  that declares the pressed key, so Escape on a wrapper is heard from
+  every field within it.
+- **`keydown.<key>@window`** is heard anywhere on the page, for as long as
+  the element is rendered. The element may be hidden, so a hotkey needs no
+  visible button. While the visitor is typing in a text field, a select,
+  or an editable element, a window key fires only if it is `esc` or
+  carries `ctrl` or `meta`; a plain `n` stays a typed letter.
+
+The key is a letter, a digit, or one of these names: `enter`, `tab`,
+`esc`, `space`, the arrow keys `up`, `down`, `left`, and `right`, `home`,
+`end`, `page_up`, and `page_down`.
+
+Modifiers go in front, joined by `+`: `keydown.ctrl+s`,
+`keydown.meta+shift+k`. They are `ctrl`, `meta`, and `shift`, and they
+match exactly: `keydown.s` does not fire on Ctrl+S. For "Command on a Mac,
+Control elsewhere", list both tokens:
+`event: ["keydown.ctrl+s", "keydown.meta+s"]`. There is no `alt`, because
+on macOS the Option key changes the character a key reports.
+
+Four rules are worth knowing before you wire a key:
+
+- **A matched key's default is prevented.** `keydown.ctrl+s` keeps the
+  browser's Save dialog closed. A key no control declares is left alone.
+- **Some keydowns are ignored.** A key pressed during IME composition and
+  the repeats of a held key send nothing.
+- **One element takes one action.** `on` returns a single action, however
+  many events it lists, so a form wired for `submit` cannot also send
+  `cancel` on Escape. Put the key on a wrapper, as in the example above.
+- **Invalid tokens raise when the view renders.** An unknown key or
+  modifier, `shift` with a digit, and a bare `keydown` each raise an
+  `ArgumentError`. For typed text, use `:input`.
+
+A key without a scope needs focus inside its element. The `focus` helper
+puts it there when a form opens: see [Focus](#focus).
 
 ## Falling back to native behavior
 
@@ -293,12 +371,76 @@ Three limits apply:
   does not know, so a fragment can never set `innerHTML` or an event
   handler.
 - **`props` assigns properties and calls no methods.** Opening a modal
-  dialog, moving focus, and playing media are method calls, and they still
-  need JavaScript of your own.
+  dialog and playing media are method calls, and they still need
+  JavaScript of your own. Moving focus is a method call too, and it has a
+  helper of its own: see [Focus](#focus).
 
 State that has an attribute needs no helper. `value`, `checked`,
 `disabled`, and `open` on a `<details>` element ride the fragment like any
 other markup.
+
+## Focus
+
+A render can open a form, and a render can close one. Since 0.17.0 the
+client moves keyboard focus at both moments, so a visitor can open a row,
+type, and press Escape without reaching for the mouse.
+
+### A field that a render opens
+
+The `focus` helper marks the element that should take the cursor when it
+appears:
+
+```erb
+<%= text_field_tag "title", form.title, **focus(select: true) %>
+```
+
+`select: true` also selects the field's text. Like `on` and `props`,
+`focus` returns a hash under the `data:` key, so combine them with
+`deep_merge`, or with `mix` in a Phlex component:
+`**on(:set_field, event: :input).deep_merge(focus)`.
+
+The client focuses a marked element under these rules:
+
+- **Once, on the render that brings it.** Later renders that keep the
+  element leave focus alone.
+- **Only on a render this tab's own action caused.** Another visitor's
+  save never moves the cursor, and neither does a page refresh sent with
+  `broadcast_refresh`.
+- **Never on page load.** A marked element in the page's first HTML is not
+  focused. Use the `autofocus` attribute there.
+- **Never away from unsent typing.** A field whose debounced input has yet
+  to be sent keeps the focus.
+
+As with `props`, the element must be inside an island.
+
+### A render that removes the focused element
+
+When a form closes, the field that held focus is gone, and the browser
+drops focus to the page body. A keyboard user loses their place, and the
+island stops hearing keys. The client gives focus back to a control, and
+the view needs nothing written for it. It looks for a target in this
+order:
+
+1. **The element with the same id.** A field that a render replaced keeps
+   its focus and its caret. Under the transmit transport, which replaces
+   elements on every render, this covers each field that has an id.
+2. **The control that opened the form**, when the form's field carries
+   `focus`: the row's Edit link, the New button. The client remembers
+   which control's action brought the marked field, and finds it again
+   after a re-render by its id, or by its action and `with:` payload.
+3. **The first control inside the nearest ancestor that has an id**, when
+   that ancestor is still on the page.
+
+Only a control ever takes focus, never a container. When the client finds
+none of the three, as after a row is destroyed, it leaves focus where the
+browser put it. The rule applies to every render, on both transports and
+after a page refresh, and it never moves focus that the visitor has since
+put somewhere else.
+
+The scaffold's forms carry no `focus` mark, so closing one returns focus
+by the first and third rules only. Add `focus` to the first field of a
+generated form to have it take the cursor on opening and return to its
+Edit or New control on closing.
 
 ## Subscribe params
 
@@ -486,10 +628,14 @@ the effects' first transmits always land. The server-rendered HTML only
 fills the space until the first one arrives, so it need not match the
 graph's initial state.
 
-One rule carries over from any reactive UI design: never transmit a fragment containing the input the user is currently typing in.
+Avoid transmitting a fragment that contains the input the user is typing
+in. A transmit replaces the field with a new element on every render.
+Since 0.17.0 the client puts focus, the caret, and unsent text back on a
+replaced field that keeps its id, but a field outside the fragment is
+never disturbed at all.
 {: .tip }
 
 For gestures that can't be declared in markup — a drag library's drop
-callback, a canvas widget, a keyboard shortcut — `perform`/`performOn`
+callback, a canvas widget — `perform`/`performOn`
 fire an action through the island's own subscription from your own code:
 see [Driving an island from JS]({{ "/driving-an-island/" | relative_url }}).

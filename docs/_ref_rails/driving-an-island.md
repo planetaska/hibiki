@@ -12,9 +12,10 @@ channel subscription, and swaps the re-rendered HTML back in when the
 server answers ([The JS client]({{ "/the-js-client/" | relative_url }})
 covers that cycle). But some gestures never surface as a DOM event you
 could declare: a drag library reports a drop through its own callback, a
-canvas widget tracks the pointer itself, a keyboard shortcut lives on
-`window`. For those, the client lets your own code fire an action
-directly.
+canvas widget tracks the pointer itself. For those, the client lets your
+own code fire an action directly. (A keyboard shortcut is no longer among
+them: since 0.17.0, `on` takes
+[keys]({{ "/the-js-client/#keys" | relative_url }}).)
 
 ## Firing an action from code
 

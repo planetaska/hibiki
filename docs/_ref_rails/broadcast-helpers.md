@@ -74,9 +74,13 @@ position, and every unchanged element survive the update.
 
 **Reach for morph wherever a form can be open inside the fragment**, and
 treat plain `broadcast_replace` as the display-only case. A replace under
-an open inline form moves focus to `<body>` and drops the caret; a morph
-keeps both, because the morph library pairs old and new subtrees by id
-and leaves the element the user is typing in alone. On a growing list
+an open inline form swaps the field the user is typing in for a new
+element. Since 0.17.0 the client puts focus and the caret back on a
+replaced field that keeps its id (see
+[Focus]({{ "/the-js-client/#focus" | relative_url }})), but text the field
+has not sent comes back only for a debounced `:input` field. A morph loses
+none of it, because the morph library pairs old and new subtrees by id and
+leaves the element the user is typing in alone. On a growing list
 morphed at the very bottom of the document, scroll position and every
 element's position on screen measure identically before and after.
 
