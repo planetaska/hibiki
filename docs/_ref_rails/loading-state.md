@@ -192,6 +192,13 @@ class SlowLink extends HibikiController {
 export default SlowLink
 ```
 
+A fourth timing is set the same way, though it concerns the order of
+renders, not the busy flag:
+
+| Property     | Default | What it is                                                    |
+| ------------ | ------- | ------------------------------------------------------------- |
+| `orderGrace` | 100 ms  | How long a Turbo broadcast render that arrived ahead of an earlier one waits for it (since 0.17.1). Only a broadcast that is lost waits the whole time; see [Broadcast helpers]({{ "/broadcast-helpers/#the-order-renders-arrive-in" | relative_url }}). |
+
 There is deliberately no per-island option. The timings compensate for
 the network and the server, and every island on the page shares those,
 so the knob lives in one place: the controller class, set once for the

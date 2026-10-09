@@ -18,9 +18,8 @@ the effect hands the HTML to the channel's own subscription, and the
 packaged JS client swaps it into the page (see
 [The JS client]({{ "/the-js-client/" | relative_url }})). The second
 route is Turbo broadcasts: the effect renders a Turbo Stream, broadcasts
-it to a named stream, and turbo-rails's own JavaScript applies it — no
-hibiki client involved. This page documents the helpers for that second
-route.
+it to a named stream, and turbo-rails's own JavaScript applies it. This
+page documents the helpers for that second route.
 
 Including `Hibiki::Rails::Channel` brings them in. Each is a thin wrapper
 over `Turbo::StreamsChannel`, bound to the channel's `stream_name`, so a
@@ -53,7 +52,7 @@ an action the browser can invoke, and we don't want the browser calling
 ## `broadcast_replace`
 
 ```ruby
-broadcast_replace(target:, **rendering)
+broadcast_replace(target:, attributes: {}, **rendering)
 ```
 
 Replace the element whose DOM id is `target` with freshly rendered
@@ -61,10 +60,21 @@ content. The rendering options are whatever Turbo's renderer accepts:
 `partial:` with `locals:`, a raw `html:` string (which is how
 `Hibiki::Phlex.render_effect` pairs with it), and so on.
 
+`attributes:` (since 0.17.1) is a hash of extra attributes for the
+`<turbo-stream>` element itself, for a page script that listens to
+Turbo's stream events:
+
+```ruby
+broadcast_replace target: "count", html: count_html,
+                  attributes: { "data-reason": "tick" }
+```
+
+`broadcast_morph` takes it too.
+
 ## `broadcast_morph`
 
 ```ruby
-broadcast_morph(target:, **rendering)
+broadcast_morph(target:, attributes: {}, **rendering)
 ```
 
 The same replacement, delivered as a Turbo 8 morph (`method="morph"`).
@@ -92,6 +102,34 @@ id-less trailing node cannot be paired by id, so it is matched
 node most likely to be under the reader's cursor. Ids also have to stay
 the same across a row's own display/edit switch, or the swap that opens
 the form reads as a delete plus an insert.
+
+## The order renders arrive in
+
+Action Cable does not keep a stream's broadcasts in order. Each one is
+handed to a pool of threads on its way to the socket, so two renders a
+channel sends a millisecond apart can reach the browser in either order.
+When both draw the same target, the older one lands last and the page
+stays wrong until something renders that target again.
+
+Since 0.17.1 the two helpers above number each render, and the JS client
+applies them in the order the channel sent them. A render that arrives
+ahead of an earlier one waits for it, for at most 100 ms. An earlier
+render that arrives after that wait is still drawn, unless a newer one
+has drawn the same target since. The wait is the client's `orderGrace`,
+tuned like the timings in
+[Loading state]({{ "/loading-state/#tuning-the-timings" | relative_url }}).
+
+You write nothing for this, with three limits to know:
+
+- The gem and the npm package must both be 0.17.1 or later.
+- The island must use the packaged `hibiki` controller. A page that
+  subscribes with its own `ChannelController` subclass applies renders as
+  they arrive.
+- A stream you broadcast with `Turbo::StreamsChannel` yourself carries no
+  number and is applied as it arrives.
+
+`broadcast_refresh` needs no number: a refresh fetches the page, which is
+current whenever it is fetched.
 
 ## `broadcast_refresh`
 
