@@ -76,6 +76,9 @@ The packaged client uses it to clear the island's busy state, and
 [Loading state]({{ "/loading-state/" | relative_url }}) explains why it
 waits for that rather than for new HTML.
 
+To time an action, its effects, and its renders, subscribe to the events
+in [Instrumentation]({{ "/instrumentation/" | relative_url }}).
+
 ## Every job starts clean
 
 Building the graph, running an action, and flushing effects are each

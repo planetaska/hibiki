@@ -199,6 +199,10 @@ renders, not the busy flag:
 | ------------ | ------- | ------------------------------------------------------------- |
 | `orderGrace` | 100 ms  | How long a Turbo broadcast render that arrived ahead of an earlier one waits for it (since 0.17.1). Only a broadcast that is lost waits the whole time; see [Broadcast helpers]({{ "/broadcast-helpers/#the-order-renders-arrive-in" | relative_url }}). |
 
+One more class property is a switch, not a timing: `reportTrips`
+(since 0.18.0) makes every island report how long its round trips took.
+See [Instrumentation]({{ "/instrumentation/#trips-how-long-a-visitor-waited" | relative_url }}).
+
 There is deliberately no per-island option. The timings compensate for
 the network and the server, and every island on the page shares those,
 so the knob lives in one place: the controller class, set once for the

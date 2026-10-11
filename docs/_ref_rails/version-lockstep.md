@@ -1,6 +1,6 @@
 ---
 title: Version lockstep
-nav_order: 14
+nav_order: 15
 ---
 
 # Version lockstep
@@ -16,6 +16,7 @@ vendored inside the gem.
 
 | `hibiki_rails` gem | `hibiki-rails` npm | notes |
 | ------------------ | ------------------ | ----- |
+| 0.18.0             | 0.18.0             | instrumentation. A channel publishes `ActiveSupport::Notifications` events for subscribing, actions and renders, with nothing to configure. With `HibikiController.reportTrips = true` the client also times each round trip and reports it with the next action, under the new reserved payload key `hbt`; a client older than 0.18.0 reports none. See [Instrumentation]({{ "/instrumentation/" | relative_url }}) |
 | 0.17.2             | 0.17.2             | no client change (on the gem side, two fixes to forms that declare `reactive_association`. A save the model refused could leave the form unable to save again, and a form that had already saved once could save its selection wrongly after another session changed the same record. `commit` now compares the selection with the table each time; see [Multi-select associations]({{ "/multiselect/" | relative_url }})) |
 | 0.17.1             | 0.17.1             | a fix in both halves. Action Cable can deliver two broadcast renders out of order, and a page that drew both into one target ended on the older one. `broadcast_replace` and `broadcast_morph` now number their renders, and the client applies them in the order the channel sent them. One half alone behaves as 0.17.0 did |
 | 0.17.0             | 0.17.0             | focus and keys, all in the client. A field with unsent debounced input keeps its text and caret through a render, and an undebounced action first sends the island's pending input. `on` takes keys (`keydown.esc`, `keydown.ctrl+s`, `keydown.n@window`). The new `focus` view helper puts the cursor in a field that a render opens, and focus returns to a control when a render removes the focused element — see [The JS client]({{ "/the-js-client/#keys" | relative_url }}) |

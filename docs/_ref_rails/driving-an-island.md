@@ -174,16 +174,20 @@ end
 
 A performed action reaches the channel like any ActionCable action: the
 public method named by the action runs with one hash. That hash is the
-payload you passed, with **string keys**, plus two reserved entries
-added on the way out — `action`, ActionCable's dispatch key, and `hbk`,
-the sequence number behind
-[busy tracking]({{ "/loading-state/" | relative_url }}). For the drop
-above, `nested_move` receives:
+payload you passed, with **string keys**, plus `action`, ActionCable's
+dispatch key. For the drop above, `nested_move` receives:
 
 ```ruby
-{ "action" => "nested_move", "hbk" => 7,
+{ "action" => "nested_move",
   "dom" => "song_42", "path" => "credits/c3", "to" => 2 }
 ```
+
+Two more keys travel with the payload and are removed before your method
+runs, so they are reserved: `hbk`, the sequence number behind
+[busy tracking]({{ "/loading-state/" | relative_url }}), and `hbt`, the
+trip timings of
+[Instrumentation]({{ "/instrumentation/" | relative_url }}) (since
+0.18.0). A payload key with either name never reaches the action.
 
 and consumes it like this (the gem's own implementation, shown for what
 it does with those keys):
@@ -228,7 +232,7 @@ class ThemeChannel < ApplicationCable::Channel
     # ... effects that read @color.value and transmit HTML ...
   end
 
-  # runs with { "action" => "set_color", "hbk" => n, "hex" => "#a3e2b8" }
+  # runs with { "action" => "set_color", "hex" => "#a3e2b8" }
   def set_color(data)
     hex = data["hex"].to_s
     return unless hex.match?(/\A#\h{6}\z/)  # client-supplied — validate before writing
