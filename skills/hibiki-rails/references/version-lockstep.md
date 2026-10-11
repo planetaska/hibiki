@@ -8,6 +8,7 @@ this for free because they serve the copy inside the gem.
 
 | gem = npm | Client change |
 | --- | --- |
+| 0.18.0 | with `HibikiController.reportTrips = true`, times each round trip and reports it with the next action under the reserved `hbt` key (gem side: the `*.hibiki_rails` instrumentation events and `registry.tally`; see instrumentation) |
 | 0.17.2 | none (`ReactiveForm#commit` unloads `reactive_association` targets before writing and after a refusal; fixes `RecordNotUnique` on the save after a refused one, and wrong saves after another session's) |
 | 0.17.1 | applies Turbo broadcast renders in the order the channel sent them (`broadcast_replace` and `broadcast_morph` number each one); fixes a page ending on the older of two renders of one target. Needs both halves |
 | 0.17.0 | a field with unsent debounced input keeps its text and caret through a render, and an undebounced action flushes pending input first; keys in `on` (`keydown.<key>`, `@window`); the `focus` helper; focus returns to a control when a render removes the focused element |

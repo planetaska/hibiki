@@ -61,6 +61,7 @@ The base class handles acks before `received`, so a subclass override without
 | `busyGrace` | 60 ms | keep the flag up after the ack, so trailing HTML lands while still busy |
 | `busyCeiling` | 10000 ms | give the trip up and mark the island `stalled` |
 | `orderGrace` | 100 ms | not a busy timing: how long a broadcast render that arrived ahead of an earlier one waits for it (since 0.17.1, broadcast-helpers) |
+| `reportTrips` | `false` | not a timing: `true` makes every island report its round-trip times (since 0.18.0, instrumentation) |
 
 ```js
 // app/javascript/controllers/hibiki_controller.js

@@ -1,18 +1,18 @@
 ---
 name: hibiki-rails
 description: >-
-  Rails integration for hibiki (hibiki_rails 0.17.2): channels with Hibiki::Rails::Channel, build_graph, actions, transmit, transmit_value, transmit_url, broadcast_replace/morph/refresh(_effect), the island/hibiki_island/on/reactive/reactive_attrs/props/focus helpers (props sets indeterminate and scroll; focus places the cursor), keys in on (keydown.esc, @window), the JS client (HibikiController, perform/performOn, fallback:, debounce:, confirm:, visible), loading state (data-hibiki-busy, data-hibiki-state), channel lifecycle, graph thread, error layers, ActiveRecord patterns (record_equals, db_version, after_commit pings), hibiki:rails:install, troubleshooting. Load for any app/channels/*_channel.rb using Hibiki, any view with island/on, "page doesn't update", "first update never arrives", "button does nothing", "State write dropped by ==", a page left on an older render. Siblings: hibiki-rails-forms (ReactiveForm), hibiki-rails-scaffold (generators), hibiki-rails-motion (data-motion), hibiki-phlex (Phlex).
+  Rails integration for hibiki (hibiki_rails 0.18.0): channels with Hibiki::Rails::Channel, build_graph, actions, transmit, transmit_value, transmit_url, broadcast_replace/morph/refresh(_effect), the island/hibiki_island/on/reactive/reactive_attrs/props/focus helpers, keys in on (keydown.esc, @window), the JS client (HibikiController, perform/performOn, fallback:, debounce:, confirm:, visible), loading state (data-hibiki-busy, data-hibiki-state), channel lifecycle, graph thread, error layers, instrumentation (action.hibiki_rails events, reportTrips), ActiveRecord patterns (record_equals, db_version, after_commit pings), hibiki:rails:install, troubleshooting. Load for any app/channels/*_channel.rb using Hibiki, any view with island/on, "page doesn't update", "first update never arrives", "button does nothing", "State write dropped by ==", a page left on an older render. Siblings: hibiki-rails-forms (ReactiveForm), hibiki-rails-scaffold (generators), hibiki-rails-motion (data-motion), hibiki-phlex (Phlex).
 license: MIT
 metadata:
   author: planetaska
   hibiki: "0.3.0"
-  hibiki_rails: "0.17.2"
+  hibiki_rails: "0.18.0"
   hibiki_phlex: "0.1.0"
 ---
 
 # hibiki-rails
 
-hibiki_rails 0.17.2 and npm hibiki-rails 0.17.2, in lockstep; the family versions table lives in the `hibiki` skill.
+hibiki_rails 0.18.0 and npm hibiki-rails 0.18.0, in lockstep; the family versions table lives in the `hibiki` skill.
 
 ## The round trip
 
@@ -75,7 +75,7 @@ end
 - Let actions only write signals, never render: the effects re-render on
   their own. Each body runs on the graph thread inside one `Hibiki.batch`, so
   ten writes still mean one re-run per affected effect. A one-parameter action
-  gets a string-keyed hash; `perform_action` strips the reserved `hbk` key.
+  gets a string-keyed hash; `perform_action` strips the reserved `hbk` and `hbt` keys.
 - Every public method is a client-callable action, so keep the rest `private`;
   only `HIDDEN_ACTIONS` (`build_graph`, `subscribed`, `unsubscribed`) are hidden.
 
@@ -284,6 +284,19 @@ warning), so revert the gesture yourself. See `references/driving-an-island.md`.
    `def build_graph_actor = Hibiki::Rails::GraphActor.new(on_error: ->(e) { ... })`.
    See `references/error-handling-layers.md`.
 
+## Instrumentation
+
+Since 0.18.0 a channel publishes `ActiveSupport::Notifications` events, always
+on: `subscribe`, `unsubscribe`, `action` (payload `channel`, `action`, `wait`,
+`renders`) and `render` (`channel`, `target`, `method`), each suffixed
+`.hibiki_rails`. Rails' `perform_action.action_cable` times only the hand-off
+to the graph thread, so use these to time an action and its renders. A
+subscriber runs on the graph thread: keep it to cheap in-memory work.
+`Hibiki::Rails.registry.tally` counts live subscriptions by class.
+`HibikiController.reportTrips = true` makes the browser report each round trip
+as a `trip.hibiki_rails` event (`ack`, `paint` in ms); the figures are the
+browser's and can be forged. See `references/instrumentation.md`.
+
 ## Troubleshooting order
 
 Follow the trip end to end, because each symptom sits on one stage of it:
@@ -353,6 +366,7 @@ action ran, not that anything changed.
 - `references/broadcast-helpers.md`: the four signatures, morph vs replace, rendering outside a request, `stream_name`.
 - `references/channel-lifecycle.md`: GraphActor, executor wrap, subscribe/unsubscribe, hooks, dev reload.
 - `references/error-handling-layers.md`: `rescue_from`, `Hibiki.error_handler`, the safety net, `build_graph_actor`.
+- `references/instrumentation.md`: the five `*.hibiki_rails` events and payloads, subscriber rules, `registry.tally`, `reportTrips` and trips.
 - `references/loading-state.md`: attribute table, four states, queue rules, the ack, timing statics.
 - `references/driving-an-island.md`: `performOn`/`perform` contract, the SortableJS pattern, what the server receives.
 - `references/working-with-active-record.md`: the two rules, ranked patterns, the `after_commit` bridge, controller/job gotchas.

@@ -61,8 +61,9 @@ Sortable instance is rebuilt. `nested_move` comes from
 `Hibiki::Rails::NestedActions` (the `hibiki-rails-forms` skill).
 
 What the server receives: the public method named by the action, with one
-string-keyed hash: your payload plus `action` (ActionCable's dispatch key) and
-`hbk` (the busy seq, stripped by `perform_action` before your method runs).
+string-keyed hash: your payload plus `action` (ActionCable's dispatch key).
+`hbk` (the busy seq) and `hbt` (trip timings, since 0.18.0) are reserved:
+`perform_action` strips both before your method runs.
 Treat it as untrusted, like request params:
 
 ```ruby
