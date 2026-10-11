@@ -23,7 +23,7 @@ end
 | Macro | Declares | Notes |
 | --- | --- | --- |
 | `reactive_attributes model, *names` | one `state` per name, a casting writer | model as Class, String or Symbol; resolved on every use |
-| `reactive_association *names` | `<singular>_ids` state, joins `hibiki_attributes` | raises unless `reactive_attributes` came first; cast via target PK type, blanks dropped |
+| `reactive_association *names` | `<singular>_ids` state, joins `hibiki_attributes`; names kept in `hibiki_associations` | raises unless `reactive_attributes` came first; cast via target PK type, blanks dropped; `commit` unloads the association before writing and after a refusal (0.17.2) |
 | `reactive_nested name, form_class` | a state holding `[]` of child forms | not in `hibiki_attributes`; serialized as `<name>_attributes` |
 
 ## Instance surface

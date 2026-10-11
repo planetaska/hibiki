@@ -18,6 +18,23 @@ ActiveRecord's association writer manages join rows. Each id is cast through
 `Song`'s primary-key type and the multi-select hidden-input blank is dropped
 (`Array(value).compact_blank`), so wire strings never leave `dirty?` stuck.
 
+The form keeps one record between saves. Since 0.17.2 `commit` resets each
+declared association on the record before `update`, and again when `update`
+is refused, together with the join association behind a `has_many :through`
+or a `has_and_belongs_to_many`. The ids writer therefore compares the
+selection with the table. The `song_ids` signal is untouched, so `dirty?`
+and the visitor's selection survive a refusal. `Form.hibiki_associations`
+lists the declared names.
+
+| Before 0.17.2 | Result |
+| --- | --- |
+| refused save removed an id, next save has it | `RecordNotUnique` under the join's unique index, else a duplicate row |
+| form saved once, another session added an id, this save adds it too | the same |
+| form saved once, another session removed an id, this save keeps it | `commit` returns true, row not written |
+
+The fix on those releases was `record.reload` before `commit`; remove it on
+0.17.2. The later save still wins over another session's selection.
+
 A hand-rolled `<select multiple name="song_ids[]">` still works: the JS
 client collects `[]`-suffixed names into one array under the bare key, so the
 action reads `data["song_ids"]`.

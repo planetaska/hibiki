@@ -1,7 +1,7 @@
 ---
 name: hibiki-rails-forms
 description: >-
-  Reactive forms for hibiki_rails 0.17.1: `Hibiki::Rails::ReactiveForm` with
+  Reactive forms for hibiki_rails 0.17.2: `Hibiki::Rails::ReactiveForm` with
   `reactive_attributes`, `reactive_association`, `reactive_nested`, `.from`,
   `hydrate`, `commit` vs `commit!`, `dirty?`, `errors`, `error_for`, `to_h`,
   `hibiki_attributes`, two validation layers, wire-type casting. Also the
@@ -20,13 +20,13 @@ license: MIT
 metadata:
   author: planetaska
   hibiki: "0.3.0"
-  hibiki_rails: "0.17.1"
+  hibiki_rails: "0.17.2"
   hibiki_phlex: "0.1.0"
 ---
 
 # hibiki-rails-forms
 
-Covers hibiki_rails 0.17.1. The family versions table lives in the `hibiki`
+Covers hibiki_rails 0.17.2. The family versions table lives in the `hibiki`
 skill.
 
 ## What a reactive form is
@@ -190,7 +190,9 @@ controls firing `nested_move` with `to:` as the index among visible siblings.
 `reactive_association :songs` (declared after `reactive_attributes`, or it
 raises) adds a `song_ids` signal that hydrates from the record's ids reader
 and commits through the association writer. Each id is cast through the
-target's primary-key type and blanks are dropped.
+target's primary-key type and blanks are dropped. Since 0.17.2 `commit`
+unloads the association before writing and after a refusal, so the writer
+compares the selection with the table; the signal keeps the selection.
 
 ```sh
 bin/rails g hibiki:rails:multiselect Album Song Track
@@ -247,6 +249,7 @@ channel instead of showing an error.
 - A unique index without `validates uniqueness:`. The duplicate raises `RecordNotUnique` in the channel and the busy ack still clears, so the user sees a clean no-op. (crud-notes)
 - Assuming `NestedActions` methods are internal. Every public method is a client-invocable action by design; keep helpers private. (nested-forms)
 - Sending `to:` as an index over all children. It counts visible siblings only; marked rows sit at the tail and refuse to move. (nested-forms)
+- `RecordNotUnique` on a join row at the save after a refused one, or after another session saved, on hibiki_rails before 0.17.2. Update the gem; do not add `record.reload` before `commit`, and remove one written for this. (multiselect)
 - Naming multiselect boxes `song_ids[]`. A filtered submit would drop hidden selections; send `checked` per box to the toggle action. (multiselect)
 - Expecting `data["song_ids"]` from a `[]` field to be a string. The client collects `[]`-suffixed names into an array; bare duplicate keys stay last-wins. (multiselect)
 - Reading `album.cover` on a channel row. Rows are frozen and `strict_loading`; read `cover_attachment` and preload with `with_attached_cover`. (file-uploads)

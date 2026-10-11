@@ -1,18 +1,18 @@
 ---
 name: hibiki-rails
 description: >-
-  Rails integration for hibiki (hibiki_rails 0.17.1): channels with Hibiki::Rails::Channel, build_graph, actions, transmit, transmit_value, transmit_url, broadcast_replace/morph/refresh(_effect), the island/hibiki_island/on/reactive/reactive_attrs/props/focus helpers (props sets indeterminate and scroll; focus places the cursor), keys in on (keydown.esc, @window), the JS client (HibikiController, perform/performOn, fallback:, debounce:, confirm:, visible), loading state (data-hibiki-busy, data-hibiki-state), channel lifecycle, graph thread, error layers, ActiveRecord patterns (record_equals, db_version, after_commit pings), hibiki:rails:install, troubleshooting. Load for any app/channels/*_channel.rb using Hibiki, any view with island/on, "page doesn't update", "first update never arrives", "button does nothing", "State write dropped by ==", a page left on an older render. Siblings: hibiki-rails-forms (ReactiveForm), hibiki-rails-scaffold (generators), hibiki-rails-motion (data-motion), hibiki-phlex (Phlex).
+  Rails integration for hibiki (hibiki_rails 0.17.2): channels with Hibiki::Rails::Channel, build_graph, actions, transmit, transmit_value, transmit_url, broadcast_replace/morph/refresh(_effect), the island/hibiki_island/on/reactive/reactive_attrs/props/focus helpers (props sets indeterminate and scroll; focus places the cursor), keys in on (keydown.esc, @window), the JS client (HibikiController, perform/performOn, fallback:, debounce:, confirm:, visible), loading state (data-hibiki-busy, data-hibiki-state), channel lifecycle, graph thread, error layers, ActiveRecord patterns (record_equals, db_version, after_commit pings), hibiki:rails:install, troubleshooting. Load for any app/channels/*_channel.rb using Hibiki, any view with island/on, "page doesn't update", "first update never arrives", "button does nothing", "State write dropped by ==", a page left on an older render. Siblings: hibiki-rails-forms (ReactiveForm), hibiki-rails-scaffold (generators), hibiki-rails-motion (data-motion), hibiki-phlex (Phlex).
 license: MIT
 metadata:
   author: planetaska
   hibiki: "0.3.0"
-  hibiki_rails: "0.17.1"
+  hibiki_rails: "0.17.2"
   hibiki_phlex: "0.1.0"
 ---
 
 # hibiki-rails
 
-hibiki_rails 0.17.1 and npm hibiki-rails 0.17.1, in lockstep; the family versions table lives in the `hibiki` skill.
+hibiki_rails 0.17.2 and npm hibiki-rails 0.17.2, in lockstep; the family versions table lives in the `hibiki` skill.
 
 ## The round trip
 
