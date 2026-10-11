@@ -140,6 +140,26 @@ a multi-select submission is dropped. Without the cast, the signal would
 hold `"3"` against the `3` hydration copied in, and `dirty?` would report
 the form dirty forever.
 
+A form keeps one record between saves, and ActiveRecord remembers an
+association once it has loaded it. Since 0.17.2, `commit` unloads each
+declared association before it writes, so the writer compares the selection
+with the join rows in the table and not with what the record remembers. When
+the model refuses the save, `commit` unloads them again, because the writer
+has by then changed the record's memory and the rollback restores only the
+rows. The form's `song_ids` signal keeps the visitor's selection through
+both.
+
+Two faults on earlier releases came from that memory. A refused save that
+had removed a song made the next save insert a join row the table still
+held, which raises `ActiveRecord::RecordNotUnique` under the join's unique
+index. A form that had saved once did the same after another session added
+the song, and reported success without writing a song that another session
+had removed. An app that called `record.reload` before `commit` to avoid
+either can drop the call.
+
+The later save still wins: its selection replaces the one another session
+wrote, as its other fields do.
+
 A hand-rolled form that *does* submit its selection still works: the JS
 client collects every entry of a `[]`-suffixed field name into an array
 under the bare key, so a `<select multiple name="song_ids[]">` or a checkbox
