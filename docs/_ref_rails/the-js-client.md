@@ -28,6 +28,10 @@ older install's pin is harmless). A second pin, `hibiki-rails/motion`,
 serves an optional module: with it, an element you mark can finish a CSS
 transition before a re-render removes it from the page. The scaffold
 imports it, and [Motion explained]({{ "/motion-explained/" | relative_url }}) describes it.
+A third pin, `hibiki-rails/commands`, serves the module that runs
+[commands]({{ "/commands/" | relative_url }}): things a control does in
+the browser with no round trip. The install generator adds its import to
+`app/javascript/application.js` (since 0.20.0).
 
 If you do not wish to use the install generator, you can create the one-line shim yourself:
 
@@ -151,7 +155,12 @@ Six helpers cover the surface:
 side of that arrow always names an event — a DOM event like `:click` (the
 default), `:change`, `:input`, or `:submit`, a key such as
 `"keydown.esc"` (see [Keys](#keys)), or the `:visible` pseudo-event
-described below. Everything else about the gesture — how long
+described below. Two more events have pages of their own: `:popstate`, the
+browser's Back and Forward
+([Reactive values]({{ "/reactive-values/" | relative_url }}#history-entries)),
+and a dialog's `:cancel` and `:close`
+([Commands and dialogs]({{ "/commands/" | relative_url }}#dialogs)).
+Everything else about the gesture — how long
 to wait, whether to ask first, whether to reset — lives in a separate
 attribute scoped to the control. That keeps the token list parseable by
 whitespace, and lets one element answer several events:
@@ -205,6 +214,11 @@ sentinel that means scrolling into view would navigate. When the control
 needs a degraded path, split it as the scaffold does: a wrapper that
 carries only `visible`, and a link inside it that carries `click`, a real
 href, and `fallback: true`.
+
+`on` also takes a list of commands in place of the action name. The
+browser runs them on the event, with no round trip:
+`on(js.toggle("#menu"))`. See
+[Commands and dialogs]({{ "/commands/" | relative_url }}).
 
 The shape of this helper interface is inspired by
 [phlex-reactive](https://phlex-reactive.zoolutions.llc)'s `on(...)`
@@ -410,6 +424,10 @@ The client focuses a marked element under these rules:
   focused. Use the `autofocus` attribute there.
 - **Never away from unsent typing.** A field whose debounced input has yet
   to be sent keeps the focus.
+- **In a dialog, when the dialog opens.** A marked field inside a closed
+  `<dialog>` does not count as on the page (since 0.20.0). It takes the
+  cursor on the render that opens the dialog, and focus returns to the
+  control that opened it when the dialog closes.
 
 As with `props`, the element must be inside an island.
 
@@ -620,8 +638,8 @@ other two have channel-side helpers of their own: `transmit_value` sends a
 single piece of text for the client to write into every matching
 `data-hibiki-value` placeholder (see
 [Reactive values]({{ "/reactive-values/" | relative_url }})), and
-`transmit_url` mirrors graph state into the address bar via
-`history.replaceState`.
+`transmit_url` mirrors graph state into the address bar, by
+`history.replaceState` unless you ask for history entries.
 
 Because the client is listening before the server runs `build_graph`,
 the effects' first transmits always land. The server-rendered HTML only

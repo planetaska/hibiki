@@ -112,6 +112,11 @@ break is between the DOM and the channel.
 - **In the Stimulus shape with jsbundling or Vite,** the controller must
   appear in `controllers/index.js`. The generator appends it, and
   `stimulus:manifest:update` regenerates the file.
+- **A control wired with `on(js. ...)` needs the commands module.** Check
+  that your JavaScript entry point has `import "hibiki-rails/commands"`.
+  Without it the console shows one warning, *"a control has commands, but
+  "hibiki-rails/commands" is not imported"*, and the control does
+  nothing. See [Commands and dialogs]({{ "/commands/" | relative_url }}).
 - **Read the browser Console tab.** A controller that throws in
   `connect()` never subscribes, and every control inside it stays dead.
 

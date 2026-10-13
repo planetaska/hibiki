@@ -185,11 +185,11 @@ page's own origin. The browser refuses any other origin, silently. Leave
 out query params that hold their defaults, or the first update fills the
 bar with noise.
 
-The rewrite uses `history.replaceState` instead of  `pushState`. The URL is a
-mirror of the state, not a record of how the state got there, so no
-history entry is added. The Back button leaves the page as it normally
-would instead of stepping back through every search keystroke, and there
-is no history event for you to handle.
+By default the rewrite uses `history.replaceState`. The URL is a mirror
+of the state, not a record of how the state got there, so no history
+entry is added. The Back button leaves the page as it normally would
+instead of stepping back through every search keystroke, and there is no
+history event for you to handle.
 
 The mirror pays off when the URL comes back. A reload, or a link someone
 shared, should land on the state the URL names. For that, the Rails
@@ -199,3 +199,59 @@ scaffold wires this loop end to end; see
 [CRUD scaffolding]({{ "/crud-scaffolding/" | relative_url }}). A form's
 URL is worth mirroring too, as the example above does: a reload in the
 middle of an edit lands on the ordinary edit page for that record.
+
+### History entries
+
+Some state reads as a place: the step of a wizard, the tab of a settings
+page. A visitor expects Back to return to the step before, not to leave
+the page. Since 0.19.0, `history: :push` makes each move of the URL an
+entry in the browser's history:
+
+```ruby
+transmit_url(history: :push) do
+  urls.enlistment_path(step: STEPS[@step.value])
+end
+```
+
+Back then changes the address without loading a page, so the graph has to
+follow it. Declare a `popstate` event on the island root, and the client
+performs that action each time Back or Forward lands on an entry the
+island made. The payload is the query of the new address:
+
+```erb
+<%= island WizardChannel, params: { step: params[:step] }.compact,
+      **on(:visit, event: :popstate) do %>
+  ...
+<% end %>
+```
+
+```ruby
+def visit(data)
+  to = STEPS.index(data["step"].to_s) || 0
+  @step.value = [to, @reached.value].min
+end
+```
+
+The params come from the address bar, where anyone can type. Check them as
+you would a subscribe param: the example holds the step to those the
+visitor has reached. A key ending in `[]` arrives as an array, and every
+other key arrives as written, so `filter[name]=x` arrives under the key
+`filter[name]`.
+
+The client decides what becomes an entry by these rules:
+
+- **Only a URL that answers this tab's own action is pushed.** The first
+  URL the channel sends, and one that follows another visitor's write,
+  replace the address as before.
+- **An action that refuses the address adds nothing.** If `visit` leaves
+  the state alone, or moves it somewhere else, the client corrects the bar
+  in place to the URL the channel last sent.
+- **`popstate` takes no `debounce:` or `fallback:`.** Either raises when
+  the view renders.
+
+Two cases load the page afresh instead of calling the action: an island
+that pushes entries and declares no `popstate`, and Back into one of those
+entries from another page. Both show the right state when the Rails
+controller renders the page from the same params, which a mirrored URL
+already requires. A page that has pushed an entry is also left out of
+Turbo's snapshot cache, so returning to it always asks the server.

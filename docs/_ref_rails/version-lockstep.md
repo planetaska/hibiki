@@ -1,6 +1,6 @@
 ---
 title: Version lockstep
-nav_order: 15
+nav_order: 16
 ---
 
 # Version lockstep
@@ -16,6 +16,8 @@ vendored inside the gem.
 
 | `hibiki_rails` gem | `hibiki-rails` npm | notes |
 | ------------------ | ------------------ | ----- |
+| 0.20.0             | 0.20.0             | commands and dialogs. `on` takes a list of commands built with `js`, which the browser runs with no round trip: show and hide, classes, attributes, focus, a DOM event, a dialog, and a channel action among them. The new module `hibiki-rails/commands` runs them; the install generator imports it, and an existing app adds `import "hibiki-rails/commands"` itself. `modal(open:)` lets a channel open and close a `<dialog>`, `on` hears a dialog's `cancel` and `close`, and a morph keeps a dialog's `open` attribute. See [Commands and dialogs]({{ "/commands/" | relative_url }}) |
+| 0.19.0             | 0.19.0             | history entries. `transmit_url(history: :push)` makes each move of the URL an entry in the browser's history, and `on(:action, event: :popstate)` answers Back and Forward. The default is still `replaceState`. See [Reactive values]({{ "/reactive-values/" | relative_url }}#history-entries) |
 | 0.18.0             | 0.18.0             | instrumentation. A channel publishes `ActiveSupport::Notifications` events for subscribing, actions and renders, with nothing to configure. With `HibikiController.reportTrips = true` the client also times each round trip and reports it with the next action, under the new reserved payload key `hbt`; a client older than 0.18.0 reports none. See [Instrumentation]({{ "/instrumentation/" | relative_url }}) |
 | 0.17.2             | 0.17.2             | no client change (on the gem side, two fixes to forms that declare `reactive_association`. A save the model refused could leave the form unable to save again, and a form that had already saved once could save its selection wrongly after another session changed the same record. `commit` now compares the selection with the table each time; see [Multi-select associations]({{ "/multiselect/" | relative_url }})) |
 | 0.17.1             | 0.17.1             | a fix in both halves. Action Cable can deliver two broadcast renders out of order, and a page that drew both into one target ended on the older one. `broadcast_replace` and `broadcast_morph` now number their renders, and the client applies them in the order the channel sent them. One half alone behaves as 0.17.0 did |
