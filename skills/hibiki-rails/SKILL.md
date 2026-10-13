@@ -1,18 +1,18 @@
 ---
 name: hibiki-rails
 description: >-
-  Rails integration for hibiki (hibiki_rails 0.20.0): channels with Hibiki::Rails::Channel, build_graph, actions, transmit, transmit_value, transmit_url (history: :push, popstate), broadcast_replace/morph/refresh(_effect), the island/hibiki_island/on/reactive/reactive_attrs/props/focus helpers, keys in on (keydown.esc, @window), js commands in on (show/hide/toggle, classes, attributes, push) and dialogs (modal, show_modal), the JS client (HibikiController, perform/performOn, fallback:, debounce:, confirm:, visible), loading state (data-hibiki-busy), channel lifecycle, graph thread, error layers, instrumentation (reportTrips), ActiveRecord patterns (record_equals, db_version, after_commit pings), hibiki:rails:install, troubleshooting. Load for any app/channels/*_channel.rb using Hibiki, any view with island/on, "page doesn't update", "first update never arrives", "button does nothing", "State write dropped by ==". Siblings: hibiki-rails-forms, hibiki-rails-scaffold, hibiki-rails-motion, hibiki-phlex.
+  Rails integration for hibiki (hibiki_rails 0.20.1): channels with Hibiki::Rails::Channel, build_graph, actions, transmit, transmit_value, transmit_url (history: :push, popstate), broadcast_replace/morph/refresh(_effect), the island/hibiki_island/on/reactive/reactive_attrs/props/focus helpers, keys in on (keydown.esc, @window), js commands in on (show/hide/toggle, classes, attributes, push) and dialogs (modal, show_modal), the JS client (HibikiController, perform/performOn, fallback:, debounce:, confirm:, visible), loading state (data-hibiki-busy), channel lifecycle, graph thread, error layers, instrumentation (reportTrips), ActiveRecord patterns (record_equals, db_version, after_commit pings), hibiki:rails:install, troubleshooting. Load for any app/channels/*_channel.rb using Hibiki, any view with island/on, "page doesn't update", "first update never arrives", "button does nothing", "State write dropped by ==". Siblings: hibiki-rails-forms, hibiki-rails-scaffold, hibiki-rails-motion, hibiki-phlex.
 license: MIT
 metadata:
   author: planetaska
   hibiki: "0.3.0"
-  hibiki_rails: "0.20.0"
+  hibiki_rails: "0.20.1"
   hibiki_phlex: "0.1.0"
 ---
 
 # hibiki-rails
 
-hibiki_rails 0.20.0 and npm hibiki-rails 0.20.0, in lockstep; the family versions table lives in the `hibiki` skill.
+hibiki_rails 0.20.1 and npm hibiki-rails 0.20.1, in lockstep; the family versions table lives in the `hibiki` skill.
 
 ## The round trip
 

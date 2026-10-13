@@ -19,7 +19,7 @@ license: MIT
 metadata:
   author: planetaska
   hibiki: "0.3.0"
-  hibiki_rails: "0.20.0"
+  hibiki_rails: "0.20.1"
   hibiki_phlex: "0.1.0"
 ---
 

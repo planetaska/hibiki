@@ -8,6 +8,7 @@ this for free because they serve the copy inside the gem.
 
 | gem = npm | Client change |
 | --- | --- |
+| 0.20.1 | numbers each subscription's actions from 1 with no gaps, so the channel can run them in the order sent (Action Cable could swap two sent back to back, such as typed input and the click after it); fixes an action running before the value typed just ahead of it. Needs both halves |
 | 0.20.0 | runs `js` command lists (`on(js.hide(...))`) through the new module `hibiki-rails/commands`, which an existing app must import; opens and closes a `<dialog>` from `modal(open:)`; `on` hears a dialog's `cancel` and `close`; a morph keeps a dialog's `open` (see commands) |
 | 0.19.0 | `transmit_url(history: :push)` makes URL moves history entries, and `on(:action, event: :popstate)` answers Back and Forward (see reactive-values) |
 | 0.18.0 | with `HibikiController.reportTrips = true`, times each round trip and reports it with the next action under the reserved `hbt` key (gem side: the `*.hibiki_rails` instrumentation events and `registry.tally`; see instrumentation) |
