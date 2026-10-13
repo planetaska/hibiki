@@ -1,7 +1,7 @@
 ---
 name: hibiki-rails-forms
 description: >-
-  Reactive forms for hibiki_rails 0.18.0: `Hibiki::Rails::ReactiveForm` with
+  Reactive forms for hibiki_rails 0.20.0: `Hibiki::Rails::ReactiveForm` with
   `reactive_attributes`, `reactive_association`, `reactive_nested`, `.from`,
   `hydrate`, `commit` vs `commit!`, `dirty?`, `errors`, `error_for`, `to_h`,
   `hibiki_attributes`, two validation layers, wire-type casting. Also the
@@ -20,13 +20,13 @@ license: MIT
 metadata:
   author: planetaska
   hibiki: "0.3.0"
-  hibiki_rails: "0.18.0"
+  hibiki_rails: "0.20.0"
   hibiki_phlex: "0.1.0"
 ---
 
 # hibiki-rails-forms
 
-Covers hibiki_rails 0.18.0. The family versions table lives in the `hibiki`
+Covers hibiki_rails 0.20.0. The family versions table lives in the `hibiki`
 skill.
 
 ## What a reactive form is

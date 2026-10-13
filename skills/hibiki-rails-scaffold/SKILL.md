@@ -1,18 +1,18 @@
 ---
 name: hibiki-rails-scaffold
 description: >-
-  hibiki_rails 0.18.0 generators: `hibiki:rails:install`, `hibiki:rails:scaffold Model field:type ...`, `hibiki:rails:scaffold_controller Model`, and the component shapes `stimulus`, `island`, `phlex`. Every option (`--css=daisyui|tailwind|none`, `--infinite-scroll`, the `--skip-*` flags, `--page-size=N`, `--phlex`, `--skip-routes`), what a scaffold writes (channels, controller, ReactiveForm, `app/queries/book_query.rb`, ERB or Phlex views, busy and motion CSS), what it modifies (model after_commit ping, parent has_many, routes, application.js), the post-install notices (restart, css, assoc, order, fields, form, unique, skip, hint, motion), address-bar mirroring, no-JS fallbacks. Load when generating or reshaping a live CRUD resource, on "NameError after scaffold" / "uninitialized constant BookQuery", or when choosing `--phlex` vs hibiki_phlex. Add-on generators (form, nested, multiselect, upload_field) are in hibiki-rails-forms; `hbk-*` motion in hibiki-rails-motion; channels and JS client in hibiki-rails.
+  hibiki_rails 0.20.0 generators: `hibiki:rails:install`, `hibiki:rails:scaffold Model field:type ...`, `hibiki:rails:scaffold_controller Model`, and the component shapes `stimulus`, `island`, `phlex`. Every option (`--css=daisyui|tailwind|none`, `--infinite-scroll`, the `--skip-*` flags, `--page-size=N`, `--phlex`, `--skip-routes`), what a scaffold writes (channels, controller, ReactiveForm, `app/queries/book_query.rb`, ERB or Phlex views, busy and motion CSS), what it modifies (model after_commit ping, parent has_many, routes, application.js), the post-install notices (restart, css, assoc, order, fields, form, unique, skip, hint, motion), address-bar mirroring, no-JS fallbacks. Load when generating or reshaping a live CRUD resource, on "NameError after scaffold" / "uninitialized constant BookQuery", or when choosing `--phlex` vs hibiki_phlex. Add-on generators (form, nested, multiselect, upload_field) are in hibiki-rails-forms; `hbk-*` motion in hibiki-rails-motion; channels and JS client in hibiki-rails.
 license: MIT
 metadata:
   author: planetaska
   hibiki: "0.3.0"
-  hibiki_rails: "0.18.0"
+  hibiki_rails: "0.20.0"
   hibiki_phlex: "0.1.0"
 ---
 
 # hibiki-rails-scaffold
 
-Generators shipped with hibiki_rails 0.18.0 (the versions table for the whole
+Generators shipped with hibiki_rails 0.20.0 (the versions table for the whole
 family lives in the `hibiki` skill). This skill covers `rails g hibiki:rails:*`
 end to end: what each command writes, what it changes in files you own, and
 what the output means when it surprises you.
@@ -37,8 +37,10 @@ Add `gem "hibiki"` and `gem "hibiki_rails"` to the Gemfile, then run
 `bin/rails g hibiki:rails:install`. It writes the
 `app/javascript/controllers/hibiki_controller.js` shim, appends the register
 lines to `controllers/index.js` on jsbundling apps, adds
-`include Hibiki::Rails::Helpers` to `ApplicationHelper`, and creates the
-`ApplicationCable` channel and connection files when missing. Importmap apps
+`include Hibiki::Rails::Helpers` to `ApplicationHelper`, appends
+`import "hibiki-rails/commands"` to `app/javascript/application.js` (since
+0.20.0), and creates the `ApplicationCable` channel and connection files
+when missing. Importmap apps
 are done there; bundler apps also `npm add hibiki-rails` pinned to the gem
 version, since the two release in lockstep. Every step is idempotent by content
 check, so re-running is safe.

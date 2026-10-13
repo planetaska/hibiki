@@ -8,6 +8,8 @@ this for free because they serve the copy inside the gem.
 
 | gem = npm | Client change |
 | --- | --- |
+| 0.20.0 | runs `js` command lists (`on(js.hide(...))`) through the new module `hibiki-rails/commands`, which an existing app must import; opens and closes a `<dialog>` from `modal(open:)`; `on` hears a dialog's `cancel` and `close`; a morph keeps a dialog's `open` (see commands) |
+| 0.19.0 | `transmit_url(history: :push)` makes URL moves history entries, and `on(:action, event: :popstate)` answers Back and Forward (see reactive-values) |
 | 0.18.0 | with `HibikiController.reportTrips = true`, times each round trip and reports it with the next action under the reserved `hbt` key (gem side: the `*.hibiki_rails` instrumentation events and `registry.tally`; see instrumentation) |
 | 0.17.2 | none (`ReactiveForm#commit` unloads `reactive_association` targets before writing and after a refusal; fixes `RecordNotUnique` on the save after a refused one, and wrong saves after another session's) |
 | 0.17.1 | applies Turbo broadcast renders in the order the channel sent them (`broadcast_replace` and `broadcast_morph` number each one); fixes a page ending on the older of two renders of one target. Needs both halves |

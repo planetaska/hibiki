@@ -74,7 +74,37 @@ def urls = ::Rails.application.routes.url_helpers
 Compute a same-origin path (anything else is refused silently), omit params
 at their defaults so the first update adds no noise, and render the initial
 page from the same params so a reload lands on the state the URL names.
-`replaceState`, never `pushState`: the URL mirrors state, so Back leaves the
-page normally and there is no history event to handle.
+`replaceState` by default: the URL mirrors state, so Back leaves the page
+normally and there is no history event to handle.
+
+History entries (since 0.19.0), for state that reads as a place:
+
+```ruby
+transmit_url(history: :push) { urls.enlistment_path(step: STEPS[@step.value]) }
+
+def visit(data)                       # Back and Forward
+  to = STEPS.index(data["step"].to_s) || 0
+  @step.value = [to, @reached.value].min
+end
+```
+
+```erb
+<%= island WizardChannel, params: { step: params[:step] }.compact,
+      **on(:visit, event: :popstate) do %>
+```
+
+- `popstate` goes on the island root. The client performs the action with
+  the query of the address Back or Forward landed on; a key ending in `[]`
+  is an array, other keys arrive as written. The values are the address
+  bar's, so check them like a subscribe param.
+- Only a URL that answers this tab's own action is pushed. The first URL and
+  one caused by another visitor replace.
+- An action that leaves the state alone, or moves it elsewhere, adds no
+  entry: the client puts the bar back to the last URL the channel sent.
+- `popstate` takes no `debounce:` or `fallback:` (raises at render).
+- With no `popstate` action, or on Back into an entry from another page, the
+  page is loaded afresh at that address. Render the page from the same
+  params (controller and subscribe params) so it shows the right state.
+- A page that has pushed is left out of Turbo's snapshot cache.
 
 Full docs: https://planetaska.github.io/hibiki/reactive-values/

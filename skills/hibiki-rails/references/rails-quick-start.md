@@ -16,13 +16,15 @@ re-running is safe.
 | `app/javascript/controllers/hibiki_controller.js` | writes the shim `export { default } from "hibiki-rails"`, which registers the packaged controller as `hibiki`; a real controller file, so `stimulus:manifest:update` re-derives it | present |
 | `app/javascript/controllers/index.js` | appends `import HibikiController from "./hibiki_controller"` + `application.register("hibiki", HibikiController)` | importmap app (eager-loads the shim), or already registered |
 | `app/helpers/application_helper.rb` | injects `include Hibiki::Rails::Helpers` after `module ApplicationHelper` | already included |
+| `app/javascript/application.js` | appends `import "hibiki-rails/commands"`, the module that runs `on(js. ...)` command lists (since 0.20.0) | already imported; prints the line when the file is missing |
 | `app/channels/application_cable/channel.rb`, `connection.rb` | stock ActionCable boilerplate (`identified_by :current_user` goes in the connection) | present |
 
 The generator detects an import map by `config/importmap.rb`:
 
-- Importmap app: done. The engine merges `pin "hibiki-rails"` and
-  `pin "hibiki-rails/motion"` into the import map from its own
-  `config/importmap.rb`, so there is nothing to download.
+- Importmap app: done. The engine merges `pin "hibiki-rails"`,
+  `pin "hibiki-rails/motion"` and `pin "hibiki-rails/commands"` into the
+  import map from its own `config/importmap.rb`, so there is nothing to
+  download.
 - Bundler app (esbuild, vite, bun): the generator prints
   `config/importmap.rb not found` and `with a JS bundler, npm/yarn/bun add hibiki-rails instead`.
   Install the npm package at the same version as the gem, because the two ship

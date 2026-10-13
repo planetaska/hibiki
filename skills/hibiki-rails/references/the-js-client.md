@@ -3,8 +3,9 @@
 The gem vendors `hibiki.js` (npm `hibiki-rails`, same module, lockstep
 version); the shim `app/javascript/controllers/hibiki_controller.js`
 (`export { default } from "hibiki-rails"`) registers it as `hibiki`, which the
-helpers hardcode. Importmap apps get the pins `hibiki-rails` and
-`hibiki-rails/motion` from the engine; bundler apps `npm add hibiki-rails`
+helpers hardcode. Importmap apps get the pins `hibiki-rails`,
+`hibiki-rails/motion` and `hibiki-rails/commands` (the module that runs `js`
+command lists; see commands.md) from the engine; bundler apps `npm add hibiki-rails`
 (peers `@hotwired/stimulus >= 3.2`, `@hotwired/turbo-rails >= 8.0`). The
 consumer is turbo-rails' own, so islands and streams share one websocket. The
 `data-hibiki-*` attributes are private, versioned with the client; never
@@ -16,7 +17,9 @@ write them by hand.
 | --- | --- | --- |
 | `hibiki_island(channel, cid:, params: nil)` | `{ data: {...} }` to splat | the primitive; Phlex uses `div(**hibiki_island(...))`; `channel` is a class or string |
 | `island(channel, cid: nil, params: nil, transport: :broadcast, tag_name: :div, **attributes) { \|cid\| }` | the root element | ERB-only (needs `capture`; raises elsewhere); class-only; generates a UUID cid; `:broadcast` adds `turbo_stream_from channel.channel_name, cid`; other keywords land on the root, `data:` merged beneath the island's keys |
-| `on(action, event: :click, with: nil, debounce: nil, confirm: nil, reset: nil, fallback: nil)` | `{ data: {...} }` to splat | one `event->action` token per event; names must match `/\A[a-z][a-z0-9_.-]*\z/i` |
+| `on(action, event: :click, with: nil, debounce: nil, confirm: nil, reset: nil, fallback: nil)` | `{ data: {...} }` to splat | one `event->action` token per event; names must match `/\A[a-z][a-z0-9_.-]*\z/i`; `action` may be a `js` command list instead (commands.md) |
+| `js` | an empty command list | chain commands on it and hand it to `on` (commands.md, since 0.20.0) |
+| `modal(open:)` | `{ data: {...} }` to splat | on a `<dialog>`: the client calls `showModal()` or `close()` to match after each render (commands.md, since 0.20.0) |
 | `reactive(name, placeholder = "", tag_name: :span)` | a complete element | `<span data-hibiki-value="name">0</span>`; names match `/\A[a-z][a-z0-9_-]*\z/i` |
 | `reactive_attrs(name)` | `{ data: { hibiki_value: } }` | the Phlex form: `span(**reactive_attrs(:remaining)) { @remaining.to_s }` |
 | `props(indeterminate:, scroll_top:, scroll_left:, key: nil)` | `{ data: {...} }` to splat | DOM properties that have no attribute (below); any other name raises `ArgumentError` |
@@ -26,7 +29,7 @@ write them by hand.
 
 | Option | Effect |
 | --- | --- |
-| `event:` | one event or a list: `:click` (default), `:change`, `:input`, `:submit`, a key such as `"keydown.esc"` (below), or the `:visible` pseudo-event |
+| `event:` | one event or a list: `:click` (default), `:change`, `:input`, `:submit`, a key such as `"keydown.esc"` (below), the `:visible` pseudo-event, `:popstate` on the island root (Back and Forward, reactive-values.md), or a dialog's `:cancel` and `:close` (commands.md) |
 | `with:` | a hash merged into every payload from this control |
 | `debounce:` | ms to let the gesture settle; `:input` gets 250 by default, `0` sends every keystroke; the payload is built when the action fires, so the last value wins |
 | `confirm:` | a `window.confirm` message; declining performs nothing and does not submit; `data-turbo-confirm` is ignored, the control is not Turbo-driven |
@@ -119,6 +122,10 @@ transports and never moves focus the visitor has since put elsewhere. Scaffolded
 forms carry no `focus`, so they get 1 and 3 only; add `focus` to a generated
 form's first field for the cursor on open and the return to Edit or New.
 
+A marked field inside a closed `<dialog>` does not count as on the page
+(since 0.20.0): it takes the cursor on the render that opens the dialog, and
+focus returns to the opener when the dialog closes.
+
 ## `props`: DOM properties (since 0.16.0)
 
 A checkbox's `indeterminate` and a container's scroll position exist only as
@@ -197,7 +204,7 @@ end
 | --- | --- | --- |
 | `{ html: }` | your effect (`transmit({ html: ApplicationController.render(...) })`) | swaps each top-level element into the element with the same id; dispatches `hibiki:before-render` first |
 | `{ value: { name:, text: } }` | `transmit_value` | sets `textContent` on every `[data-hibiki-value=name]`, document-wide |
-| `{ url: }` | `transmit_url` | `history.replaceState`, same-origin only |
+| `{ url: }` | `transmit_url` | `history.replaceState`, same-origin only; with `push: true` (`history: :push`) a history entry when it answers this tab's action |
 | `{ ack:, dropped: }` | `perform_action` | clears busy; handled before `received`, so an override cannot break it |
 
 `hibiki:before-render` bubbles from the island root with

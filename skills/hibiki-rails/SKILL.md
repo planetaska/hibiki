@@ -1,18 +1,18 @@
 ---
 name: hibiki-rails
 description: >-
-  Rails integration for hibiki (hibiki_rails 0.18.0): channels with Hibiki::Rails::Channel, build_graph, actions, transmit, transmit_value, transmit_url, broadcast_replace/morph/refresh(_effect), the island/hibiki_island/on/reactive/reactive_attrs/props/focus helpers, keys in on (keydown.esc, @window), the JS client (HibikiController, perform/performOn, fallback:, debounce:, confirm:, visible), loading state (data-hibiki-busy, data-hibiki-state), channel lifecycle, graph thread, error layers, instrumentation (action.hibiki_rails events, reportTrips), ActiveRecord patterns (record_equals, db_version, after_commit pings), hibiki:rails:install, troubleshooting. Load for any app/channels/*_channel.rb using Hibiki, any view with island/on, "page doesn't update", "first update never arrives", "button does nothing", "State write dropped by ==", a page left on an older render. Siblings: hibiki-rails-forms (ReactiveForm), hibiki-rails-scaffold (generators), hibiki-rails-motion (data-motion), hibiki-phlex (Phlex).
+  Rails integration for hibiki (hibiki_rails 0.20.0): channels with Hibiki::Rails::Channel, build_graph, actions, transmit, transmit_value, transmit_url (history: :push, popstate), broadcast_replace/morph/refresh(_effect), the island/hibiki_island/on/reactive/reactive_attrs/props/focus helpers, keys in on (keydown.esc, @window), js commands in on (show/hide/toggle, classes, attributes, push) and dialogs (modal, show_modal), the JS client (HibikiController, perform/performOn, fallback:, debounce:, confirm:, visible), loading state (data-hibiki-busy), channel lifecycle, graph thread, error layers, instrumentation (reportTrips), ActiveRecord patterns (record_equals, db_version, after_commit pings), hibiki:rails:install, troubleshooting. Load for any app/channels/*_channel.rb using Hibiki, any view with island/on, "page doesn't update", "first update never arrives", "button does nothing", "State write dropped by ==". Siblings: hibiki-rails-forms, hibiki-rails-scaffold, hibiki-rails-motion, hibiki-phlex.
 license: MIT
 metadata:
   author: planetaska
   hibiki: "0.3.0"
-  hibiki_rails: "0.18.0"
+  hibiki_rails: "0.20.0"
   hibiki_phlex: "0.1.0"
 ---
 
 # hibiki-rails
 
-hibiki_rails 0.18.0 and npm hibiki-rails 0.18.0, in lockstep; the family versions table lives in the `hibiki` skill.
+hibiki_rails 0.20.0 and npm hibiki-rails 0.20.0, in lockstep; the family versions table lives in the `hibiki` skill.
 
 ## The round trip
 
@@ -36,12 +36,15 @@ the registration instead of dropping it); on jsbundling/vite (no
 `config/importmap.rb`) the import/register pair in
 `app/javascript/controllers/index.js`; `include Hibiki::Rails::Helpers` in
 `app/helpers/application_helper.rb`, because the gem never mixes the helpers
-into your views for you; and `app/channels/application_cable/channel.rb` plus
+into your views for you; `import "hibiki-rails/commands"` appended to
+`app/javascript/application.js` (since 0.20.0; it runs `on(js. ...)` command
+lists); and `app/channels/application_cable/channel.rb` plus
 `connection.rb` when missing, since a stock app has none until its first
 `rails g channel`.
 
-Importmap apps are then done: the engine merges the pins `hibiki-rails` and
-`hibiki-rails/motion` (opt-in motion) into the import map. Bundler apps run
+Importmap apps are then done: the engine merges the pins `hibiki-rails`,
+`hibiki-rails/motion` (opt-in motion) and `hibiki-rails/commands` into the
+import map. Bundler apps run
 `npm add hibiki-rails` pinned to the gem's version; peers are
 `@hotwired/stimulus >= 3.2` and `@hotwired/turbo-rails >= 8.0`. No
 `@rails/actioncable` pin since 0.11.0, because the client rides turbo-rails'
@@ -114,6 +117,11 @@ contract you never write by hand. Island shape, ERB, no JavaScript of yours:
   own action renders it; `select: true` selects its text. When a render
   removes the focused element, the client returns focus to a control with
   no markup from you. Details: `references/the-js-client.md`.
+- `on` also takes a list of commands built with `js` where it takes an
+  action name: `on(js.toggle("#menu"))`, `on(js.hide("#panel").push(:cancel))`.
+  The browser runs them at once, with no round trip. `modal(open:)` on a
+  `<dialog>` lets the channel open and close it. Both since 0.20.0:
+  `references/commands.md`.
 
 Stimulus shape, with a controller of your own: the root carries
 `data-controller="counter"`, `data-counter-cid-value`, and
@@ -150,7 +158,10 @@ document-wide like a class, so a nav badge and a heading can share one.
 `transmit_value` and `transmit_url` are equality-gated on the emitted string,
 so a run whose text matches the last one sends nothing. `transmit_url { ... }`
 mirrors state into the address bar with `history.replaceState`; compute a
-same-origin path and omit params at their defaults. See
+same-origin path and omit params at their defaults. For state that reads as
+a place (a wizard's step), `transmit_url(history: :push)` makes each move a
+history entry, and `on(:visit, event: :popstate)` on the island root answers
+Back and Forward with the new address's query (since 0.19.0). See
 `references/reactive-values.md`.
 
 ## Broadcast helpers
@@ -347,6 +358,11 @@ action ran, not that anything changed.
 - `focus` does nothing on page load or on another visitor's render. Use `autofocus` for the page's first HTML only: inside a broadcast fragment, Turbo acts on it for renders the visitor did not cause. (the-js-client)
 - Escape and hotkeys need no Stimulus controller since 0.17.0. Do not write one that calls `performOn` for a key or for `focus()`. (the-js-client)
 - `indeterminate` has no HTML attribute. Set it with `props(indeterminate:)`; an `indeterminate` attribute or a `transmit_value` does nothing. (the-js-client)
+- A command's change is lost when the server next renders that element. A morph resets attributes to the server's HTML; keep state the server should know in a signal, and use commands on elements the channel does not render. (commands)
+- `on(js. ...)` does nothing without `import "hibiki-rails/commands"`. The console warns once; the install generator adds the line, an older app adds it by hand. (commands)
+- Opening a menu, toggling a class or a `<dialog>` needs no Stimulus controller and no channel action since 0.20.0. Use `js` commands, or `modal(open:)` when the server decides. (commands)
+- A form in a dialog uses `modal(open:)`, not `js.show_modal`. Only the channel knows whether a save was refused; put `on(:cancel, event: :cancel)` on the dialog so Escape reaches it. (commands)
+- With `history: :push`, treat the `popstate` payload as untrusted. It is the address bar's query; clamp it as you would a subscribe param. (reactive-values)
 - A `visible` control never gets `fallback:`. Off-ready, scrolling into view would navigate; split it into a sentinel wrapper and an inner fallback link. (the-js-client)
 - Before 0.17.1, two broadcast renders of one target could land out of order and leave the older one on the page. Update the gem and the npm package together; do not add a delay or a second render to work around it. (broadcast-helpers)
 - Morph needs a stable id on every child of the container. An id-less trailing node is matched positionally and rebuilt. (broadcast-helpers)
@@ -362,7 +378,8 @@ action ran, not that anything changed.
 - `references/rails-quick-start.md`: install steps, what the generator writes, importmap vs bundler, first component.
 - `references/rails-usage.md`: channel anatomy, the three view shapes, cid, the two routes, placeholders, rendering without a request.
 - `references/the-js-client.md`: helper signatures, the `on` option table, payload shapes, `visible`, fallback contract, subscribe-param trust, message shapes, `hibiki:before-render`, exports, unsent typing, keys in `on`, `focus` and focus return, `props` (DOM properties).
-- `references/reactive-values.md`: `reactive`/`reactive_attrs` + `transmit_value`, text-only rules, `transmit_url`.
+- `references/commands.md`: `js` command lists in `on` (the command table, targets, `push`, rules), the `hibiki-rails/commands` import, dialogs (`show_modal`/`close_dialog`, `modal(open:)`, `cancel`/`close` events).
+- `references/reactive-values.md`: `reactive`/`reactive_attrs` + `transmit_value`, text-only rules, `transmit_url`, history entries and `popstate`.
 - `references/broadcast-helpers.md`: the four signatures, morph vs replace, rendering outside a request, `stream_name`.
 - `references/channel-lifecycle.md`: GraphActor, executor wrap, subscribe/unsubscribe, hooks, dev reload.
 - `references/error-handling-layers.md`: `rescue_from`, `Hibiki.error_handler`, the safety net, `build_graph_actor`.
