@@ -61,6 +61,9 @@ greeter.name = "Hibiki"        # prints "hello, Hibiki!"
 
 The effect printed "hello, Ruby!" once, not "hello, world!" followed by a correction. Had it started before `initialize`, it would have run twice, and the first run would have been wrong.
 
+Using hibiki_rails? Keep `Hibiki::Reactive` out of ActionCable channels. The browser can call any public method on a channel, so it could call these readers and writers, and the effects would start when ActionCable builds the channel, before the channel's graph exists. In a Phlex component or a form object it is fine. [Rails usage]({% link _rails/rails-usage.md %}#actions) shows what to write in a channel.
+{: .warning }
+
 ## Every instance is its own island
 
 The macros declare signals on the class, but the signals themselves belong to instances. Two counters share nothing:

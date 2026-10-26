@@ -86,6 +86,39 @@ by name. Anything the browser must not call goes under `private`. The
 include hides `build_graph`, `subscribed`, and `unsubscribed` from the
 browser for you.
 
+That counts public methods a module brings in, too. `Hibiki::DSL`, the
+module behind the short `state`, `derived`, and `effect` names, is made of
+public methods, so a channel that includes it lets the browser call
+`state`, `root`, and the rest by name. To use the short names in a
+channel, make them private on the line after the include:
+
+```ruby
+class CounterChannel < ApplicationCable::Channel
+  include Hibiki::Rails::Channel
+  include Hibiki::DSL
+  private(*Hibiki::DSL.instance_methods)  # the short names, hidden from the browser
+
+  def build_graph
+    @count = state(0)  # the same as Hibiki::State.new(0)
+
+    effect do
+      broadcast_replace target: "count", partial: "counter/count",
+                        locals: { count: @count.value, doubled: @count.value * 2 }
+    end
+  end
+
+  def increment = @count.value += 1
+end
+```
+
+Keep `Hibiki::Reactive` out of channels altogether. Its macros define
+public readers and writers, so the browser could set a state to whatever
+it sends. Its effects also start when ActionCable builds the channel
+object, before the channel's graph exists, so nothing disposes them when
+the tab leaves. (It is fine in a Phlex component or a form object, which
+the browser cannot call.)
+{: .warning }
+
 An action changes the graph by writing signals, and does nothing else. It
 never renders. The effects that read those signals notice the change and
 re-render on their own, so `increment` is a one-line write and the page

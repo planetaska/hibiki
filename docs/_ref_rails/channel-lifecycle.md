@@ -138,6 +138,27 @@ channel adds as an action, so a public override of one of these would
 be reachable from any client. The concern removes all three from the
 action list, so you can make the override public without exposing it.
 
+The concern removes those three and no others. A public method that
+comes from a module you include is an action too. `Hibiki::DSL` is the
+module most likely to arrive this way: include it for the short names,
+then make them private on the next line with
+`private(*Hibiki::DSL.instance_methods)`, as
+[Rails usage]({{ "/rails-usage/#actions" | relative_url }}) shows. Leave
+its `root` alone inside a channel. `build_graph` already runs inside the
+channel's root, and a root made inside another is not adopted by it, so
+the inner root's effects keep running after the browser unsubscribes. A
+channel that needs a second root creates it with `Hibiki.root` and
+disposes it in an `on_cleanup` block.
+
+`Hibiki::Reactive` does not belong in a channel at all, and making its
+methods private would not be enough. Its readers, writers, and `dispose`
+are public, so the browser could write a state or stop the effects. Its
+effects also start when the object is built, and ActionCable builds the
+channel on a cable worker before `subscribed` runs. Those effects run
+outside the graph thread and outside the channel's root, so nothing
+disposes them.
+{: .warning }
+
 ## When code reloads in development
 
 Effects hold blocks written against the class versions that existed

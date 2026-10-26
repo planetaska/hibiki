@@ -50,6 +50,9 @@ y.value # => 11
 
 The two styles mix freely. The rest of this page uses the DSL.
 
+Using hibiki_rails? The DSL's methods are public, and ActionCable lets the browser call any public method on a channel. In a channel, make them private right after the include, as [Rails usage]({% link _rails/rails-usage.md %}#actions) shows.
+{: .warning }
+
 ## The three primitives
 
 Everything in Hibiki is built from three parts. A **state** holds a value you can change. A **derived** computes a value from other signals. An **effect** runs a block, and runs it again whenever something the block read has changed. The first two are signals: values that remember who read them. The third is where something actually happens.
