@@ -15,7 +15,7 @@ description: >-
   re-render", "DoubleRenderError", "has no #rerender", or "phlex vs --phlex".
   Load hibiki for the signal core, hibiki-rails for channels and the JS client,
   hibiki-rails-scaffold for --phlex.
-license: MIT
+license: MIT OR Apache-2.0
 metadata:
   author: planetaska
   hibiki: "0.3.0"

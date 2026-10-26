@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Dual-licensed under MIT or Apache 2.0**, at the user's option. The MIT text
+  moved from `LICENSE.txt` to `LICENSE-MIT.txt`, next to `LICENSE-APACHE.txt`.
+
 ## [0.3.0] - 2026-08-09
 
 ### Added

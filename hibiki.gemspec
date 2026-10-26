@@ -16,7 +16,7 @@ Gem::Specification.new do |spec|
     subscribes it. Writable state, lazy derived values, and eager effects.
   DESC
   spec.homepage = "https://github.com/planetaska/hibiki"
-  spec.license = "MIT"
+  spec.licenses = ["MIT", "Apache-2.0"]
   spec.required_ruby_version = ">= 3.4"
 
   spec.metadata["homepage_uri"] = spec.homepage
@@ -24,7 +24,7 @@ Gem::Specification.new do |spec|
   spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/main/CHANGELOG.md"
   spec.metadata["rubygems_mfa_required"] = "true"
 
-  spec.files = Dir["lib/**/*.rb", "README.md", "CHANGELOG.md", "LICENSE.txt"]
+  spec.files = Dir["lib/**/*.rb", "README.md", "CHANGELOG.md", "LICENSE-*.txt"]
   spec.require_paths = ["lib"]
 
   # No runtime dependencies — core invariant of this gem.

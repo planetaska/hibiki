@@ -2,7 +2,7 @@
 name: hibiki
 description: >-
   Svelte-5-style signals for Ruby: Hibiki::State, Hibiki::Derived, Hibiki::Effect, Hibiki.root, Hibiki.batch, Hibiki.untrack, peek, on_cleanup, equals:, scheduler:, the opt-in Hibiki::DSL (bare state/derived/effect) and the Hibiki::Reactive class macros. Load whenever Ruby code reads or writes .value, includes Hibiki::DSL or Hibiki::Reactive, or a derived/effect "does not update", loops forever, raises SystemStackError, a <<-mutated array or merge!-ed hash stays stale, or threads, fibers, Sidekiq/Puma or Ractors touch a signal graph. Also the family router: read its "Which skill next" table, then load hibiki-rails (channels, islands, JS client, ActiveRecord), hibiki-rails-forms (ReactiveForm, app/forms), hibiki-rails-scaffold (every bin/rails g hibiki:rails:* generator), hibiki-rails-motion (data-motion, hbk-* CSS) or hibiki-phlex (Phlex components). Do not stop here for anything under app/channels, app/forms, or a hibiki:rails generator.
-license: MIT
+license: MIT OR Apache-2.0
 metadata:
   author: planetaska
   hibiki: "0.3.0"

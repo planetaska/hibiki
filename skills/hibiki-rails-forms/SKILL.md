@@ -16,7 +16,7 @@ description: >-
   errors never show, or RecordNotUnique hits the log. Base scaffold and its
   options: load hibiki-rails-scaffold. Channels, islands, `on`, JS client:
   load hibiki-rails.
-license: MIT
+license: MIT OR Apache-2.0
 metadata:
   author: planetaska
   hibiki: "0.3.0"
