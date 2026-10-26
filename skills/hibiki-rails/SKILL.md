@@ -81,6 +81,12 @@ end
   gets a string-keyed hash; `perform_action` strips the reserved `hbk` and `hbt` keys.
 - Every public method is a client-callable action, so keep the rest `private`;
   only `HIDDEN_ACTIONS` (`build_graph`, `subscribed`, `unsubscribed`) are hidden.
+- That includes public methods from included modules. For the short names,
+  `include Hibiki::DSL` then `private(*Hibiki::DSL.instance_methods)` on the
+  next line, and never call a bare `root` in a channel (a nested root is not
+  adopted, so its effects outlive the subscription). Never include
+  `Hibiki::Reactive` in a channel: its writers and `dispose` become actions
+  and its effects start at construction, outside the graph.
 
 ## Views: two shapes, one protocol
 

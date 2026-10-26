@@ -27,6 +27,7 @@ end
 | --- | --- |
 | `build_graph` runs once, at subscribe, on the graph thread inside `Hibiki.root` | the root owns every signal and effect, so unsubscribe disposes all at once |
 | Signals live in ivars; a derived only an effect reads can stay local | actions need to reach what they write |
+| `include Hibiki::DSL` only with `private(*Hibiki::DSL.instance_methods)` on the next line; never `Hibiki::Reactive` | public module methods are actions too; Reactive's effects start at construction, outside the graph |
 | Each effect is a render effect; its first run subscribes it to what it reads | a change to `@count` re-runs only the effects that read it |
 | Every public method is an action; the include hides `build_graph`, `subscribed`, `unsubscribed` | anything else public is client-callable |
 | An action writes signals and nothing else; the whole body is one `Hibiki.batch` | effects run once after the action returns |

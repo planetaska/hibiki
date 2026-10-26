@@ -41,6 +41,12 @@ Overriding the hooks:
   is subtracted from `action_methods`, so a public override is not
   client-callable either way, but the habit protects methods the gem does not
   know about.
+- Public methods from included modules are actions too. `Hibiki::DSL` needs
+  `private(*Hibiki::DSL.instance_methods)` after its include, and its bare
+  `root` must not be called in a channel (detached, so it outlives
+  `unsubscribed`; use `Hibiki.root` and dispose it in `on_cleanup`).
+  `Hibiki::Reactive` never goes in a channel: public writers and `dispose`,
+  and effects started in `initialize` on a cable worker, outside the root.
 - Override `cid` to derive identity elsewhere, `stream_name` for other
   streamables, `build_graph_actor` for a different error sink
   (`GraphActor.new(name:, on_error:)`), and read `graph_actor` to post work

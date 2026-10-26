@@ -63,7 +63,7 @@ Ruby >= 3.4 for all three gems. Docs root: https://planetaska.github.io/hibiki/
 
 ## Two flavors
 
-Use either spelling; they build the same objects. `include Hibiki::DSL` adds bare `state`, `derived`, `effect`, `batch`, `root` and `on_cleanup` to the including scope. Requiring the gem never includes it for you, so a library built on hibiki adds nothing to its callers' namespace; include it yourself where you want the short names.
+Use either spelling; they build the same objects. `include Hibiki::DSL` adds bare `state`, `derived`, `effect`, `batch`, `root` and `on_cleanup` to the including scope. Requiring the gem never includes it for you, so a library built on hibiki adds nothing to its callers' namespace; include it yourself where you want the short names. In a hibiki_rails channel, every public method is a browser-callable action, so follow the include with `private(*Hibiki::DSL.instance_methods)` and never call a bare `root` there (load `hibiki-rails`).
 
 ```ruby
 require "hibiki"
@@ -92,7 +92,7 @@ Assign, never mutate in place: `todos.value += [item]`, not `todos.value << item
 
 ## Class-based reactivity
 
-`include Hibiki::Reactive` puts a per-instance signal behind each attribute, so reads and writes drop the `.value` and tracking flows through plain method calls (Svelte 5's class fields).
+`include Hibiki::Reactive` puts a per-instance signal behind each attribute, so reads and writes drop the `.value` and tracking flows through plain method calls (Svelte 5's class fields). Never include it in a hibiki_rails channel: its readers, writers and `dispose` are public (browser-callable actions), and its effects start in `initialize`, before the channel's graph exists, so nothing disposes them. Components and form objects are fine.
 
 ```ruby
 class Counter
