@@ -104,6 +104,16 @@ travels back down and replaces the old one. Nothing else on the page moves.
 (The [Rails introduction]({{ "/rails-introduction/" | relative_url
 }}#what-happens-on-a-click) walks through the same four steps if you are not familiar.)
 
+The channel also declares the search, filter, sort and page actions
+*replaceable*, and the search box sends with `replaceable: true`. Each of
+those actions sets a value outright, so when a visitor types faster than
+the server answers, the channel skips a search that the next one has
+already made pointless, and the browser sends one search per answer
+rather than one per pause in typing.
+[Replaceable actions]({{ "/replaceable-actions/" | relative_url }})
+explains both halves, and what to check before adding an action of your
+own to the list.
+
 The above path covers the writes one browser tab makes. The database has other writers:
 a console session, a background job, the plain controller, another user's
 tab. Signals only notice writes made to them, so a row saved anywhere else

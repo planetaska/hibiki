@@ -64,6 +64,12 @@ ends, and runs each affected effect once. So an action that writes five
 signals still means one re-run, and one re-render, per effect that read
 any of them.
 
+An action the channel has declared `replaceable` may never be posted at
+all. When the next action the browser sent is of the same kind and this
+one has not started, the concern skips it and acknowledges it as dropped.
+[Replaceable actions]({{ "/replaceable-actions/" | relative_url }})
+explains when that is safe and what the browser does on its side.
+
 `rescue_from` handlers work as in any channel. The only difference is
 where they run: on the graph thread, because that is where the action
 body runs. An error no handler catches is reported to `Rails.error`

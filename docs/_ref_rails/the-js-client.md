@@ -177,6 +177,7 @@ whitespace, and lets one element answer several events:
 | `confirm:` | a `window.confirm` message. Declining performs nothing (and does not submit the form). Note that `data-turbo-confirm` does *not* work on a hibiki control — it isn't a Turbo-driven form. |
 | `reset:` | `false` keeps a submitted form's inputs. The default resets them, which is right for an "add" form and wrong for an edit one: the reset runs synchronously, before the server has replied, so a failed commit would discard what the user typed. |
 | `fallback:` | `true` makes the control's own native behavior its degraded path — see [Falling back to native behavior](#falling-back-to-native-behavior). |
+| `replaceable:` | `true` holds a new send while one of the same kind from this island is waiting for its ack, and a newer send replaces the held one, so a search box sends one search per answer when the server is slow. Pair it with `replaceable` on the channel; see [Replaceable actions]({{ "/replaceable-actions/" | relative_url }}). Since 0.21.0. |
 
 Each action carries a payload. A changed control contributes one entry
 under its own `name`: a checkbox sends its **checked state** as a boolean,

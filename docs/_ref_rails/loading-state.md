@@ -163,6 +163,12 @@ no edits, a filter set to the value it already holds) correctly renders
 nothing at all. Waiting for HTML would leave the spinner up forever; the
 ack arrives either way.
 
+A control wired with `replaceable: true` may hold a send while an earlier
+one of its kind is still waiting for its ack. The control stays busy
+through the hold, since the trip in flight already marks it, and the
+flag clears when the held send has gone and been acked in its turn. See
+[Replaceable actions]({{ "/replaceable-actions/" | relative_url }}).
+
 For apps that customize the JS side (for example, to tune the busy
 timings introduced in the next section): if you subclass
 `ChannelController` and override its `received` method, the busy flag

@@ -1,6 +1,6 @@
 ---
 title: Version lockstep
-nav_order: 16
+nav_order: 17
 ---
 
 # Version lockstep
@@ -16,6 +16,7 @@ vendored inside the gem.
 
 | `hibiki_rails` gem | `hibiki-rails` npm | notes |
 | ------------------ | ------------------ | ----- |
+| 0.21.0             | 0.21.0             | replaceable actions. A channel names the actions that set state outright, such as a search or a sort, with `replaceable :search, :set_sort`, and skips one that the next action of the same kind has made pointless before it started. `on` takes `replaceable: true`, and the browser then holds a new send of that kind while the last one waits for its ack, so a slow server gets one search per answer rather than one per pause in typing. The scaffold declares both. See [Replaceable actions]({{ "/replaceable-actions/" | relative_url }}). Also a fix: an island that renders over a Turbo stream repaints after a reconnect, because it now waits for its stream to confirm again before it resubscribes, as it already did on first connect; and a control with two actions in flight stays busy until both are answered. Update both halves together: the channel's half works with any client since 0.20.1, and `replaceable: true` needs the 0.21.0 client, which an older one ignores |
 | 0.20.1             | 0.20.1             | a channel runs its actions in the order the browser sent them. Action Cable could run two actions sent back to back in either order, so a click made straight after typing could reach the channel before the typed value. The client now numbers each subscription's actions from 1 with none missing, and the channel waits up to 100 ms for one that is late. Update both halves together: a client older than 0.20.1 works with the new gem, but its first action after a reconnect waits those 100 ms |
 | 0.20.0             | 0.20.0             | commands and dialogs. `on` takes a list of commands built with `js`, which the browser runs with no round trip: show and hide, classes, attributes, focus, a DOM event, a dialog, and a channel action among them. The new module `hibiki-rails/commands` runs them; the install generator imports it, and an existing app adds `import "hibiki-rails/commands"` itself. `modal(open:)` lets a channel open and close a `<dialog>`, `on` hears a dialog's `cancel` and `close`, and a morph keeps a dialog's `open` attribute. See [Commands and dialogs]({{ "/commands/" | relative_url }}) |
 | 0.19.0             | 0.19.0             | history entries. `transmit_url(history: :push)` makes each move of the URL an entry in the browser's history, and `on(:action, event: :popstate)` answers Back and Forward. The default is still `replaceState`. See [Reactive values]({{ "/reactive-values/" | relative_url }}#history-entries) |
