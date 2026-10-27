@@ -1,18 +1,18 @@
 ---
 name: hibiki-rails
 description: >-
-  Rails integration for hibiki (hibiki_rails 0.20.1): channels with Hibiki::Rails::Channel, build_graph, actions, transmit, transmit_value, transmit_url (history: :push, popstate), broadcast_replace/morph/refresh(_effect), the island/hibiki_island/on/reactive/reactive_attrs/props/focus helpers, keys in on (keydown.esc, @window), js commands in on (show/hide/toggle, classes, attributes, push) and dialogs (modal, show_modal), the JS client (HibikiController, perform/performOn, fallback:, debounce:, confirm:, visible), loading state (data-hibiki-busy), channel lifecycle, graph thread, error layers, instrumentation (reportTrips), ActiveRecord patterns (record_equals, db_version, after_commit pings), hibiki:rails:install, troubleshooting. Load for any app/channels/*_channel.rb using Hibiki, any view with island/on, "page doesn't update", "first update never arrives", "button does nothing", "State write dropped by ==". Siblings: hibiki-rails-forms, hibiki-rails-scaffold, hibiki-rails-motion, hibiki-phlex.
+  Rails integration for hibiki (hibiki_rails 0.21.0): channels with Hibiki::Rails::Channel, build_graph, actions, transmit, transmit_value, transmit_url (history: :push, popstate), broadcast_replace/morph/refresh(_effect), the island/hibiki_island/on/reactive/reactive_attrs/props/focus helpers, keys in on (keydown.esc, @window), js commands in on (show/hide/toggle, classes, attributes, push) and dialogs (modal, show_modal), the JS client (HibikiController, perform/performOn, fallback:, debounce:, confirm:, replaceable:, visible), loading state (data-hibiki-busy), channel lifecycle, graph thread, error layers, instrumentation (reportTrips), ActiveRecord patterns (record_equals, db_version, after_commit), hibiki:rails:install, troubleshooting. Load for any app/channels/*_channel.rb using Hibiki, any view with island/on, "page doesn't update", "first update never arrives", "button does nothing", "State write dropped by ==". Siblings: hibiki-rails-forms, hibiki-rails-scaffold, hibiki-rails-motion, hibiki-phlex.
 license: MIT OR Apache-2.0
 metadata:
   author: planetaska
   hibiki: "0.3.0"
-  hibiki_rails: "0.20.1"
+  hibiki_rails: "0.21.0"
   hibiki_phlex: "0.1.0"
 ---
 
 # hibiki-rails
 
-hibiki_rails 0.20.1 and npm hibiki-rails 0.20.1, in lockstep; the family versions table lives in the `hibiki` skill.
+hibiki_rails 0.21.0 and npm hibiki-rails 0.21.0, in lockstep; the family versions table lives in the `hibiki` skill.
 
 ## The round trip
 
@@ -107,10 +107,11 @@ contract you never write by hand. Island shape, ERB, no JavaScript of yours:
   ERB-only (it needs `capture`, so it raises elsewhere), class-only, no strings.
 - `hibiki_island(channel, cid:, params:)` is the primitive
   (`tag.div(**hibiki_island(CounterChannel, cid:))`), the form Phlex uses.
-- `on(action, event: :click, with:, debounce:, confirm:, reset:, fallback:)`
+- `on(action, event: :click, with:, debounce:, confirm:, reset:, fallback:, replaceable:)`
   marks a control. `:input` defaults to a 250 ms debounce; `reset: false`
   keeps a submitted form's inputs; `fallback: true` makes its own href or
-  action the degraded path. A changed control sends its value under its
+  action the degraded path; `replaceable: true` holds a send while one of
+  its kind waits for its ack. A changed control sends its value under its
   `name`, a form its FormData. Table: `references/the-js-client.md`.
 - `props(indeterminate:, scroll_top:, scroll_left:, key:)` sets DOM
   properties that have no attribute, on an element inside a re-rendered
@@ -206,6 +207,12 @@ A channel renders outside any request (empty `params` and `session`, nil
   drain first and a later action is acked `dropped: true`. Overrides call
   `super` and stay private. Before a dev reload the engine disposes every live
   graph, so counters reset on edit. See `references/channel-lifecycle.md`.
+- `replaceable :search, :set_sort` (since 0.21.0) lets the channel skip an
+  action when the next one the browser sent is the same kind (name and
+  payload keys) and the first has not started; it is acked dropped. Pair it
+  with `on(:search, event: :input, replaceable: true)`, which stops the
+  browser sending one while one of its kind is in flight. Only actions that
+  set state outright. See `references/replaceable-actions.md`.
 
 ## Working with ActiveRecord
 
@@ -305,7 +312,8 @@ warning), so revert the gesture yourself. See `references/driving-an-island.md`.
 
 Since 0.18.0 a channel publishes `ActiveSupport::Notifications` events, always
 on: `subscribe`, `unsubscribe`, `action` (payload `channel`, `action`, `wait`,
-`renders`) and `render` (`channel`, `target`, `method`), each suffixed
+`renders`), `render` (`channel`, `target`, `method`) and, since 0.21.0, `skip`
+(a replaceable action skipped; `channel`, `action`, `wait`), each suffixed
 `.hibiki_rails`. Rails' `perform_action.action_cable` times only the hand-off
 to the graph thread, so use these to time an action and its renders. A
 subscriber runs on the graph thread: keep it to cheap in-memory work.
@@ -376,6 +384,7 @@ action ran, not that anything changed.
 - Importmap apps use the vendored pin; bundler apps install npm `hibiki-rails` at the gem's version. Mixing versions breaks the private attribute contract. (version-lockstep)
 - A first-run effect error bypasses `Hibiki.error_handler`. It lands in the safety net and the fragment never renders; check the log. (error-handling-layers)
 - A placeholder inside a replaced fragment must render its current value, and `transmit_url` is same-origin only. The swap resets the text and the gate will not re-send; another origin is refused silently. (reactive-values)
+- Declare `replaceable` only for actions that set state outright from the payload. One that adds, toggles or saves loses the visitor's gesture when skipped. (replaceable-actions)
 - Clicks during an offline gap are dropped, not queued. A reconnect builds a fresh graph the old intent was not formed against. (loading-state)
 - Dev reload resets every graph, and a new `app/*` directory needs a restart. Autoload roots are computed at boot. (troubleshooting)
 
@@ -389,7 +398,8 @@ action ran, not that anything changed.
 - `references/broadcast-helpers.md`: the four signatures, morph vs replace, rendering outside a request, `stream_name`.
 - `references/channel-lifecycle.md`: GraphActor, executor wrap, subscribe/unsubscribe, hooks, dev reload.
 - `references/error-handling-layers.md`: `rescue_from`, `Hibiki.error_handler`, the safety net, `build_graph_actor`.
-- `references/instrumentation.md`: the five `*.hibiki_rails` events and payloads, subscriber rules, `registry.tally`, `reportTrips` and trips.
+- `references/replaceable-actions.md`: `replaceable` on the channel, `on(replaceable: true)`, the kind and adjacency rules, what to declare, load figures.
+- `references/instrumentation.md`: the six `*.hibiki_rails` events and payloads, subscriber rules, `registry.tally`, `reportTrips` and trips.
 - `references/loading-state.md`: attribute table, four states, queue rules, the ack, timing statics.
 - `references/driving-an-island.md`: `performOn`/`perform` contract, the SortableJS pattern, what the server receives.
 - `references/working-with-active-record.md`: the two rules, ranked patterns, the `after_commit` bridge, controller/job gotchas.
