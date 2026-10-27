@@ -8,6 +8,7 @@ this for free because they serve the copy inside the gem.
 
 | gem = npm | Client change |
 | --- | --- |
+| 0.21.0 | holds a send from an `on(..., replaceable: true)` control while one of its kind (name and payload keys) waits for its ack, sending the newest on the ack and anything held before any other action; an island over a Turbo stream waits for its stream to confirm before resubscribing after a reconnect, so it repaints; a control with two trips out stays busy until both settle. The channel's `replaceable` half works with clients since 0.20.1; `replaceable: true` needs this one (see replaceable-actions) |
 | 0.20.1 | numbers each subscription's actions from 1 with no gaps, so the channel can run them in the order sent (Action Cable could swap two sent back to back, such as typed input and the click after it); fixes an action running before the value typed just ahead of it. Needs both halves |
 | 0.20.0 | runs `js` command lists (`on(js.hide(...))`) through the new module `hibiki-rails/commands`, which an existing app must import; opens and closes a `<dialog>` from `modal(open:)`; `on` hears a dialog's `cancel` and `close`; a morph keeps a dialog's `open` (see commands) |
 | 0.19.0 | `transmit_url(history: :push)` makes URL moves history entries, and `on(:action, event: :popstate)` answers Back and Forward (see reactive-values) |

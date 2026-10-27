@@ -6,7 +6,7 @@ Hibiki::Rails::Channel` does at each step.
 | Moment | What happens |
 | --- | --- |
 | subscribe | `subscribed` calls `super`, rejects if `cid.blank?`, builds a `Hibiki::Rails::GraphActor` (`build_graph_actor`), posts `Hibiki.root { build_graph }` to it, registers with the registry |
-| action | `perform_action` deletes the reserved `hbk` and `hbt` keys, posts `Hibiki.batch { super(data) }` to the actor, then `transmit({ ack: seq })` in an `ensure`; a post that fails (no actor, or closed queue) acks `{ ack: seq, dropped: true }` at once |
+| action | `perform_action` deletes the reserved `hbk` and `hbt` keys, posts `Hibiki.batch { super(data) }` to the actor, then `transmit({ ack: seq })` in an `ensure`; a post that fails (no actor, or closed queue) acks `{ ack: seq, dropped: true }` at once; a `replaceable` action the next one sent replaced before it started acks dropped from the graph thread without running (replaceable-actions.md) |
 | unsubscribe | `unsubscribed` unregisters, posts the root's `dispose`, then `stop`s the actor: the queue closes rather than empties, so already-posted jobs drain, `on_cleanup` blocks run, subscriptions drop, the thread exits |
 | dev reload | the engine's `to_prepare` hook calls `Hibiki::Rails.registry.dispose_all`, closing every connection with a live channel; clients reconnect and `build_graph` runs on fresh classes |
 

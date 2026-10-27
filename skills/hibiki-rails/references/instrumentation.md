@@ -12,10 +12,11 @@ thread, not the action, its effects or its renders.
 | `action.hibiki_rails` | the action and every effect it re-ran | `channel`, `action`, `wait`, `renders` |
 | `render.hibiki_rails` | one `broadcast_replace` / `broadcast_morph` / `broadcast_refresh` | `channel`, `target`, `method` |
 | `trip.hibiki_rails` | nothing | `channel`, `action`, `ack`, `paint` |
+| `skip.hibiki_rails` | nothing: a `replaceable` action the next one replaced before it ran (since 0.21.0) | `channel`, `action`, `wait` |
 
 - `channel` is the class name, `action` the method name.
 - `wait`: ms the action queued for the graph thread. `renders`: broadcast
-  renders it caused.
+  renders it caused. A skipped action publishes `skip`, never `action`.
 - `method`: `:replace`, `:morph` or `:refresh`; a refresh has no `target`.
 
 ```ruby

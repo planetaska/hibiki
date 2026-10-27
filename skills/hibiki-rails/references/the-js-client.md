@@ -17,7 +17,7 @@ write them by hand.
 | --- | --- | --- |
 | `hibiki_island(channel, cid:, params: nil)` | `{ data: {...} }` to splat | the primitive; Phlex uses `div(**hibiki_island(...))`; `channel` is a class or string |
 | `island(channel, cid: nil, params: nil, transport: :broadcast, tag_name: :div, **attributes) { \|cid\| }` | the root element | ERB-only (needs `capture`; raises elsewhere); class-only; generates a UUID cid; `:broadcast` adds `turbo_stream_from channel.channel_name, cid`; other keywords land on the root, `data:` merged beneath the island's keys |
-| `on(action, event: :click, with: nil, debounce: nil, confirm: nil, reset: nil, fallback: nil)` | `{ data: {...} }` to splat | one `event->action` token per event; names must match `/\A[a-z][a-z0-9_.-]*\z/i`; `action` may be a `js` command list instead (commands.md) |
+| `on(action, event: :click, with: nil, debounce: nil, confirm: nil, reset: nil, fallback: nil, replaceable: nil)` | `{ data: {...} }` to splat | one `event->action` token per event; names must match `/\A[a-z][a-z0-9_.-]*\z/i`; `action` may be a `js` command list instead (commands.md) |
 | `js` | an empty command list | chain commands on it and hand it to `on` (commands.md, since 0.20.0) |
 | `modal(open:)` | `{ data: {...} }` to splat | on a `<dialog>`: the client calls `showModal()` or `close()` to match after each render (commands.md, since 0.20.0) |
 | `reactive(name, placeholder = "", tag_name: :span)` | a complete element | `<span data-hibiki-value="name">0</span>`; names match `/\A[a-z][a-z0-9_-]*\z/i` |
@@ -35,6 +35,7 @@ write them by hand.
 | `confirm:` | a `window.confirm` message; declining performs nothing and does not submit; `data-turbo-confirm` is ignored, the control is not Turbo-driven |
 | `reset:` | `false` keeps a submitted form's inputs; the default reset runs before the server replies, so an edit form needs `false` |
 | `fallback:` | `true` makes the control's native href/action its degraded path (below) |
+| `replaceable:` | `true` holds a send while an action of its kind (name and payload keys) from the island waits for its ack; a newer one replaces it, and any other action sends it first (since 0.21.0, replaceable-actions.md) |
 
 Payload per gesture: a changed control contributes `name => value` (checkbox:
 its checked boolean; multi-select: an array; a `[]`-suffixed name collects
