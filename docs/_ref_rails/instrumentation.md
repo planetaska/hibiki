@@ -1,6 +1,6 @@
 ---
 title: Instrumentation
-nav_order: 15
+nav_order: 16
 ---
 
 # Instrumentation
@@ -22,7 +22,7 @@ around the work itself.
 
 ## The events
 
-All five go through `ActiveSupport::Notifications`, the same mechanism
+All six go through `ActiveSupport::Notifications`, the same mechanism
 Rails uses for its own events. They are always on and need no
 configuration, and the gem subscribes to none of them.
 
@@ -31,6 +31,7 @@ configuration, and the gem subscribes to none of them.
 | `subscribe.hibiki_rails` | `build_graph` and the first renders it sends | `channel` |
 | `unsubscribe.hibiki_rails` | disposing the graph | `channel` |
 | `action.hibiki_rails` | the action and every effect it re-ran | `channel`, `action`, `wait`, `renders` |
+| `skip.hibiki_rails` | nothing: a [replaceable action]({{ "/replaceable-actions/" | relative_url }}) that the next one replaced before it started, so it never ran (since 0.21.0) | `channel`, `action`, `wait` |
 | `render.hibiki_rails` | one `broadcast_replace`, `broadcast_morph`, or `broadcast_refresh`: rendering the HTML and handing it to Action Cable | `channel`, `target`, `method` |
 | `trip.hibiki_rails` | nothing; see [Trips](#trips-how-long-a-visitor-waited) | `channel`, `action`, `ack`, `paint` |
 
@@ -40,7 +41,8 @@ The payload keys:
   action method.
 - `wait` is the time the action spent queued for the graph thread, in
   milliseconds. It grows when earlier actions on the same subscription
-  are slow.
+  are slow. For a `skip` it is the whole time the action stood in line
+  before the next one replaced it.
 - `renders` is the number of broadcast renders the action caused.
 - `target` is the DOM id the render replaces. `method` is `:replace`,
   `:morph`, or `:refresh`, and a refresh has no `target`.
@@ -76,6 +78,9 @@ With no subscriber, an event costs an action one to two microseconds.
 - **A raising action still publishes.** Its payload carries the
   exception under `:exception` and `:exception_object`, as any Rails
   event does.
+- **A skipped action has no `action` event.** A replaceable action that
+  the next one replaced never runs, so it publishes `skip` in place of
+  `action`. The trips the browser sent with it are still published.
 - **A render with no action has no `action` event.** A model's
   `after_commit` ping or a debounced refresh re-runs an effect outside
   any action. Its `render` event is published as usual.
