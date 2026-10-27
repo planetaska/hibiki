@@ -51,7 +51,7 @@ class SearchChannel < ApplicationCable::Channel
 end
 ```
 
-Here `search` sets the query from its payload and nothing it does depends
+Here `search` sets the query from its payload, and nothing it does depends
 on the query before it, so a search the visitor has already typed past
 can be left out. The macro says so for `search`, `set_sort` and `go`.
 From then on:
@@ -161,17 +161,15 @@ per answer rather than one per pause, and the server's queue stays short.
 
 Each half works alone. `replaceable: true` on a control works with any
 channel, since it only changes when the browser sends; the channel's list
-is what the server skips by, and it applies to sends from any client since
-0.20.1, which numbers its actions. Use
-both on a control that qualifies, as the scaffold does.
+is what the server skips by, and it applies to sends from any client.
 
-What the two halves buy, measured on one process on a 12-core Mac with
-Ruby on one core, running reverb's Live Search recipe for 500 visitors who
-each search once a second. That rate is past the process's ceiling of
+Here is what the two halves improve, measured with a single server process,
+Ruby on one core, running a Live Search page for 500 visitors who each
+search once a second. The request rate is past the process's ceiling of
 about 430 searches a second, so the server is behind from the first
 second:
 
-- **With neither half**, the queue grew without end. The mean wait for an
+- **With no skip**, the queue grew without end. The mean wait for an
   action went from 10.5 s to 21.9 s over two minutes, and an
   acknowledgement took 6.2 s at the median.
 - **With the channel's half alone**, the queue stopped growing. The mean
@@ -185,9 +183,12 @@ second:
 
 What neither half can do is raise the ceiling. With 500 searches always in
 flight and about 415 finished each second, each one takes about 1.2 s
-from send to acknowledgement, because that is how long the line is. More
-Puma workers raise the ceiling; replaceable actions keep the line from
-growing past it.
+from send to acknowledgement, because that is how long the line is. To
+raise the ceiling, add processes: more Puma workers, or a standalone
+Action Cable server. Each process runs its graphs on a core of its own,
+and the processes share broadcasts through Solid Cable or Redis, since the
+`async` adapter reaches only its own process. Replaceable actions only
+keep the line from growing past the ceiling.
 
 ## In a scaffolded app
 
